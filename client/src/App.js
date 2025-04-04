@@ -16,7 +16,7 @@
 // import Customerreport from "./Components/Report/custreport";
 // import Transaction from "./Components/Customer/Transaction";
 
-// function Layout() {
+// function Layout() { 
 //   const location = useLocation();
 
 //   const showNavbar = location.pathname !== "/";

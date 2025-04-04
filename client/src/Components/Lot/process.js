@@ -19,7 +19,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import { createLot, getAllLot, saveLot } from "../../Api/processTableApi";
+import { createLot, getAllLot, saveLot ,getLotDatewise} from "../../Api/processTableApi";
 import { styled } from "@mui/material/styles";
 import { processStepId } from "../../ProcessStepId/processStepId";
 import axios from "axios";
@@ -62,6 +62,8 @@ const ProcessTable = () => {
   const [initialWeight, setInitialWeight] = useState("");
   const [touchValue, setTouchValue] = useState("");
   const [isLotCreated, setIsLotCreated] = useState(false);
+  const [fromDate,setFromDate]=useState("")
+  const [toDate,setToDate]=useState("")
 
   const handleWeightChange = (index, process, field, value) => {
     const updatedItems = [...items];
@@ -309,7 +311,8 @@ const ProcessTable = () => {
       console.log("API Response:", response); // Check structure
 
       setItems((prevItems) => [...prevItems, response]); // Ensure prevItems is an array
-      setInitialWeight(""); // Clear input field
+      setInitialWeight(""); 
+      setTouchValue("");// Clear input field
       setOpen(false);
       setIsLotCreated(true);
     } catch (error) {
@@ -333,8 +336,8 @@ const ProcessTable = () => {
   const handleSaveData = async () => {
     console.log('handleSaveData', items);
     const res = await saveLot(items);
-    console.log('res from save function', res)
-    setItems(res)
+    console.log('res from save function', res.data.data)
+    setItems(res.data.data)
 
   }
   const allData = async () => {
@@ -380,6 +383,21 @@ const ProcessTable = () => {
     );
 
     return totalValue;
+
+
+  }
+
+  const handleDifference = (kambiWeight, lotid, lotProcessId, processId) => {
+    const tempData = [...items];
+    const lotData = tempData.filter((item, index) => item.lotid === lotid);
+
+    const totalValue = lotData[0]?.data[lotProcessId]?.ProcessSteps[processId]?.AttributeValues.reduce(
+      (acc, item) => acc + item.value,
+      0
+    );
+    const differValue = kambiWeight - totalValue;
+
+    return differValue;
 
 
   }
@@ -435,6 +453,28 @@ const ProcessTable = () => {
 
   }
 
+
+  const handleDateWiseFilter = async () => {
+    try {
+      console.log('fromDate', fromDate);
+      console.log('toDate', toDate);
+  
+      if (fromDate > toDate) {
+        alert('Your Date Order was Wrong');
+        return;
+      }
+  
+      const res = await getLotDatewise(fromDate, toDate);
+      console.log('DateWiseFilter', res.data.data);
+      setItems(res.data.data)
+      console.log('itemsAfterDateWiseFilter',items);
+    } catch (error) {
+      console.error('Error fetching data by date:', error.message);
+      alert('Something went wrong while fetching data. Please try again.');
+    }
+  };
+  
+
   useEffect(() => {
     allData()
   }, [])
@@ -446,21 +486,44 @@ const ProcessTable = () => {
           color="primary"
           onClick={handleCreateLot}
           sx={{ marginRight: "10px" }}
-        // Disable "Create Lot" after it's clicked
+       
         >
-          Create Lot
+          AddItem
         </Button>
         <Button
           variant="contained"
           color="secondary"
           onClick={handleSaveData}
           sx={{ marginRight: "10px" }}
-        // Disable "Create Lot" after it's clicked
+       
         >
           Save
         </Button>
 
       </Box>
+     {/* DateWiseFilter */}
+
+     <div style={{ padding: 20 }}>
+        <div style={{ display: "flex", gap: "10px", marginBottom: 20 }}>
+          <TextField
+            label="From Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+          />
+          <TextField
+            label="To Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+          />
+          <Button variant="contained" onClick={()=>{handleDateWiseFilter()}}>Filter</Button>
+        </div>
+
+       
+      </div>
       <StyledTableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -539,11 +602,11 @@ const ProcessTable = () => {
               </StyledTableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
+          <TableBody >
             {
               items.map((lotItem, lotIndex) => (
-                <React.Fragment key={lotIndex}>
-                  <TableRow>
+                <React.Fragment key={lotIndex} >
+                  <TableRow >
                     <StyledTableCell>
 
                       <StyledInput
@@ -639,8 +702,13 @@ const ProcessTable = () => {
                   {
                     lotItem.data[3].ProcessSteps[0].AttributeValues.map((item, key) => (
                       //
-                      <TableRow key={key}>
-                        <StyledTableCell colSpan={9} />
+                      <TableRow key={key} >
+                       {
+                          processes.map((item) => (// its show 8 cell before Item Name 
+                            <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
+                          ))
+                        }
+                        <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
 
                         <StyledTableCell>
                           <StyledInput
@@ -721,11 +789,10 @@ const ProcessTable = () => {
                             (<StyledTableCell>
                               <p style={{ fontSize: "15px" }}>{lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].value - lotItem.data[8]?.ProcessSteps[1]?.AttributeValues[key].value}</p>
                             </StyledTableCell>)
-                            : ("")
+                            : (<StyledTableCell></StyledTableCell>)
                         }
-                       <StyledTableCell></StyledTableCell>
-                       <StyledTableCell></StyledTableCell>
-                       <StyledTableCell></StyledTableCell>
+                      <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
+                      <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
 
                       </TableRow>
 
@@ -740,13 +807,51 @@ const ProcessTable = () => {
                         <StyledTableCell>{"Total:"+handleTotal(lotItem.lotid, 3, 0)}</StyledTableCell>
                       ) : (<StyledTableCell>Total:0</StyledTableCell>)
                     }
-                     {
-                     lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 ? ( //weight total
-                        <StyledTableCell>{lotItem.data[2].ProcessSteps[1].AttributeValues.length!==0?(
-                         + lotItem.data[2].ProcessSteps[1].AttributeValues[0].value-handleTotal(lotItem.lotid, 3, 0)
-                        ):("")}</StyledTableCell>
-                      ) : (<StyledTableCell>Diff:0</StyledTableCell>)
-                    }
+                       <StyledTableCell
+                      style={{
+                        backgroundColor:
+                          lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 &&
+                            lotItem.data[2].ProcessSteps[1].AttributeValues.length !== 0
+                            ? (() => {
+                              const diff = handleDifference(
+                                lotItem.data[2].ProcessSteps[1].AttributeValues[0].value,
+                                lotItem.lotid,
+                                3,
+                                0
+                              );
+                              return diff !== 0 ? "red" : "transparent"; // Red for both > 0 and < 0
+                            })()
+                            : "transparent",
+                        color:
+                          lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 &&
+                            lotItem.data[2].ProcessSteps[1].AttributeValues.length !== 0
+                            ? (() => {
+                              const diff = handleDifference(
+                                lotItem.data[2].ProcessSteps[1].AttributeValues[0].value,
+                                lotItem.lotid,
+                                3,
+                                0
+                              );
+                              return diff !== 0 ? "white" : "black"; // White text if red background
+                            })()
+                            : "black",
+                      }}
+                    >
+                      {lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 ? (
+                        lotItem.data[2].ProcessSteps[1].AttributeValues.length !== 0 ? (
+                          handleDifference(
+                            lotItem.data[2].ProcessSteps[1].AttributeValues[0].value,
+                            lotItem.lotid,
+                            3,
+                            0
+                          )
+                        ) : (
+                          ""
+                        )
+                      ) : (
+                        "Diff:0"
+                      )}
+                    </StyledTableCell>
 
                     {
                       lotItem.data.map((item, index) => (
@@ -812,7 +917,7 @@ const ProcessTable = () => {
             </TableRow> */}
           </TableBody>
           <TableFooter>
-            <StyledTableCell><b>LotTotal:{handleLotTotal()}</b></StyledTableCell>
+            <StyledTableCell><p style={{fontSize:"17px",fontWeight:"bold",color:"black"}}>Total RawGold:{handleLotTotal()}</p></StyledTableCell>
           </TableFooter>
         </Table>
       </StyledTableContainer>

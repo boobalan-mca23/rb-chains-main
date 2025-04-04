@@ -16,7 +16,15 @@ export const getAllLot=async()=>{
 export const saveLot=async(lotdata)=>{
 
     const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/process/saveProcess`,{lotdata:lotdata})
-    return response.data.data;
+    return response;
+ 
+}
+
+//getLotDatewise
+export const getLotDatewise=async(fromDate,toDate)=>{
+
+    const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/process/getLotsByDateRange`,{"fromDate":fromDate,"toDate":toDate})
+    return response;
  
 }
 
