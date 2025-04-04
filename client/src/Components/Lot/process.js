@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Table,
@@ -64,6 +63,24 @@ const ProcessTable = () => {
   const [isLotCreated, setIsLotCreated] = useState(false);
   const [fromDate,setFromDate]=useState("")
   const [toDate,setToDate]=useState("")
+  const [calculation, setCalculation] = useState([
+    { rawGold: 0 },
+    { touchValue: 0 },
+    {
+      process: [
+        { processName: "Melting", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+        { processName: "Kambi", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+        { processName: "Wire", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+        { processName: "Machine", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+        { processName: "Soldrine", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+        { processName: "Joint", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+        { processName: "Cutting", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+        { processName: "Finishing", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+      ],
+    },
+  ]);
+ 
+  
 
   const handleWeightChange = (index, process, field, value) => {
     const updatedItems = [...items];
@@ -73,7 +90,7 @@ const ProcessTable = () => {
     updatedItems[index].data[process][field] = value;
     setItems(updatedItems);
   };
-
+  
 
 
   const handleInitialChange = (lotid, index, value) => {
@@ -386,7 +403,60 @@ const ProcessTable = () => {
 
 
   }
+  const handleChildItemTotal=(name,key,processid)=>{
+    
+    const tempData=[...items];
+    let finalTotal = 0;
+    
+    tempData.forEach((lotItem,lotItemIndex)=>{
+     if( lotItem.data[key+1].ProcessSteps[processid].AttributeValues.length===0){
+       finalTotal+=0
+     }else{
+      lotItem.data[key+1].ProcessSteps[processid].AttributeValues.forEach((arrItem,arrIndex)=>{
+        finalTotal+=arrItem.value;
+     })
+     }
+    })
+    const tempCalculation=[...calculation];
+    let process=tempCalculation[2].process.filter((item)=>item.processName===name);
+    process[0].Weight[processid]=finalTotal;
+  
+  }
+  const handleTotalFinsh=()=>{
+    let tempData=[...items]
+    let finishTotal=0;
+    tempData.forEach((lotData,lotIndex)=>{
+       if( lotData.data[8].ProcessSteps[1].AttributeValues.length===0){
+        return finishTotal;
+       }else{
+        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem,arrIndex)=>{
+            finishTotal+=arrItem.value
+        })
+       }
+    })
+    return finishTotal
 
+  }
+  const handleTotalLot=()=>{
+    let tempData=[...items]
+    let finishTotal=0;
+    let lotTotal=0;
+
+    tempData.forEach((lotData,lotIndex)=>{
+       if( lotData.data[8].ProcessSteps[1].AttributeValues.length===0){
+        return finishTotal;
+       }else{
+        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem,arrIndex)=>{
+            finishTotal+=arrItem.value
+           
+        })
+        lotTotal+=lotData.data[0].ProcessSteps[0].AttributeValues[0].value- finishTotal
+        finishTotal=0;
+       }
+    })
+    return lotTotal
+ 
+  }
   const handleDifference = (kambiWeight, lotid, lotProcessId, processId) => {
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
@@ -918,6 +988,33 @@ const ProcessTable = () => {
           </TableBody>
           <TableFooter>
             <StyledTableCell><p style={{fontSize:"17px",fontWeight:"bold",color:"black"}}>Total RawGold:{handleLotTotal()}</p></StyledTableCell>
+            <StyledTableCell><p ></p></StyledTableCell>
+           {
+             calculation[2].process.map((item,key)=>(
+              <>
+                
+                 <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
+                 {
+                  item.processName==="Finishing"?( <StyledTableCell><p style={{fontSize:"15px",fontWeight:"bold",color:"black"}}>FinishTotal:{handleTotalFinsh()}</p></StyledTableCell>):( <StyledTableCell>0</StyledTableCell>)
+                 }
+                 <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
+                 {
+                  item.processName==="Kambi"?(
+                    <>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    </>
+                  ):("")
+                 }
+              
+              </>
+             ))
+           }
+           <StyledTableCell></StyledTableCell>
+           <StyledTableCell></StyledTableCell>
+           <StyledTableCell><p style={{fontSize:"15px",fontWeight:"bold",color:"black"}}>LotTotal:{handleTotalLot()}</p></StyledTableCell>
           </TableFooter>
         </Table>
       </StyledTableContainer>
