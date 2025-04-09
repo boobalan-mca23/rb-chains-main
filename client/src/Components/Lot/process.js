@@ -16,9 +16,10 @@ import {
   TableFooter,
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
 
-import { createLot, getAllLot, saveLot ,getLotDatewise} from "../../Api/processTableApi";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { createLot, getAllLot, saveLot, getLotDatewise } from "../../Api/processTableApi";
 import { styled } from "@mui/material/styles";
 import { processStepId } from "../../ProcessStepId/processStepId";
 import axios from "axios";
@@ -61,26 +62,67 @@ const ProcessTable = () => {
   const [initialWeight, setInitialWeight] = useState("");
   const [touchValue, setTouchValue] = useState("");
   const [isLotCreated, setIsLotCreated] = useState(false);
-  const [fromDate,setFromDate]=useState("")
-  const [toDate,setToDate]=useState("")
+  const [fromDate, setFromDate] = useState("")
+  const [toDate, setToDate] = useState("")
   const [calculation, setCalculation] = useState([
     { rawGold: 0 },
     { touchValue: 0 },
     {
       process: [
-        { processName: "Melting", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
-        { processName: "Kambi", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
-        { processName: "Wire", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
-        { processName: "Machine", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
-        { processName: "Soldrine", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
-        { processName: "Joint", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
-        { processName: "Cutting", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
-        { processName: "Finishing", Weight: [{ bw: 0 }, { aw: 0 }, { df: 0 }] },
+        { processName: "Melting", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 },{ lw: 0 }] },
+        { processName: "Kambi", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 },{ lw: 0 }] },
+        { processName: "Wire", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 },{ lw: 0 }] },
+        { processName: "Machine", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 },{ lw: 0 }] },
+        { processName: "Soldrine", Weight: [{ bw: 0 }, { aw: 0 }, {sw: 0 },{ lw: 0 }] },
+        { processName: "Joint", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 },{ lw: 0 }] },
+        { processName: "Cutting", Weight: [{ bw: 0 }, { aw: 0 }, {sw: 0 },{ lw: 0 },{pw:0}] },
+        { processName: "Finishing", Weight: [{ bw: 0 }, { aw: 0 }, {sw: 0 },{ lw: 0 }] },
       ],
     },
+    {
+      lotTotal:0
+    }
   ]);
- 
-  
+
+const docalculation = (arrayItems)=>{
+// Calculation
+const tempData = [...arrayItems];
+    let lotTotal = tempData.reduce((acc, item) => acc + item.data[0].ProcessSteps[0].AttributeValues[0].value, 0)
+const tempCalculation=[...calculation];
+tempCalculation[0].rawGold=lotTotal;
+
+let finishTotal = 0;
+    tempData.forEach((lotData, lotIndex) => {
+      if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
+        finishTotal=0
+      } else {
+        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+          finishTotal += arrItem.value
+        })
+      }
+    })
+    tempCalculation[2].process[7].Weight[1].aw=finishTotal
+
+    let finsihAfterValue = 0;
+    let lotFinishValue = 0;
+
+    tempData.forEach((lotData, lotIndex) => {
+      console.log('lodata from doCalculation',lotData)
+      // if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
+      //   finsihAfterValue=0;
+      // } else {
+      //   lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+      //     finishTotal += arrItem.value
+
+      //   })
+      //   lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finsihAfterValue 
+      //   finsihAfterValue = 0;
+      // }
+    })
+    // tempCalculation[3].lotTotal=lotFinishValue
+return tempCalculation
+    
+}
 
   const handleWeightChange = (index, process, field, value) => {
     const updatedItems = [...items];
@@ -90,7 +132,7 @@ const ProcessTable = () => {
     updatedItems[index].data[process][field] = value;
     setItems(updatedItems);
   };
-  
+
 
 
   const handleInitialChange = (lotid, index, value) => {
@@ -134,71 +176,80 @@ const ProcessTable = () => {
 
     if (process_id === 2) { //Melting Processs
 
+      if (attribute_id === 3) {
 
-      const obj = {
-        lot_id: lotid,
-        process_step_id: findProcessStep(process_id, attribute_id),
-        // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-        attribute_id: attribute_id,
-        items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-        value: value
-      }
-
-      if (lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 0) {
-
-        lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.push(obj);
-
-        const nextProcessObj = {
+        const obj = {
           lot_id: lotid,
-          process_step_id: 5,
+          process_step_id: findProcessStep(process_id, attribute_id),
+          // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
+          attribute_id: attribute_id,
           items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-          // item_name:lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-          attribute_id: 2,
           value: value
         }
-        lotData[0].data[2].ProcessSteps[0].AttributeValues.push(nextProcessObj);
-        const diffObj = {
+
+        if (lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 0) {
+
+          lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.push(obj);
+
+          const nextProcessObj = {
+            lot_id: lotid,
+            process_step_id: 6,
+            items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
+            // item_name:lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
+            attribute_id: 2,
+            value: value
+          }
+          lotData[0].data[2].ProcessSteps[0].AttributeValues.push(nextProcessObj);
+
+          tempData.splice(lotIndex, 1, lotData[0]);
+          setItems(tempData)
+        } else { //Melting Process After Weight Update
+          lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value = parseFloat(value);
+          lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value = parseFloat(value);
+          tempData.splice(lotIndex, 1, lotData[0]);
+          setItems(tempData)
+        }
+      }
+      else if (attribute_id === 4) {// Melting Process Scrap Value Insert
+        const obj = {
           lot_id: lotid,
-          process_step_id: 4,
-          items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
+          process_step_id: findProcessStep(process_id, attribute_id),
           // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-          attribute_id: 4,
-          value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value
-        }
-        lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(diffObj);
-
-
-
-
-
-
-
-
-        tempData.splice(lotIndex, 1, lotData[0]);
-        setItems(tempData)
-
-
-      }
-      else {
-        lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value = parseFloat(value);//Meting Process After Weight update
-        lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value = parseFloat(value);
-        lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value
-
-
-        if (lotData[0].data[2].ProcessSteps[1].AttributeValues.length !== 0) {
-          lotData[0].data[2].ProcessSteps[2].AttributeValues[0].value = lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[2].ProcessSteps[1].AttributeValues[0].value
+          attribute_id: attribute_id,
+          items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
+          value: value
         }
 
+        if (lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.length === 0) {
 
-        tempData.splice(lotIndex, 1, lotData[0]);
-        setItems(tempData)
+          lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(obj);
+
+          const lossObj = {
+            lot_id: lotid,
+            process_step_id: 5,
+            items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
+            attribute_id: 2,
+            value: (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value
+          }
+          lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
+
+          tempData.splice(lotIndex, 1, lotData[0]);
+          setItems(tempData)
+        } else {// Melting Process ScrapValue Update
+          lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = parseFloat(value);
+          lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
+          tempData.splice(lotIndex, 1, lotData[0]);
+          setItems(tempData)
+        }
       }
+
+
 
     }//Melting ProcessEnd
 
     else {
       //Kambi Process Start
-      if (process_id === 3) {
+      if (attribute_id === 3) {//Kambi Process Insert Value
 
         const obj = {
           lot_id: lotid,
@@ -209,28 +260,50 @@ const ProcessTable = () => {
           value: value
         }
         if (lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 0) {
-          lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.push(obj);
-          const diffObj = {
-            lot_id: lotid,
-            process_step_id: 7,
-            items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-            // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-            attribute_id: 4,
-            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length !== 0 ? parseFloat(lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) : parseFloat(0 - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value)
-          }
 
-          lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(diffObj);
+          lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.push(obj);
           tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
-          console.log('kambi', items)
+
         } else {
           lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value = parseFloat(value);
-          lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length !== 0 ? parseFloat(lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) : parseFloat(0 - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value)
+
           tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
           console.log('kambi', items)
         }//Kambi Process End
 
+      } else if (attribute_id === 4) {// Kambi Process Scrap Value Insert
+        const obj = {
+          lot_id: lotid,
+          process_step_id: findProcessStep(process_id, attribute_id),
+          // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
+          attribute_id: attribute_id,
+          items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
+          value: value
+        }
+
+        if (lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.length === 0) {
+
+          lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(obj);
+
+          const lossObj = {
+            lot_id: lotid,
+            process_step_id: 9,
+            items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
+            attribute_id: 2,
+            value: (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value
+          }
+          lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
+
+          tempData.splice(lotIndex, 1, lotData[0]);
+          setItems(tempData)
+        } else {// Kambi Process ScrapValue Update
+          lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = parseFloat(value);
+          lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
+          tempData.splice(lotIndex, 1, lotData[0]);
+          setItems(tempData)
+        }
       }
     }
 
@@ -260,29 +333,44 @@ const ProcessTable = () => {
     console.log('lotid', lotid);
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
-    let processstepid = 8;
+    let processstepid = 10;
     for (let i = 3; i <= 8; i++) {
 
-      for (let j = 1; j <= 3; j++) {
+      for (let j = 1; j <= 4; j++) {
+        if (processstepid === 30) {
+          ++processstepid;//its used For CuttingProcessPureWeight
+        }
         const obj = {
           lot_id: lotid,
           process_step_id: processstepid,
           item_name: " ",
           items_id: null,
           attribute_id: j + 1,
-          value: null
+          value: null,
+          index:null
         }
         lotData[0].data[i].ProcessSteps[j - 1].AttributeValues.push(obj)
         ++processstepid;
       }
 
     }
-    processstepid = 8
+    processstepid = 10
 
+    const obj = {
+      lot_id: lotid,
+      process_step_id: 30,
+      item_name: " ",
+      items_id: null,
+      attribute_id: 6,
+      value: null,
+      index:null
+    }
+    lotData[0].data[7].ProcessSteps[4].AttributeValues.push(obj)
 
 
 
     tempData.splice(index, 1, lotData[0]);
+    console.log('tempDate Data Push', tempData);
     setItems(tempData);
     console.log('items', items);
 
@@ -293,8 +381,16 @@ const ProcessTable = () => {
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
 
     for (let i = 3; i <= 8; i++) {//this create childItem name Each Process
-      for (let j = 0; j <= 2; j++) {
+      for (let j = 0; j <= 3; j++) {
         lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].item_name = String(itemName);
+      }
+    }
+    for (let i = 3; i <= 8; i++) {//this create Index  Each Process
+      if(i===7){
+        lotData[0].data[i].ProcessSteps[4].AttributeValues[childIndex].index =childIndex
+      }
+      for (let j = 0; j <= 3; j++) {
+        lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].index =childIndex
       }
     }
 
@@ -307,6 +403,7 @@ const ProcessTable = () => {
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
     lotData[0].data[3].ProcessSteps[0].AttributeValues[childIndex].value = parseFloat(itemWeight);
+    lotData[0].data[3].ProcessSteps[0].AttributeValues[childIndex].index=childIndex
 
     tempData.splice(lotIndex, 1, lotData[0]);
     setItems(tempData);
@@ -328,7 +425,7 @@ const ProcessTable = () => {
       console.log("API Response:", response); // Check structure
 
       setItems((prevItems) => [...prevItems, response]); // Ensure prevItems is an array
-      setInitialWeight(""); 
+      setInitialWeight("");
       setTouchValue("");// Clear input field
       setOpen(false);
       setIsLotCreated(true);
@@ -355,12 +452,15 @@ const ProcessTable = () => {
     const res = await saveLot(items);
     console.log('res from save function', res.data.data)
     setItems(res.data.data)
+    toast.success("Lot Saved", { autoClose: 2000 });
 
   }
   const allData = async () => {
     const res = await getAllLot();
     console.log('useEffect data', res);
     setItems(res)
+    setCalculation(docalculation(res))
+    console.log('after calculation',calculation);
   }
   const handleChildItems = (lotIndex, lotid, attribute_id, value, key, process_id, lotArrIndex) => {
     const tempData = [...items];
@@ -369,22 +469,50 @@ const ProcessTable = () => {
     if (process_id <= 8) {
 
 
-      // child Items Value Carry Forward here!!!!
-
-      lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value = parseFloat(value);
-      lotData[0].data[lotArrIndex + 1].ProcessSteps[0].AttributeValues[key].value = parseFloat(value);
-      lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value = parseFloat(lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value)
-      tempData.splice(lotIndex, 1, lotData[0]);
-      setItems(tempData);
-      console.log('items', items);
-
-    } else { //last process after weight
-      if (process_id === 9) {
+      // child Items Value Carry Forward here!!!
+      if (attribute_id === 3) { //child item After weight Update
         lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value = parseFloat(value);
-        lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value = parseFloat(lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value)
+        lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].index = key
+        lotData[0].data[lotArrIndex + 1].ProcessSteps[0].AttributeValues[key].value = parseFloat(value);
+        lotData[0].data[lotArrIndex + 1].ProcessSteps[0].AttributeValues[key].index=key
+
         tempData.splice(lotIndex, 1, lotData[0]);
         setItems(tempData);
         console.log('items', items);
+      } else if (attribute_id === 4) {//child item Scarp weight Update
+        lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value = parseFloat(value);
+        lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index=key;
+        lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value = (lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value) - value
+        lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].index=key;
+        if (process_id === 8) {//Pure Weight Calculation
+          if (lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value) {
+            lotData[0].data[lotArrIndex].ProcessSteps[4].AttributeValues[key].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value / 100
+            lotData[0].data[lotArrIndex].ProcessSteps[4].AttributeValues[key].index=key
+          }
+        }
+        tempData.splice(lotIndex, 1, lotData[0]);
+        console.log('lossCalculation', tempData);
+        setItems(tempData);
+      }
+
+    } else { //last process after weight
+      if (process_id === 9) {
+
+        if (attribute_id === 3) {
+          lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value = parseFloat(value);
+          lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].index=key
+
+          tempData.splice(lotIndex, 1, lotData[0]);
+          setItems(tempData);
+          console.log('items', items);
+        } else if (attribute_id === 4) {
+          lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value = parseFloat(value);
+          lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key;
+          lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value = (lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value) - value
+          lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].index=key;
+          tempData.splice(lotIndex, 1, lotData[0]);
+          setItems(tempData);
+        }
       }
     }
 
@@ -403,59 +531,59 @@ const ProcessTable = () => {
 
 
   }
-  const handleChildItemTotal=(name,key,processid)=>{
-    
-    const tempData=[...items];
+  const handleChildItemTotal = (name, key, processid) => {
+
+    const tempData = [...items];
     let finalTotal = 0;
-    
-    tempData.forEach((lotItem,lotItemIndex)=>{
-     if( lotItem.data[key+1].ProcessSteps[processid].AttributeValues.length===0){
-       finalTotal+=0
-     }else{
-      lotItem.data[key+1].ProcessSteps[processid].AttributeValues.forEach((arrItem,arrIndex)=>{
-        finalTotal+=arrItem.value;
-     })
-     }
-    })
-    const tempCalculation=[...calculation];
-    let process=tempCalculation[2].process.filter((item)=>item.processName===name);
-    process[0].Weight[processid]=finalTotal;
-  
-  }
-  const handleTotalFinsh=()=>{
-    let tempData=[...items]
-    let finishTotal=0;
-    tempData.forEach((lotData,lotIndex)=>{
-       if( lotData.data[8].ProcessSteps[1].AttributeValues.length===0){
-        return finishTotal;
-       }else{
-        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem,arrIndex)=>{
-            finishTotal+=arrItem.value
+
+    tempData.forEach((lotItem, lotItemIndex) => {
+      if (lotItem.data[key + 1].ProcessSteps[processid].AttributeValues.length === 0) {
+        finalTotal += 0
+      } else {
+        lotItem.data[key + 1].ProcessSteps[processid].AttributeValues.forEach((arrItem, arrIndex) => {
+          finalTotal += arrItem.value;
         })
-       }
+      }
+    })
+    const tempCalculation = [...calculation];
+    let process = tempCalculation[2].process.filter((item) => item.processName === name);
+    process[0].Weight[processid] = finalTotal;
+
+  }
+  const handleTotalFinsh = () => {
+    let tempData = [...items]
+    let finishTotal = 0;
+    tempData.forEach((lotData, lotIndex) => {
+      if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
+        return finishTotal;
+      } else {
+        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+          finishTotal += arrItem.value
+        })
+      }
     })
     return finishTotal
 
   }
-  const handleTotalLot=()=>{
-    let tempData=[...items]
-    let finishTotal=0;
-    let lotTotal=0;
+  const handleTotalLot = () => {
+    let tempData = [...items]
+    let finishTotal = 0;
+    let lotTotal = 0;
 
-    tempData.forEach((lotData,lotIndex)=>{
-       if( lotData.data[8].ProcessSteps[1].AttributeValues.length===0){
+    tempData.forEach((lotData, lotIndex) => {
+      if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
         return finishTotal;
-       }else{
-        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem,arrIndex)=>{
-            finishTotal+=arrItem.value
-           
+      } else {
+        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+          finishTotal += arrItem.value
+
         })
-        lotTotal+=lotData.data[0].ProcessSteps[0].AttributeValues[0].value- finishTotal
-        finishTotal=0;
-       }
+        lotTotal += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finishTotal
+        finishTotal = 0;
+      }
     })
     return lotTotal
- 
+
   }
   const handleDifference = (kambiWeight, lotid, lotProcessId, processId) => {
     const tempData = [...items];
@@ -471,82 +599,42 @@ const ProcessTable = () => {
 
 
   }
-  const handleLotTotal=()=>{
+  const handleLotTotal = () => {
     const tempData = [...items];
-    let lotTotal=tempData.reduce((acc,item)=>acc+item.data[0].ProcessSteps[0].AttributeValues[0].value,0)
+    let lotTotal = tempData.reduce((acc, item) => acc + item.data[0].ProcessSteps[0].AttributeValues[0].value, 0)
     return lotTotal;
   }
 
-  const handleDeleteItem = async (lotid, index, lotIndex) => {
-    try {
-        const tempData = [...items];
-        const lotData = tempData.filter((item) => item.lotid === lotid);
-
-        if (!lotData.length) {
-            console.error("Lot data not found!");
-            return;
-        }
-
-        // Check if items_id is null
-        if (lotData[0].data[3].ProcessSteps[0].AttributeValues[index].items_id === null) {
-            for (let i = 3; i <= 8; i++) {
-                lotData[0].data[i].ProcessSteps[0].AttributeValues.splice(index, 1);
-                lotData[0].data[i].ProcessSteps[1].AttributeValues.splice(index, 1);
-                lotData[0].data[i].ProcessSteps[2].AttributeValues.splice(index, 1);
-            }
-            tempData.splice(lotIndex, 1, lotData[0]);
-            setItems(tempData);
-        } else {
-            console.log("API call initiated...");
-            const items_id = lotData[0].data[3].ProcessSteps[0].AttributeValues[index].items_id;
-
-            const res = await axios.delete(`http://localhost:5000/api/process/deleteItem/${lotid}/${items_id}`);
-
-            if (res.status === 200) {
-                setItems(res.data.data);
-            }
-        }
-    } catch (error) {
-        console.error("Error deleting item:", error);
-    }
-};
 
 
-  const handleDeleteLot=async(lotid,lotIndex)=>{
-    const tempData = [...items];
-    tempData.splice(lotIndex,1);
-    setItems(tempData)
-     const res=await axios.delete(`http://localhost:5000/api/process/deleteLot/${lotid}`)
-     if(res.status===200){
-        alert(res.data.message)
-     }
 
-  }
+
 
 
   const handleDateWiseFilter = async () => {
     try {
       console.log('fromDate', fromDate);
       console.log('toDate', toDate);
-  
+
       if (fromDate > toDate) {
         alert('Your Date Order was Wrong');
         return;
       }
-  
+
       const res = await getLotDatewise(fromDate, toDate);
       console.log('DateWiseFilter', res.data.data);
       setItems(res.data.data)
-      console.log('itemsAfterDateWiseFilter',items);
+      console.log('itemsAfterDateWiseFilter', items);
     } catch (error) {
       console.error('Error fetching data by date:', error.message);
       alert('Something went wrong while fetching data. Please try again.');
     }
   };
-  
+
 
   useEffect(() => {
     allData()
+    
   }, [])
   return (
     <Box sx={{ padding: "20px" }}>
@@ -556,7 +644,7 @@ const ProcessTable = () => {
           color="primary"
           onClick={handleCreateLot}
           sx={{ marginRight: "10px" }}
-       
+
         >
           AddItem
         </Button>
@@ -565,15 +653,15 @@ const ProcessTable = () => {
           color="secondary"
           onClick={handleSaveData}
           sx={{ marginRight: "10px" }}
-       
+
         >
           Save
         </Button>
 
       </Box>
-     {/* DateWiseFilter */}
+      {/* DateWiseFilter */}
 
-     <div style={{ padding: 20 }}>
+      <div style={{ padding: 20 }}>
         <div style={{ display: "flex", gap: "10px", marginBottom: 20 }}>
           <TextField
             label="From Date"
@@ -589,10 +677,10 @@ const ProcessTable = () => {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
-          <Button variant="contained" onClick={()=>{handleDateWiseFilter()}}>Filter</Button>
+          <Button variant="contained" onClick={() => { handleDateWiseFilter() }}>Filter</Button>
         </div>
 
-       
+
       </div>
       <StyledTableContainer component={Paper}>
         <Table>
@@ -604,24 +692,30 @@ const ProcessTable = () => {
               <StyledTableCell>
                 <b>Touch</b>
               </StyledTableCell>
-              {processes.map((process) => (
-                <StyledTableCell
-                  key={process}
-                  colSpan={process === "Kambi" ? 7 : 3}
-                >
-                  <b>{process}</b>
-                </StyledTableCell>
-              ))}
-               <StyledTableCell>
-                
-              </StyledTableCell>
+              {processes.map((process) => {
+                let colSpanValue = 4;
+
+                if (process === "Kambi") {
+                  colSpanValue = 8;
+                } else if (process === "Cutting") {
+                  colSpanValue = 5;
+                }
+
+                return (
+                  <StyledTableCell key={process} colSpan={colSpanValue}>
+                    <b>{process}</b>
+                  </StyledTableCell>
+                );
+              })}
+
+
               <StyledTableCell>
                 <b>Item Diffrent</b>
               </StyledTableCell>
               <StyledTableCell>
                 <b>Total Diffrent</b>
               </StyledTableCell>
-              <StyledTableCell/>
+
 
             </TableRow>
             <TableRow>
@@ -635,8 +729,18 @@ const ProcessTable = () => {
                     <b>After</b>
                   </StyledTableCell>
                   <StyledTableCell>
-                    <b>Diff</b>
+                    <b>Scarp</b>
                   </StyledTableCell>
+                  <StyledTableCell>
+                    <b>Loss</b>
+                  </StyledTableCell>
+                  {
+                    process === "Cutting" && (
+                      <StyledTableCell>
+                        <b>Scarp Pure</b>
+                      </StyledTableCell>
+                    )
+                  }
 
                   {process === "Kambi" && (
                     <>
@@ -662,14 +766,10 @@ const ProcessTable = () => {
                   )}
                 </React.Fragment>
               ))}
-               <StyledTableCell>
-                <b>DeleteItem</b>
-               </StyledTableCell>
               <StyledTableCell />
               <StyledTableCell />
-              <StyledTableCell>
-                  <b>DeleteLot</b>
-              </StyledTableCell>
+
+
             </TableRow>
           </TableHead>
           <TableBody >
@@ -680,14 +780,18 @@ const ProcessTable = () => {
                     <StyledTableCell>
 
                       <StyledInput
-
-                        value={lotItem.data[0].ProcessSteps[0].AttributeValues[0].value || " "}
+                        value={//RawGold Input Box
+                          typeof lotItem.data[0].ProcessSteps[0].AttributeValues[0].value === "number"
+                            ? lotItem.data[0].ProcessSteps[0].AttributeValues[0].value.toFixed(3)
+                            : ""
+                        }
                         onChange={(e) =>
                           handleInitialChange(lotItem.lotid, lotIndex, e.target.value)
                         }
                         type="number"
-
+                        style={{ width: "120px" }}
                       />
+
 
                     </StyledTableCell>
                     <StyledTableCell>
@@ -697,6 +801,7 @@ const ProcessTable = () => {
                           handleTouchChange(lotItem.lotid, lotIndex, e.target.value)
                         }}
                         type="number"
+                        style={{ width: "120px" }}
                       />
                     </StyledTableCell>
 
@@ -705,17 +810,19 @@ const ProcessTable = () => {
                         lotArrIndex >= 0 && lotArrIndex <= 1 ? (
                           <React.Fragment key={lotArrIndex}>
                             <StyledTableCell>
-                              <StyledInput
+                              <StyledInput //Before Weight
                                 value={
-                                  lotItem.data[lotArrIndex + 1]?.ProcessSteps[0]?.AttributeValues[0]?.value || ''
+                                  typeof lotItem.data[lotArrIndex + 1]?.ProcessSteps[0]?.AttributeValues[0]?.value === "number"
+                                    ? lotItem.data[lotArrIndex + 1].ProcessSteps[0].AttributeValues[0].value.toFixed(3)
+                                    : ""
                                 }
-
-
+                                style={{ width: "120px" }}
                               />
+
                             </StyledTableCell>
 
-                            <StyledTableCell>
-                              <StyledInput
+                            <StyledTableCell >
+                              <StyledInput // After weight
                                 value={
                                   lotItem.data[lotArrIndex + 1]?.ProcessSteps[1]?.AttributeValues[0]?.value || ''
                                 }
@@ -724,20 +831,37 @@ const ProcessTable = () => {
                                   lotItem.data[lotArrIndex + 1]?.ProcessSteps[1]?.AttributeInfo.attribute_id,
                                   e.target.value, lotIndex)}
                                 type="number"
+
+                                style={{ width: "120px" }}
+                              />
+                            </StyledTableCell>
+
+
+                            <StyledTableCell>
+                              <StyledInput // Scrap weight Input Box
+                                value={
+                                  lotItem.data[lotArrIndex + 1]?.ProcessSteps[2]?.AttributeValues[0]?.value || ''
+                                }
+                                onChange={(e) => handleSingleItem(lotArrIndex, lotItem.lotid,
+                                  lotItem.data[lotArrIndex + 1]?.ProcessSteps[2]?.process_id,
+                                  lotItem.data[lotArrIndex + 1]?.ProcessSteps[2]?.AttributeInfo.attribute_id,
+                                  e.target.value, lotIndex)}
+                                type="number"
+
+                                style={{ width: "120px" }}
                               />
                             </StyledTableCell>
 
                             <StyledTableCell>
 
-                              <StyledInput
+                              <StyledInput //loss Weight
                                 value={
-                                  lotItem.data[lotArrIndex + 1]?.ProcessSteps[2]?.AttributeValues[0]?.value
+                                  typeof lotItem.data[lotArrIndex + 1]?.ProcessSteps[3]?.AttributeValues[0]?.value === "number"
+                                    ? lotItem.data[lotArrIndex + 1].ProcessSteps[3].AttributeValues[0].value.toFixed(3)
+                                    : ""
                                 }
-                                style={{ width: "70px" }} // Adjust width if needed
+                                style={{ width: "120px" }}
                               />
-
-
-
                             </StyledTableCell>
 
                             {lotItem.data[lotArrIndex + 1].process_name === "kambi" && <StyledTableCell> <Button
@@ -749,12 +873,13 @@ const ProcessTable = () => {
                             >
                               <AddIcon fontSize="small" /> {/* Small-sized icon */}
                             </Button></StyledTableCell>}
-                            {lotItem.data[lotArrIndex + 1].process_name === "kambi" && <StyledTableCell colSpan={23} />}
+                            {lotItem.data[lotArrIndex + 1].process_name === "kambi" && <StyledTableCell colSpan={28} />}
 
                           </React.Fragment>) : (" ")
                       ) : null
 
                     )}
+                    <StyledTableCell></StyledTableCell>
                     {
                       lotItem.data[8]?.ProcessSteps[1]?.AttributeValues.length >= 1 ? (
                         <StyledTableCell>
@@ -762,9 +887,7 @@ const ProcessTable = () => {
                         </StyledTableCell>
                       ) : (<StyledTableCell></StyledTableCell>)
                     }
-                    <StyledTableCell style={{cursor:"pointer"}} onClick={()=>{handleDeleteLot(lotItem.lotid,lotIndex)}}>
-                        <DeleteIcon/>
-                    </StyledTableCell>
+
 
                   </TableRow>
 
@@ -773,12 +896,8 @@ const ProcessTable = () => {
                     lotItem.data[3].ProcessSteps[0].AttributeValues.map((item, key) => (
                       //
                       <TableRow key={key} >
-                       {
-                          processes.map((item) => (// its show 8 cell before Item Name 
-                            <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
-                          ))
-                        }
-                        <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
+                        <StyledTableCell colSpan={11}></StyledTableCell>
+
 
                         <StyledTableCell>
                           <StyledInput
@@ -786,6 +905,7 @@ const ProcessTable = () => {
                             placeholder="Name"
                             onChange={(e) => { handleChildItemName(lotItem.lotid, key, e.target.value, lotIndex) }}
                             type="text"
+                            style={{ width: "120px" }}
                           ></StyledInput>
                         </StyledTableCell>
 
@@ -794,7 +914,7 @@ const ProcessTable = () => {
                             value={lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].value}
                             placeholder="Weight"
                             onChange={(e) => { handleChildItemWeight(lotItem.lotid, key, e.target.value, lotIndex) }}
-                            type="number" />
+                            type="number" style={{ width: "120px" }} />
                         </StyledTableCell>
                         <StyledTableCell>
 
@@ -810,7 +930,7 @@ const ProcessTable = () => {
                                       lotItem.data[lotArrIndex]?.ProcessSteps[0]?.AttributeValues[key]?.value || " "
                                     }
 
-
+                                    style={{ width: "120px" }}
 
                                   ></StyledInput>
                                 </StyledTableCell>
@@ -828,20 +948,54 @@ const ProcessTable = () => {
                                       )
                                     }}
                                     type="number"
+                                    style={{ width: "120px" }}
                                   ></StyledInput>
                                 </StyledTableCell>
 
                                 <StyledTableCell>
                                   <StyledInput
-                                    value={
+                                    value={lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value || ''}
+                                    onChange={(e) => {
+                                      handleChildItems(lotIndex, lotItem.lotid,
+                                        lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeInfo.attribute_id,
+                                        e.target.value, key,
+                                        lotItem.data[lotArrIndex]?.ProcessSteps[2].process_id,
+                                        lotArrIndex
 
-                                      lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeValues[key]?.value ?
-                                        lotItem.data[lotArrIndex]?.ProcessSteps[0]?.AttributeValues[key]?.value -
-                                        lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeValues[key]?.value : ("-")
-
-                                    }
+                                      )
+                                    }}
+                                    type="number"
+                                    style={{ width: "120px" }}
                                   ></StyledInput>
                                 </StyledTableCell>
+
+                                <StyledTableCell>
+
+                                  <StyledInput //loss Weight
+                                    value={
+                                      typeof lotItem.data[lotArrIndex]?.ProcessSteps[3]?.AttributeValues[key]?.value === "number"
+                                        ? lotItem.data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value.toFixed(3)
+                                        : ""
+                                    }
+                                    style={{ width: "120px" }}
+                                  />
+                                </StyledTableCell>
+
+                                {lotArrIndex === 7 ? (
+                                  <StyledTableCell>
+                                    <StyledInput
+                                      value={
+                                        typeof lotItem.data[lotArrIndex]?.ProcessSteps[4]?.AttributeValues[key]?.value === "number"
+                                          ? lotItem.data[lotArrIndex].ProcessSteps[4].AttributeValues[key].value.toFixed(3)
+                                          : ""
+                                      }
+                                      style={{ width: "120px" }}></StyledInput>
+                                  </StyledTableCell>
+                                ) : (" ")
+                                }
+
+
+
 
 
 
@@ -850,9 +1004,7 @@ const ProcessTable = () => {
                             ) : (" ")
                           ))
                         }
-                        <StyledTableCell style={{cursor:"pointer"}} onClick={()=>{handleDeleteItem(lotItem.lotid, key,lotIndex)}}>
-                            <DeleteIcon/>
-                        </StyledTableCell>
+
                         {
 
                           lotItem.data[8]?.ProcessSteps[1]?.AttributeValues[key]?.value ?
@@ -861,23 +1013,23 @@ const ProcessTable = () => {
                             </StyledTableCell>)
                             : (<StyledTableCell></StyledTableCell>)
                         }
-                      <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
-                      <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
+                        <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
+
 
                       </TableRow>
 
                     ))
                   }
                   <TableRow >
-                    <StyledTableCell colSpan={9}></StyledTableCell>
+                    <StyledTableCell colSpan={11}></StyledTableCell>
 
                     <StyledTableCell>-</StyledTableCell>
                     {
                       lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 ? ( //weight total
-                        <StyledTableCell>{"Total:"+handleTotal(lotItem.lotid, 3, 0)}</StyledTableCell>
+                        <StyledTableCell>{"Total:" + handleTotal(lotItem.lotid, 3, 0)}</StyledTableCell>
                       ) : (<StyledTableCell>Total:0</StyledTableCell>)
                     }
-                       <StyledTableCell
+                    <StyledTableCell
                       style={{
                         backgroundColor:
                           lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 &&
@@ -925,39 +1077,42 @@ const ProcessTable = () => {
 
                     {
                       lotItem.data.map((item, index) => (
-                        index>=3 && index<=8 ?(
+                        index >= 3 && index <= 8 ? (
                           <React.Fragment>
-                          <StyledTableCell>
+                            <StyledTableCell>
 
-                          </StyledTableCell>
-                          <StyledTableCell>
+                            </StyledTableCell>
+                            <StyledTableCell>
                               {
-                                index===8?(  lotItem.data[8].ProcessSteps[1].AttributeValues.length!==0?(
-                                 "Total:"+ handleTotal(lotItem.lotid,8,1)
-                                ):("")):("")
-                              
-                              }
-                          </StyledTableCell>
-                          <StyledTableCell>
+                                index === 8 ? (lotItem.data[8].ProcessSteps[1].AttributeValues.length !== 0 ? (
+                                  "Total:" + handleTotal(lotItem.lotid, 8, 1)
+                                ) : ("")) : ("")
 
-                          </StyledTableCell>
-                         
-                        </React.Fragment>
-                        ):(" ")
-                        
+                              }
+                            </StyledTableCell>
+                            <StyledTableCell>
+
+                            </StyledTableCell>
+                            <StyledTableCell>
+
+                            </StyledTableCell>
+                            {
+                              index===7 ?(<StyledTableCell></StyledTableCell>):("")
+                            }
+
+                          </React.Fragment>
+                        ) : (" ")
+
                       ))
                     }
-                     <StyledTableCell>
+                  
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell style={{ borderTop: "2px solid white" }}>
 
-                     </StyledTableCell>
-                     <StyledTableCell>
-                      
-                     </StyledTableCell>
-                     <StyledTableCell>
+                    </StyledTableCell>
 
-                     </StyledTableCell>
-                     <StyledTableCell></StyledTableCell>
-               
+
+
                   </TableRow>
 
 
@@ -986,38 +1141,46 @@ const ProcessTable = () => {
               <StyledTableCell />
             </TableRow> */}
           </TableBody>
-          <TableFooter>
-            <StyledTableCell><p style={{fontSize:"17px",fontWeight:"bold",color:"black"}}>Total RawGold:{handleLotTotal()}</p></StyledTableCell>
+           <TableFooter>
+            <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>Total RawGold:{calculation[0].rawGold}</p></StyledTableCell>
             <StyledTableCell><p ></p></StyledTableCell>
-           {
-             calculation[2].process.map((item,key)=>(
-              <>
-                
-                 <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
-                 {
-                  item.processName==="Finishing"?( <StyledTableCell><p style={{fontSize:"15px",fontWeight:"bold",color:"black"}}>FinishTotal:{handleTotalFinsh()}</p></StyledTableCell>):( <StyledTableCell>0</StyledTableCell>)
-                 }
-                 <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
-                 {
-                  item.processName==="Kambi"?(
-                    <>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    </>
-                  ):("")
-                 }
-              
-              </>
-             ))
-           }
-           <StyledTableCell></StyledTableCell>
-           <StyledTableCell></StyledTableCell>
-           <StyledTableCell><p style={{fontSize:"15px",fontWeight:"bold",color:"black"}}>LotTotal:{handleTotalLot()}</p></StyledTableCell>
-          </TableFooter>
+            {
+              calculation[2].process.map((item, key) => (
+                <>
+
+                  <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
+                  <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName==='Finishing' ?"FinishTotal":"Total"}:{item.Weight[1].aw}</p></StyledTableCell>
+                  <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
+                  <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
+                  
+                   {
+                    item.processName === "Cutting" ? (
+                      <>
+                        <StyledTableCell ></StyledTableCell>
+                        
+                      </>
+                    ) : ("")
+                  }
+                  {
+                    item.processName === "Kambi" ? (
+                      <>
+                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell></StyledTableCell>
+                      </>
+                    ) : ("")
+                  }
+
+                </>
+              ))
+            }
+            <StyledTableCell></StyledTableCell>
+            <StyledTableCell><p style={{ fontSize: "15px", fontWeight: "bold", color: "black" }}>LotTotal{calculation[3].lotTotal}</p></StyledTableCell>
+          </TableFooter> 
         </Table>
       </StyledTableContainer>
+
       <Modal open={open} onClose={handleClose}>
         <Box
           sx={{
@@ -1062,6 +1225,7 @@ const ProcessTable = () => {
         </Box>
       </Modal>
     </Box>
+
   );
 };
 

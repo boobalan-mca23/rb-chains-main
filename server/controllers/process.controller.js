@@ -138,12 +138,13 @@ const saveProcess = async (req, res) => {
 
             let index = 0;
             let existingChildItems = [];
-            let createdItems = ""
+
 
 
 
 
             for (const attrValue of step.AttributeValues) {
+              console.log('childItem',attrValue)
 
               if (attrValue.items_id === null && attrValue.attribute_id === 2) {
 
@@ -167,6 +168,7 @@ const saveProcess = async (req, res) => {
                       item_name: attrValue.item_name
                     },
                   });
+                  console.log('itemIdddddddddddddd',newItem.item_id);
                 }
                 else {
                   let childItems = await prisma.item.findMany({  // its create other process child items
@@ -178,12 +180,13 @@ const saveProcess = async (req, res) => {
                   });
 
                   existingChildItems = childItems.map(item => item.item_id);
+                  
                   createdItems = await prisma.attributeValue.create({
                     data: {
                       process_step_id: attrValue.process_step_id,
                       lot_id: attrValue.lot_id,
                       attribute_id: attrValue.attribute_id,
-                      items_id: existingChildItems[index],
+                      items_id: existingChildItems[attrValue.index],
                       value: attrValue.value === null ? null : parseFloat(attrValue.value),
                       item_name: attrValue.item_name
 
@@ -192,12 +195,13 @@ const saveProcess = async (req, res) => {
                   ++index;
 
                 }
-                // this code items to stock
+
+
 
 
               }
               else {
-                let childItems = await prisma.item.findMany({  // its stored after weight of child items
+                let childItems = await prisma.item.findMany({  // its stored other weight of child items
                   where: {
                     lot_id: attrValue.lot_id,
                     item_type: "childItem",
@@ -207,32 +211,62 @@ const saveProcess = async (req, res) => {
 
                 // ✅ Store only the primary keys in the array
                 existingChildItems = childItems.map(item => item.item_id);
-                console.log('key', existingChildItems);
-
+             
                 if (attrValue.items_id === null) {
 
-                const createdItems=await prisma.attributeValue.create({
+                let createdItems= await prisma.attributeValue.create({
                     data: {
                       process_step_id: attrValue.process_step_id,
                       lot_id: attrValue.lot_id,
                       attribute_id: attrValue.attribute_id,
-                      items_id: existingChildItems[index],
+                      items_id:existingChildItems[attrValue.index],
                       item_name: attrValue.item_name,
                       value: attrValue.value === null ? null : parseFloat(attrValue.value)
 
                     },
                   });
+             
+
                   ++index;
                  
+                //   if(attrValue.process_step_id===32){
+
+                //     const childItems = await prisma.item.findMany({
+                //       where: {
+                //         lot_id: attrValue.lot_id,
+                //         item_type: "childItem",
+                //       },
+                //       select: { item_id: true },
+                //     });
                   
-                 
-                 
+                //     const existingChildItems = childItems.map(item => item.item_id);
+                  
+                //     // 2. Loop through each child item and check for step 32 value
+                //     for (const itemId of existingChildItems) {
+                //       const validAttributes = await prisma.attributeValue.findMany({
+                //         where: {
+                //           lot_id: attrValue.lot_id,
+                //           items_id: itemId,
+                //           process_step_id: 32,
+                //           attribute_id:attrValue.attribute_id,
+                //           NOT: { value: null },
+                //         },
+                //         select: {
+                //           value: true,
+                //         },
+                //       });
+                //       const hasValid = validAttributes.some(attr => Number.isFinite(attr.value));
+                //       console.log('console from created time',hasValid)
 
+                //   }
+                // }
                 
-
+                  
+                  
+                  
 
                 } else {
-                  await prisma.attributeValue.updateMany({
+                        await prisma.attributeValue.updateMany({
                     where: {
                       process_step_id: attrValue.process_step_id,
                       lot_id: attrValue.lot_id,
@@ -246,6 +280,43 @@ const saveProcess = async (req, res) => {
 
                     },
                   });
+
+                  //Stock moved to Update time
+                //   if(attrValue.process_step_id===32){
+
+                //     const childItems = await prisma.item.findMany({
+                //       where: {
+                //         lot_id: attrValue.lot_id,
+                //         item_type: "childItem",
+                //       },
+                //       select: { item_id: true },
+                //     });
+                  
+                //     const existingChildItems = childItems.map(item => item.item_id);
+                  
+                //     // 2. Loop through each child item and check for step 32 value
+                //     for (const itemId of existingChildItems) {
+                //       const validAttributes = await prisma.attributeValue.findMany({
+                //         where: {
+                //           lot_id: attrValue.lot_id,
+                //           items_id: itemId,
+                //           process_step_id: 32,
+                //           attribute_id:attrValue.attribute_id,
+                //           NOT: { value: null },
+                //         },
+                //         select: {
+                //           value: true,
+                //         },
+                //       });
+                //       const hasValid = validAttributes.some(attr => Number.isFinite(attr.value));
+                //       console.log('console from updated time',hasValid)
+
+                //   }
+                // }
+
+              
+                  
+                  
                 }
               }
             }
@@ -262,7 +333,7 @@ const saveProcess = async (req, res) => {
             }
 
             for (const attrValue of step.AttributeValues) {
-
+     
               // if (!attrValue.attribute_id) {
               //   console.warn("Skipping attribute with missing attribute_id:", attrValue);
               //   continue;
@@ -306,6 +377,9 @@ const saveProcess = async (req, res) => {
 
                   },
                 });
+
+
+                
               }
 
 
@@ -471,119 +545,13 @@ const updateProcess = async (req, res) => {
   }
 };
 
-const deleteLot = async (req, res) => {
-  try {
-    const { lotid } = req.params;
-    const lotId = parseInt(lotid);
-
-    console.log('Deleting Lot with ID:', lotId);
-
-    // Step 1: Delete AttributeValues related to LotInfo
-    await prisma.attributeValue.deleteMany({
-      where: { lot_id: lotId }
-    });
-
-    // Step 2: Delete Items related to LotInfo
-    await prisma.item.deleteMany({
-      where: { lot_id: lotId }
-    });
-
-    // Step 3: Delete the LotInfo record
-    await prisma.lotInfo.delete({
-      where: { id: lotId }
-    });
-
-    res.status(200).json({ message: `Lot ${lotId} and related records deleted successfully!` });
-  } catch (error) {
-    console.error('Error deleting lot:', error);
-    res.status(500).json({ error: 'Internal server error', details: error.message });
-  }
-};
-
-const deleteByItemId = async (req, res) => {
-  try {
-    const { lotid, items_id } = req.params;
-    const lotIdInt = parseInt(lotid);
-    const itemIdInt = parseInt(items_id);
-
-    console.log(`Deleting item with ID: ${itemIdInt} from Lot ID: ${lotIdInt}`);
-
-    // Step 1: Delete AttributeValues related to the specific lot and item
-    await prisma.attributeValue.deleteMany({
-      where: { lot_id: lotIdInt, items_id: itemIdInt }
-    });
-
-    // Step 2: Delete the specific Item related to LotInfo
-    await prisma.item.deleteMany({
-      where: { lot_id: lotIdInt, item_id: itemIdInt }
-    });
-
-    // Step 3: Fetch all LotInfo IDs
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // 12:00 AM
-
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999); // 11:59:59 PM
-
-    // Fetch lot IDs created today
-    const lotIds = await prisma.lotInfo.findMany({
-      where: {
-        createdAt: {
-          gte: today,  // Greater than or equal to 12:00 AM
-          lte: endOfDay // Less than or equal to 11:59:59 PM
-        }
-      },
-      select: { id: true }
-    });
-
-    const allLotData = []
-    for (const lot of lotIds) {
 
 
-      const processStepIds = await prisma.processSteps.findMany({
-        select: { id: true }
-      });
-
-      const stepIds = processStepIds.map(step => step.id); // Extract IDs
-
-      //  Now, fetch LotProcess with nested relations
-      const processes = await prisma.lotProcess.findMany({
-        include: {
-          ProcessSteps: {
-            include: {
-              AttributeInfo: true,
-              AttributeValues: {
-                where: {
-                  lot_id: lot.id,
-                  process_step_id: { in: stepIds } // ✅ Correctly filter step IDs
-                }
-              }
-            }
-          }
-        }
-      })
-
-
-      allLotData.push({ lotid: lot.id, data: processes })
-
-    }
-
-
-
-  
-
-    return res.status(200).json({ data: allLotData });
-
-  } catch (error) {
-    console.error('Error deleting item and fetching lots:', error);
-    return res.status(500).json({ error: 'Internal Server Error', details: error.message });
-  }
-};
 
 const getLotsByDateRange = async (req, res) => {
   try {
     const { fromDate, toDate } = req.body;
-   console.log(fromDate,toDate)
+    console.log(fromDate, toDate)
 
     if (!fromDate || !toDate) {
       return res.status(400).json({ error: 'fromDate and toDate are required' });
@@ -648,8 +616,7 @@ module.exports = {
   getAllLot,
   saveProcess,
   updateProcess,
-  deleteLot,
-  deleteByItemId
+  
 
 };
 
