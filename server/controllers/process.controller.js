@@ -229,37 +229,56 @@ const saveProcess = async (req, res) => {
 
                   ++index;
                  
-                //   if(attrValue.process_step_id===32){
-
-                //     const childItems = await prisma.item.findMany({
-                //       where: {
-                //         lot_id: attrValue.lot_id,
-                //         item_type: "childItem",
-                //       },
-                //       select: { item_id: true },
-                //     });
+                  if (attrValue.process_step_id === 32) {
+                    const childItems = await prisma.item.findMany({
+                      where: {
+                        lot_id: attrValue.lot_id,
+                        item_type: "childItem",
+                      },
+                      select: { item_id: true },
+                    });
                   
-                //     const existingChildItems = childItems.map(item => item.item_id);
+                    const existingChildItems = childItems.map(item => item.item_id);
                   
-                //     // 2. Loop through each child item and check for step 32 value
-                //     for (const itemId of existingChildItems) {
-                //       const validAttributes = await prisma.attributeValue.findMany({
-                //         where: {
-                //           lot_id: attrValue.lot_id,
-                //           items_id: itemId,
-                //           process_step_id: 32,
-                //           attribute_id:attrValue.attribute_id,
-                //           NOT: { value: null },
-                //         },
-                //         select: {
-                //           value: true,
-                //         },
-                //       });
-                //       const hasValid = validAttributes.some(attr => Number.isFinite(attr.value));
-                //       console.log('console from created time',hasValid)
-
-                //   }
-                // }
+                    for (const itemId of existingChildItems) {
+                      const validAttributes = await prisma.attributeValue.findMany({
+                        where: {
+                          lot_id: attrValue.lot_id,
+                          items_id: itemId,
+                          process_step_id: attrValue.process_step_id,
+                        },
+                        select: {
+                          value: true,
+                        },
+                      });
+                  
+                      const hasValid = validAttributes.some(attr => attr.value !== null);
+                      console.log('console from created time', hasValid);
+                  
+                      if (hasValid) {
+                        // Check if the item_id already exists in ProductStocks
+                        const existingStock = await prisma.productStocks.findFirst({
+                          where: {
+                            item_id: itemId,
+                          },
+                        });
+                  
+                        if (!existingStock) {
+                          // If not exists, create the ProductStocks entry
+                          await prisma.productStocks.create({
+                            data: {
+                              item_id: itemId,
+                              product_status: "active", // or whatever default status you want
+                            },
+                          });
+                          console.log(`Item ID ${itemId} added to ProductStocks.`);
+                        } else {
+                          console.log(`Item ID ${itemId} already exists in ProductStocks.`);
+                        }
+                      }
+                    }
+                  }
+                  
                 
                   
                   
@@ -282,37 +301,56 @@ const saveProcess = async (req, res) => {
                   });
 
                   //Stock moved to Update time
-                //   if(attrValue.process_step_id===32){
-
-                //     const childItems = await prisma.item.findMany({
-                //       where: {
-                //         lot_id: attrValue.lot_id,
-                //         item_type: "childItem",
-                //       },
-                //       select: { item_id: true },
-                //     });
+                  if (attrValue.process_step_id === 32) {
+                    const childItems = await prisma.item.findMany({
+                      where: {
+                        lot_id: attrValue.lot_id,
+                        item_type: "childItem",
+                      },
+                      select: { item_id: true },
+                    });
                   
-                //     const existingChildItems = childItems.map(item => item.item_id);
+                    const existingChildItems = childItems.map(item => item.item_id);
                   
-                //     // 2. Loop through each child item and check for step 32 value
-                //     for (const itemId of existingChildItems) {
-                //       const validAttributes = await prisma.attributeValue.findMany({
-                //         where: {
-                //           lot_id: attrValue.lot_id,
-                //           items_id: itemId,
-                //           process_step_id: 32,
-                //           attribute_id:attrValue.attribute_id,
-                //           NOT: { value: null },
-                //         },
-                //         select: {
-                //           value: true,
-                //         },
-                //       });
-                //       const hasValid = validAttributes.some(attr => Number.isFinite(attr.value));
-                //       console.log('console from updated time',hasValid)
-
-                //   }
-                // }
+                    for (const itemId of existingChildItems) {
+                      const validAttributes = await prisma.attributeValue.findMany({
+                        where: {
+                          lot_id: attrValue.lot_id,
+                          items_id: itemId,
+                          process_step_id: attrValue.process_step_id,
+                        },
+                        select: {
+                          value: true,
+                        },
+                      });
+                  
+                      const hasValid = validAttributes.some(attr => attr.value !== null);
+                      console.log('console from created time', hasValid);
+                  
+                      if (hasValid) {
+                        // Check if the item_id already exists in ProductStocks
+                        const existingStock = await prisma.productStocks.findFirst({
+                          where: {
+                            item_id: itemId,
+                          },
+                        });
+                  
+                        if (!existingStock) {
+                          // If not exists, create the ProductStocks entry
+                          await prisma.productStocks.create({
+                            data: {
+                              item_id: itemId,
+                              product_status: "active", // or whatever default status you want
+                            },
+                          });
+                          console.log(`Item ID ${itemId} added to ProductStocks.`);
+                        } else {
+                          console.log(`Item ID ${itemId} already exists in ProductStocks.`);
+                        }
+                      }
+                    }
+                  }
+                  
 
               
                   
