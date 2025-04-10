@@ -310,25 +310,6 @@ return tempCalculation
 
   }
 
-  const addRow = (weight) => {
-    setItems([
-      ...items,
-      {
-        id: items.length + 1,
-        touch: weight,
-        itemName: "",
-        data: {},
-        kambiNotes: [],
-      },
-    ]);
-  };
-
-  // const handleAddItemColumns = (index) => {
-  //   const updatedItems = [...items];
-  //   updatedItems[index].kambiNotes.push({ name: "", weight: "" });
-  //   setItems(updatedItems);
-  // };
-
   const handleAddItemColumns = (lotid, index) => {
     console.log('lotid', lotid);
     const tempData = [...items];
@@ -433,8 +414,6 @@ return tempCalculation
       console.error("Error creating lot:", error);
     }
   };
-
-
 
 
   const calculateTotal = (items, process, field) => {
@@ -605,12 +584,6 @@ return tempCalculation
     let lotTotal = tempData.reduce((acc, item) => acc + item.data[0].ProcessSteps[0].AttributeValues[0].value, 0)
     return lotTotal;
   }
-
-
-
-
-
-
 
   const handleDateWiseFilter = async () => {
     try {
@@ -1123,24 +1096,6 @@ return tempCalculation
 
             }
 
-            {/* <TableRow>
-              <StyledTableCell colSpan={2}>
-                <b>Total</b>
-              </StyledTableCell>
-              {processes.map((process) => (
-                <React.Fragment key={process}>
-                  <StyledTableCell>
-                    <b>{calculateTotal(items, process, "beforeWeight")}</b>
-                  </StyledTableCell>
-                  <StyledTableCell />
-                  <StyledTableCell>
-                    <b>{calculateTotal(items, process, "diff")}</b>
-                  </StyledTableCell>
-                  {process === "Kambi" && <StyledTableCell colSpan={2} />}
-                </React.Fragment>
-              ))}
-              <StyledTableCell />
-            </TableRow> */}
           </TableBody>
            <TableFooter>
             <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>Total RawGold:{calculation[0].rawGold}</p></StyledTableCell>

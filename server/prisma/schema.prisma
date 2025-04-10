@@ -27,6 +27,7 @@ model CustomerInfo {
   phone_number       String?
   address            String?
   MasterOrders       MasterOrder[]
+  MasterJewelTypeCustomerValue MasterJewelTypeCustomerValue[]
 
   @@map("customerInfo")
 }
@@ -158,4 +159,25 @@ model OrderItem {
   Item        Item        @relation(fields: [stock_id], references: [item_id]) 
 
   @@map("orderItems")
+}
+model MasterJewelType{
+  master_jewel_id  Int   @id @default(autoincrement())
+  jewel_name       String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  MasterJewelTypeCustomerValue MasterJewelTypeCustomerValue[]
+}
+
+model MasterJewelTypeCustomerValue{
+  id               Int      @id @default(autoincrement())
+  customer_id      Int
+  masterJewel_id   Int
+  value            Float
+  attribute1       Float
+  attribute2       Float
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  CustomerInfo     CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
+  MasterJewelType  MasterJewelType @relation(fields:[masterJewel_id],references:[master_jewel_id])
+
 }
