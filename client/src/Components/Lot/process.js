@@ -88,11 +88,11 @@ const docalculation = (arrayItems)=>{
 // Calculation
 const tempData = [...arrayItems];
     let lotTotal = tempData.reduce((acc, item) => acc + item.data[0].ProcessSteps[0].AttributeValues[0].value, 0)
-const tempCalculation=[...calculation];
+const tempCalculation=[...calculation];//over lot all raw gold total
 tempCalculation[0].rawGold=lotTotal;
 
 let finishTotal = 0;
-    tempData.forEach((lotData, lotIndex) => {
+    tempData.forEach((lotData, lotIndex) => {// lot wise finishing total
       if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
         finishTotal=0
       } else {
@@ -106,20 +106,20 @@ let finishTotal = 0;
     let finsihAfterValue = 0;
     let lotFinishValue = 0;
 
-    tempData.forEach((lotData, lotIndex) => {
+    tempData.forEach((lotData, lotIndex) => {// this calculation for lotDifferent Total
       console.log('lodata from doCalculation',lotData)
-      // if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
-      //   finsihAfterValue=0;
-      // } else {
-      //   lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
-      //     finishTotal += arrItem.value
+      if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
+        finsihAfterValue=0;
+      } else {
+        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+         finsihAfterValue  += arrItem.value
 
-      //   })
-      //   lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finsihAfterValue 
-      //   finsihAfterValue = 0;
-      // }
+        })
+        lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finsihAfterValue 
+        finsihAfterValue = 0;
+      }
     })
-    // tempCalculation[3].lotTotal=lotFinishValue
+    tempCalculation[3].lotTotal=lotFinishValue
 return tempCalculation
     
 }
@@ -452,6 +452,7 @@ return tempCalculation
     const res = await saveLot(items);
     console.log('res from save function', res.data.data)
     setItems(res.data.data)
+    setCalculation(docalculation(res.data.data))
     toast.success("Lot Saved", { autoClose: 2000 });
 
   }
@@ -1176,7 +1177,7 @@ return tempCalculation
               ))
             }
             <StyledTableCell></StyledTableCell>
-            <StyledTableCell><p style={{ fontSize: "15px", fontWeight: "bold", color: "black" }}>LotTotal{calculation[3].lotTotal}</p></StyledTableCell>
+            <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>LotTotal:{calculation[3].lotTotal}</p></StyledTableCell>
           </TableFooter> 
         </Table>
       </StyledTableContainer>
