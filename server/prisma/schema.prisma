@@ -119,7 +119,8 @@ model Item {
   LotInfo        LotInfo @relation("LotItems", fields: [lot_id], references: [id])  
   AttributeValues AttributeValue[] 
   ProductStocks  ProductStocks[]  
-  OrderItems     OrderItem[]     
+  OrderItems     OrderItem[]  
+  MasterJewelItemMapper MasterJewelItemMapper[]   
 
   @@map("item")
 }
@@ -154,30 +155,44 @@ model OrderItem {
   final_price Int
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-
   MasterOrder MasterOrder @relation(fields: [order_id], references: [id])
   Item        Item        @relation(fields: [stock_id], references: [item_id]) 
 
   @@map("orderItems")
 }
-model MasterJewelType{
-  master_jewel_id  Int   @id @default(autoincrement())
-  jewel_name       String
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+model MasterJewelType {
+  master_jewel_id    Int      @id @default(autoincrement())
+  jewel_name         String
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
   MasterJewelTypeCustomerValue MasterJewelTypeCustomerValue[]
+  MasterJewelItemMapper MasterJewelItemMapper[]
+
+  @@map("master_jewel_type") 
 }
 
-model MasterJewelTypeCustomerValue{
-  id               Int      @id @default(autoincrement())
-  customer_id      Int
-  masterJewel_id   Int
-  value            Float
-  attribute1       Float
-  attribute2       Float
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
-  CustomerInfo     CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
-  MasterJewelType  MasterJewelType @relation(fields:[masterJewel_id],references:[master_jewel_id])
+model MasterJewelTypeCustomerValue {
+  id                Int      @id @default(autoincrement())
+  customer_id       Int
+  masterJewel_id    Int
+  value             Float
+  attribute1        Float
+  attribute2        Float
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
+  MasterJewelType   MasterJewelType @relation(fields: [masterJewel_id], references: [master_jewel_id])
 
+  @@map("master_jewel_type_customer_value") 
+}
+
+model MasterJewelItemMapper{
+   id                 Int      @id @default(autoincrement())
+   item_id            Int
+   master_jewel_id    Int
+   created_at         DateTime @default(now())
+   updated_at         DateTime @updatedAt
+   MasterJewelType    MasterJewelType @relation(fields: [master_jewel_id], references: [master_jewel_id])
+   Item               Item?@relation(fields: [item_id], references: [item_id])  
+   @@map("masterjewelItemMapper") 
 }

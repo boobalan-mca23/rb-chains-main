@@ -16,18 +16,8 @@ const Billing = () => {
   const [time, setTime] = useState("");
   const [isPrinting, setIsPrinting] = useState(false);
   const billRef = useRef();
-
-  const products = [
-    { id: "P001", name: "Gold Ring", touch: 92, weight: 6.64, pure: 6.19 },
-    {
-      id: "P002",
-      name: "Silver Necklace",
-      touch: 92,
-      weight: 11.34,
-      pure: 10.66,
-    },
-  ];
-
+  const [products, setProducts] = useState([]);
+  console.log('billing pageeeee')
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -44,7 +34,24 @@ const Billing = () => {
       }
     };
 
+    const fetchJewelItem = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getJewelType`
+        );
+        console.log("Fetched JewelItems:", response.data.allJewel);
+
+        setProducts(Array.isArray(response.data.allJewel) ? response.data.allJewel : []);
+      } catch (error) {
+        toast.error("Error fetching customers!", {
+          containerId: "custom-toast",
+        });
+        console.error("Error:", error);
+      }
+    };
+
     fetchCustomers();
+    fetchJewelItem();
   }, []);
 
   useEffect(() => {
@@ -65,6 +72,10 @@ const Billing = () => {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(()=>{
+     console.log('testing')
+   
+  },[selectedCustomer,selectedProduct])
   const handleProductSelect = (event, newValue) => {
     if (newValue && !billItems.some((item) => item.id === newValue.id)) {
       setBillItems((prevItems) => [...prevItems, newValue]);
@@ -72,6 +83,7 @@ const Billing = () => {
   };
 
   const handlePrint = () => {
+    console.log('selected Customer', selectedCustomer)
     setIsPrinting(true);
     setTimeout(() => {
       html2canvas(billRef.current).then((canvas) => {
@@ -124,6 +136,7 @@ const Billing = () => {
         <Autocomplete
           options={customers}
           getOptionLabel={(option) => option.customer_name || ""}
+          
           onChange={(event, newValue) => setSelectedCustomer(newValue)}
           renderInput={(params) => (
             <TextField
@@ -138,12 +151,27 @@ const Billing = () => {
 
         <Autocomplete
           options={products}
-          getOptionLabel={(option) => option.id}
+          getOptionLabel={(option) => option.jewel_name || ""}
+          onChange={(event,newValue)=>setSelectedProduct(newValue)}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Search Product Name"
+              variant="outlined"
+              size="small"
+            />
+          )}
+          sx={styles.smallAutocomplete}
+        />
+
+        <Autocomplete
+          options={products}
+          getOptionLabel={(option) => option.jewel_name || ""}
           onChange={handleProductSelect}
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Search Product ID"
+              label="Search Product Weight"
               variant="outlined"
               size="small"
             />
@@ -176,6 +204,34 @@ const Billing = () => {
         </Box>
       )}
 
+    {selectedProduct && (
+        <Box sx={styles.customerDetails}>
+          <h3>Product Details:</h3>
+          <p>
+            <strong>Name:</strong> {selectedProduct.jewel_name}
+          </p>
+          <p>
+            <strong>Product id</strong>{selectedProduct.master_jewel_id}
+          </p>
+          {/* {selectedCustomer.address && (
+            <p>
+              <strong>Address:</strong> {selectedCustomer.address}
+            </p>
+          )}
+          {selectedCustomer.phone_number && (
+            <p>
+              <strong>Phone:</strong> {selectedCustomer.phone_number}
+            </p>
+          )}
+          {selectedCustomer.customer_shop_name && (
+            <p>
+              <strong>Shop Name:</strong> {selectedCustomer.customer_shop_name}
+            </p>
+          )} */}
+        </Box>
+      )}
+
+{/* 
       <Box sx={styles.itemsSection}>
         <h3>Bill Details:</h3>
         <table style={styles.table}>
@@ -238,7 +294,7 @@ const Billing = () => {
             </tr>
           </tbody>
         </table>
-      </Box>
+      </Box> */}
 
       <Button
         variant="contained"

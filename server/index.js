@@ -25,7 +25,9 @@ app.use("/api/process", processRoutes);
 
 // JewelType routes
 
+
 app.use("/api/jewelType", jewelTypeRoutes);
+
 
 app.listen(PORT, () => {
   console.log(chalk.green(`Server running on http://localhost:${PORT}`));

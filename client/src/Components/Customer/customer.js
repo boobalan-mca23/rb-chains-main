@@ -75,6 +75,7 @@ function Customer() {
         `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customerinfo`
       );
       setCustomers(response.data);
+      console.log('customer data',response.data)
     } catch (error) {
       toast.error("Error fetching customers!", { containerId: "custom-toast" });
       console.error("Error:", error);
