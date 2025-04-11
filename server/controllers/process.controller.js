@@ -157,6 +157,13 @@ const saveProcess = async (req, res) => {
 
                     }
                   })
+                  await prisma.masterJewelItemMapper.create({
+                    data: {
+                      item_id: newItem.item_id,
+                      master_jewel_id: attrValue.master_jewel_id
+                    }
+                  });
+                  
 
                   await prisma.attributeValue.create({
                     data: {

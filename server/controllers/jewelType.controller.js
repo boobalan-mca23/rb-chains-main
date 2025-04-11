@@ -1,5 +1,5 @@
-// const { PrismaClient } = require("@prisma/client");
-// const prisma= new PrismaClient()
+const { PrismaClient } = require("@prisma/client");
+const prisma= new PrismaClient()
 
 // //createJewelType
 
@@ -21,3 +21,21 @@
 //       return res.status(500).json({error:"Failed to Create a JewelType",})
 //     }
 // }
+
+//get JewelType
+const getJewelType=async(req,res)=>{
+    try{
+              
+        const jewelType=await prisma.masterJewelType.findMany({
+            select:{
+                master_jewel_id:true,
+                jewel_name:true
+            }
+        })
+
+              return res.status(200).json({message:"allJewelType",allJewel:jewelType})
+            }catch(err){
+              return res.status(500).json({error:"Failed to Create a JewelType",})
+            }
+}
+module.exports={getJewelType}

@@ -1,8 +1,8 @@
-// const express=require('express')
-// const router=express.Router()
+const express=require('express')
+const router=express.Router()
 
-// const{createJewelType}=require('../controllers/jewelType.controller')
+const{getJewelType}=require('../controllers/jewelType.controller')
 
 // router.post('/createJewelType',createJewelType)
-
-// module.exports=router
+router.get('/getJewelType',getJewelType)
+module.exports=router

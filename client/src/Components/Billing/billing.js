@@ -16,18 +16,8 @@ const Billing = () => {
   const [time, setTime] = useState("");
   const [isPrinting, setIsPrinting] = useState(false);
   const billRef = useRef();
-
-  const products = [
-    { id: "P001", name: "Gold Ring", touch: 92, weight: 6.64, pure: 6.19 },
-    {
-      id: "P002",
-      name: "Silver Necklace",
-      touch: 92,
-      weight: 11.34,
-      pure: 10.66,
-    },
-  ];
-
+  const [products, setProducts] = useState([]);
+  console.log('billing pageeeee')
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -44,7 +34,24 @@ const Billing = () => {
       }
     };
 
+    const fetchJewelItem = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getJewelType`
+        );
+        console.log("Fetched JewelItems:", response.data.allJewel);
+
+        setProducts(Array.isArray(response.data.allJewel) ? response.data.allJewel : []);
+      } catch (error) {
+        toast.error("Error fetching customers!", {
+          containerId: "custom-toast",
+        });
+        console.error("Error:", error);
+      }
+    };
+
     fetchCustomers();
+    fetchJewelItem();
   }, []);
 
   useEffect(() => {
@@ -72,6 +79,7 @@ const Billing = () => {
   };
 
   const handlePrint = () => {
+    console.log('selected Customer', selectedCustomer)
     setIsPrinting(true);
     setTimeout(() => {
       html2canvas(billRef.current).then((canvas) => {
@@ -124,6 +132,7 @@ const Billing = () => {
         <Autocomplete
           options={customers}
           getOptionLabel={(option) => option.customer_name || ""}
+          
           onChange={(event, newValue) => setSelectedCustomer(newValue)}
           renderInput={(params) => (
             <TextField
@@ -138,18 +147,33 @@ const Billing = () => {
 
         <Autocomplete
           options={products}
-          getOptionLabel={(option) => option.id}
+          getOptionLabel={(option) => option.jewel_name || ""}
           onChange={handleProductSelect}
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Search Product ID"
+              label="Search Product Name"
               variant="outlined"
               size="small"
             />
           )}
           sx={styles.smallAutocomplete}
         />
+
+        {/* <Autocomplete
+          options={products}
+          getOptionLabel={(option) => option.jewel_name || ""}
+          onChange={handleProductSelect}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Search Product We"
+              variant="outlined"
+              size="small"
+            />
+          )}
+          sx={styles.smallAutocomplete}
+        /> */}
       </Box>
 
       {selectedCustomer && (

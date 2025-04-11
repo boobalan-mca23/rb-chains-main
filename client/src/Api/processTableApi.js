@@ -28,3 +28,9 @@ export const getLotDatewise=async(fromDate,toDate)=>{
  
 }
 
+export const getProductName=async()=>{
+    const response=await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getJewelType`)
+    return response.data.allJewel
+}
+
+
