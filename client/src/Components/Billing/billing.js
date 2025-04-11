@@ -72,6 +72,10 @@ const Billing = () => {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(()=>{
+     console.log('testing')
+   
+  },[selectedCustomer,selectedProduct])
   const handleProductSelect = (event, newValue) => {
     if (newValue && !billItems.some((item) => item.id === newValue.id)) {
       setBillItems((prevItems) => [...prevItems, newValue]);
@@ -148,7 +152,7 @@ const Billing = () => {
         <Autocomplete
           options={products}
           getOptionLabel={(option) => option.jewel_name || ""}
-          onChange={handleProductSelect}
+          onChange={(event,newValue)=>setSelectedProduct(newValue)}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -160,20 +164,20 @@ const Billing = () => {
           sx={styles.smallAutocomplete}
         />
 
-        {/* <Autocomplete
+        <Autocomplete
           options={products}
           getOptionLabel={(option) => option.jewel_name || ""}
           onChange={handleProductSelect}
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Search Product We"
+              label="Search Product Weight"
               variant="outlined"
               size="small"
             />
           )}
           sx={styles.smallAutocomplete}
-        /> */}
+        />
       </Box>
 
       {selectedCustomer && (
@@ -200,6 +204,34 @@ const Billing = () => {
         </Box>
       )}
 
+    {selectedProduct && (
+        <Box sx={styles.customerDetails}>
+          <h3>Product Details:</h3>
+          <p>
+            <strong>Name:</strong> {selectedProduct.jewel_name}
+          </p>
+          <p>
+            <strong>Product id</strong>{selectedProduct.master_jewel_id}
+          </p>
+          {/* {selectedCustomer.address && (
+            <p>
+              <strong>Address:</strong> {selectedCustomer.address}
+            </p>
+          )}
+          {selectedCustomer.phone_number && (
+            <p>
+              <strong>Phone:</strong> {selectedCustomer.phone_number}
+            </p>
+          )}
+          {selectedCustomer.customer_shop_name && (
+            <p>
+              <strong>Shop Name:</strong> {selectedCustomer.customer_shop_name}
+            </p>
+          )} */}
+        </Box>
+      )}
+
+{/* 
       <Box sx={styles.itemsSection}>
         <h3>Bill Details:</h3>
         <table style={styles.table}>
@@ -262,7 +294,7 @@ const Billing = () => {
             </tr>
           </tbody>
         </table>
-      </Box>
+      </Box> */}
 
       <Button
         variant="contained"
