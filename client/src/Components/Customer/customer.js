@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   Button,
   TextField,
@@ -18,12 +17,11 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
-import { Edit, Delete, } from "@mui/icons-material";
+import { Edit, Delete } from "@mui/icons-material";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { REACT_APP_BACKEND_SERVER_URL } from "../../config/config";
-
 
 function Customer() {
   const [open, setOpen] = useState(false);
@@ -35,8 +33,29 @@ function Customer() {
     address: "",
   });
   const [customers, setCustomers] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewOpen, setViewOpen] = useState(false);
+  const [viewCustomer, setViewCustomer] = useState(null);
+  const [itemList, setItemList] = useState([]);
+  const [save,setSave] =useState([])
 
+  const handleView = async (customer) => {
+    setViewCustomer(customer);
+    try {
+      const response = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getAllJewelTypes`);
+      setItemList(response.data);
+      setViewOpen(true);
+    } catch (error) {
+      toast.error("Failed to load item list");
+      console.error("Error fetching items:", error);
+    }
+  };
+
+  const handleViewClose = () => {
+    setViewOpen(false);
+    setViewCustomer(null);
+    setItemList([]);
+  };
 
   const handleOpen = () => {
     setCustomer({ name: "", shop: "", phone: "", address: "" });
@@ -52,9 +71,9 @@ function Customer() {
 
   const fetchCustomers = async () => {
     try {
-    const response = await axios.get(
-      `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customerinfo`
-    );
+      const response = await axios.get(
+        `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customerinfo`
+      );
       setCustomers(response.data);
       console.log('customer data',response.data)
     } catch (error) {
@@ -82,16 +101,16 @@ function Customer() {
       }
 
       if (editIndex !== null) {
-       await axios.put(
-         `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customer_info/${customers[editIndex].customer_id}`,
-         payload
-       );
+        await axios.put(
+          `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customer_info/${customers[editIndex].customer_id}`,
+          payload
+        );
         toast.success("Customer updated successfully!", { autoClose: 2000 });
       } else {
         await axios.post(
-  `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customer_info`,
-  payload
-);
+          `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customer_info`,
+          payload
+        );
         toast.success("Customer added successfully!", { autoClose: 2000 });
       }
 
@@ -119,26 +138,26 @@ function Customer() {
     setOpen(true);
   };
 
-const handleDelete = async (customer_id) => {
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this customer?"
-  );
-  if (!confirmDelete) return;
+  const handleDelete = async (customer_id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this customer?"
+    );
+    if (!confirmDelete) return;
 
-  try {
-    await axios.delete(
-      `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customer_info/${customer_id}`
-    );
-    fetchCustomers();
-    toast.success("Customer deleted successfully!", { autoClose: 2000 });
-  } catch (error) {
-    console.error(
-      "Error deleting customer:",
-      error.response?.data || error.message
-    );
-    toast.error("Failed to delete customer!", { autoClose: 2000 });
-  }
-};
+    try {
+      await axios.delete(
+        `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customer_info/${customer_id}`
+      );
+      fetchCustomers();
+      toast.success("Customer deleted successfully!", { autoClose: 2000 });
+    } catch (error) {
+      console.error(
+        "Error deleting customer:",
+        error.response?.data || error.message
+      );
+      toast.error("Failed to delete customer!", { autoClose: 2000 });
+    }
+  };
 
   const filteredCustomers = customers.filter((cust) =>
     cust.customer_name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -280,19 +299,12 @@ const handleDelete = async (customer_id) => {
                   key={cust.id}
                   style={index % 2 === 0 ? styles.evenRow : styles.oddRow}
                 >
-                  <TableCell style={styles.cell}>
-                    {cust.customer_name}
-                  </TableCell>
-                  <TableCell style={styles.cell}>
-                    {cust.customer_shop_name}
-                  </TableCell>
+                  <TableCell style={styles.cell}>{cust.customer_name}</TableCell>
+                  <TableCell style={styles.cell}>{cust.customer_shop_name}</TableCell>
                   <TableCell style={styles.cell}>{cust.phone_number}</TableCell>
                   <TableCell style={styles.cell}>{cust.address}</TableCell>
                   <TableCell style={styles.cell}>
-                    <IconButton
-                      onClick={() => handleEdit(index)}
-                      style={{ color: "black" }}
-                    >
+                    <IconButton onClick={() => handleEdit(index)} style={{ color: "black" }}>
                       <Edit />
                     </IconButton>
                     <IconButton
@@ -301,13 +313,12 @@ const handleDelete = async (customer_id) => {
                     >
                       <Delete />
                     </IconButton>
-                    {/* <IconButton
-                      onClick={() => handleView(cust)} 
-                      
+                    <IconButton
+                      onClick={() => handleView(cust)}
                       style={{ color: "#25274D" }}
                     >
-                      <Visibility />
-                    </IconButton> */}
+                      <VisibilityIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -319,6 +330,49 @@ const handleDelete = async (customer_id) => {
           No customers found.
         </Typography>
       )}
+
+      <Dialog open={viewOpen} onClose={handleViewClose} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {viewCustomer?.customer_name || "Customer Details"}
+        </DialogTitle>
+        <DialogContent>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Item Name</strong></TableCell>
+                  <TableCell><strong>Value</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {itemList.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.jewel_name}</TableCell>
+                    <TableCell>
+                      <input
+                        type="text"
+                        placeholder="Enter value"
+                        style={{
+                          width: "100%",
+                          padding: "6px 8px",
+                          borderRadius: "4px",
+                          border: "1px solid #ccc",
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+        <Button> Save</Button>
+          <Button onClick={handleViewClose} color="primary">
+            Close
+          </Button>       
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
@@ -342,6 +396,5 @@ const styles = {
     backgroundColor: "#fff",
   },
 };
-
 
 export default Customer;

@@ -37,12 +37,12 @@ function Nav() {
             >
               Lot
             </Button>
-            <Button
+            {/* <Button
               onClick={() => navigate("/customer")}
               sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
             >
               Customer
-            </Button>
+            </Button> */}
             <Button
               onClick={() => navigate("/billing")}
               sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
@@ -54,6 +54,12 @@ function Nav() {
               sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
             >
               Report
+            </Button>
+            <Button
+              onClick={() => navigate("/master")}
+              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
+            >
+              Master
             </Button>
           </Box>
         </Toolbar>
