@@ -65,6 +65,10 @@ import Report from "./Components/Report/report";
 import Process from "./Components/Lot/process";
 import Dailyreport from "./Components/Report/dailyreport";
 import Customerreport from "./Components/Report/custreport";
+import Master from './Components/MasterFile/Master'
+import Item from "./Components/ItemFile/Item";
+
+
 
 function Layout() {
   const location = useLocation();
@@ -83,6 +87,9 @@ function Layout() {
         <Route path="/report" element={<Report />} />
         <Route path="/dailyreport" element={<Dailyreport />} />
         <Route path="/customerreport" element={<Customerreport />} />
+        <Route path="/master" element={<Master/>} />
+        <Route path="/item" element={<Item/>} />
+        
       </Routes>
     </>
   );
