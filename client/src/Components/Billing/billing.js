@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Autocomplete, TextField, Box, Button } from "@mui/material";
+import { Autocomplete, TextField, Box, Button,Table,TableHead,TableCell,TableRow,TableBody } from "@mui/material";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import axios from "axios";
@@ -17,7 +17,8 @@ const Billing = () => {
   const [isPrinting, setIsPrinting] = useState(false);
   const billRef = useRef();
   const [products, setProducts] = useState([]);
-  console.log('billing pageeeee')
+  const [productWeight,setProductWeight]=useState([])
+
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -72,10 +73,6 @@ const Billing = () => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(()=>{
-     console.log('testing')
-   
-  },[selectedCustomer,selectedProduct])
   const handleProductSelect = (event, newValue) => {
     if (newValue && !billItems.some((item) => item.id === newValue.id)) {
       setBillItems((prevItems) => [...prevItems, newValue]);
@@ -113,211 +110,250 @@ const Billing = () => {
   const calculateClosing = (total, less) => {
     return (total - less).toFixed(3);
   };
+  useEffect(() => {
+    if (selectedCustomer && selectedProduct) {
+      console.log('selectedProductId',selectedProduct.master_jewel_id)
+       const fetchWeight=async()=>{
+          try{
+             const productsWeight=await axios.get( `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`)
+             console.log('responseWeight',productsWeight.data.productsWeight)
+             setProductWeight(productsWeight.data.productsWeight)
+             if(productsWeight.status===404){
+               setProductWeight(productsWeight.data.productsWeight)
+             }
+          }catch(err){
+            if(err.status===500){
+              alert("server Error")
+            }else{
+              toast.error('No Products')
+            }
+          }
+       }
+       fetchWeight()
+    }
+    
+  }, [selectedCustomer, selectedProduct]);
+  
 
   return (
-    <Box sx={styles.container} ref={billRef}>
-      <h1 style={styles.heading}>Estimate Only</h1>
-
-      <Box sx={styles.billInfo}>
-        <p>
-          <strong>Bill No:</strong> {billNo}
-        </p>
-        <p>
-          <strong>Date:</strong> {date} <br />
-          <br></br>
-          <strong>Time:</strong> {time}
-        </p>
-      </Box>
-
-      <Box
-        sx={styles.searchSection}
-        style={{ display: isPrinting ? "none" : "flex" }}
-      >
-        <Autocomplete
-          options={customers}
-          getOptionLabel={(option) => option.customer_name || ""}
-          
-          onChange={(event, newValue) => setSelectedCustomer(newValue)}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Select Customer"
-              variant="outlined"
-              size="small"
-            />
-          )}
-          sx={styles.smallAutocomplete}
-        />
-
-        <Autocomplete
-          options={products}
-          getOptionLabel={(option) => option.jewel_name || ""}
-          onChange={(event,newValue)=>setSelectedProduct(newValue)}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Search Product Name"
-              variant="outlined"
-              size="small"
-            />
-          )}
-          sx={styles.smallAutocomplete}
-        />
-
-        <Autocomplete
-          options={products}
-          getOptionLabel={(option) => option.jewel_name || ""}
-          onChange={handleProductSelect}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Search Product Weight"
-              variant="outlined"
-              size="small"
-            />
-          )}
-          sx={styles.smallAutocomplete}
-        />
-      </Box>
-
-      {selectedCustomer && (
-        <Box sx={styles.customerDetails}>
-          <h3>Customer Details:</h3>
+    <Box sx={styles.wrapper}>
+    <Box sx={styles.leftPanel} ref={billRef}>
+         <h1 style={styles.heading}>Estimate Only</h1>
+  
+        <Box sx={styles.billInfo}>
           <p>
-            <strong>Name:</strong> {selectedCustomer.customer_name}
+            <strong>Bill No:</strong> {billNo}
           </p>
-          {selectedCustomer.address && (
-            <p>
-              <strong>Address:</strong> {selectedCustomer.address}
-            </p>
-          )}
-          {selectedCustomer.phone_number && (
-            <p>
-              <strong>Phone:</strong> {selectedCustomer.phone_number}
-            </p>
-          )}
-          {selectedCustomer.customer_shop_name && (
-            <p>
-              <strong>Shop Name:</strong> {selectedCustomer.customer_shop_name}
-            </p>
-          )}
+          <p>
+            <strong>Date:</strong> {date} <br />
+            <br></br>
+            <strong>Time:</strong> {time}
+          </p>
         </Box>
-      )}
-
-    {selectedProduct && (
-        <Box sx={styles.customerDetails}>
-          <h3>Product Details:</h3>
-          <p>
-            <strong>Name:</strong> {selectedProduct.jewel_name}
-          </p>
-          <p>
-            <strong>Product id</strong>{selectedProduct.master_jewel_id}
-          </p>
-          {/* {selectedCustomer.address && (
-            <p>
-              <strong>Address:</strong> {selectedCustomer.address}
-            </p>
-          )}
-          {selectedCustomer.phone_number && (
-            <p>
-              <strong>Phone:</strong> {selectedCustomer.phone_number}
-            </p>
-          )}
-          {selectedCustomer.customer_shop_name && (
-            <p>
-              <strong>Shop Name:</strong> {selectedCustomer.customer_shop_name}
-            </p>
-          )} */}
+  
+        <Box
+          sx={styles.searchSection}
+          style={{ display: isPrinting ? "none" : "flex" }}
+        >
+          <Autocomplete
+            options={customers}
+            getOptionLabel={(option) => option.customer_name || ""}
+            
+            onChange={(event, newValue) => setSelectedCustomer(newValue)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Select Customer"
+                variant="outlined"
+                size="small"
+              />
+            )}
+            sx={styles.smallAutocomplete}
+          />
+  
+          <Autocomplete
+            options={products}
+            getOptionLabel={(option) => option.jewel_name || ""}
+            onChange={(event,newValue)=>setSelectedProduct(newValue)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Search Product Name"
+                variant="outlined"
+                size="small"
+              />
+            )}
+            sx={styles.smallAutocomplete}
+          />
+  
+          {/* <Autocomplete
+            options={products}
+            getOptionLabel={(option) => option.jewel_name || ""}
+            onChange={handleProductSelect}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Search Product We"
+                variant="outlined"
+                size="small"
+              />
+            )}
+            sx={styles.smallAutocomplete}
+          /> */}
         </Box>
-      )}
-
-{/* 
-      <Box sx={styles.itemsSection}>
-        <h3>Bill Details:</h3>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Description</th>
-              <th style={styles.th}>Touch</th>
-              <th style={styles.th}>Weight</th>
-              <th style={styles.th}>Pure</th>
-            </tr>
-          </thead>
-          <tbody>
-            {billItems.length > 0 ? (
-              billItems.map((item, index) => (
-                <tr key={index}>
-                  <td style={styles.td}>{item.name}</td>
-                  <td style={styles.td}>{item.touch}</td>
-                  <td style={styles.td}>{item.weight}</td>
-                  <td style={styles.td}>{item.pure}</td>
-                </tr>
-              ))
-            ) : (
+  
+        {selectedCustomer && (
+          <Box sx={styles.customerDetails}>
+            <h3>Customer Details:</h3>
+            <p>
+              <strong>Name:</strong> {selectedCustomer.customer_name}
+            </p>
+            {selectedCustomer.address && (
+              <p>
+                <strong>Address:</strong> {selectedCustomer.address}
+              </p>
+            )}
+            {selectedCustomer.phone_number && (
+              <p>
+                <strong>Phone:</strong> {selectedCustomer.phone_number}
+              </p>
+            )}
+            {selectedCustomer.customer_shop_name && (
+              <p>
+                <strong>Shop Name:</strong> {selectedCustomer.customer_shop_name}
+              </p>
+            )}
+          </Box>
+        )}
+  
+        <Box sx={styles.itemsSection}>
+          <h3>Bill Details:</h3>
+          <table style={styles.table}>
+            <thead>
               <tr>
-                <td
-                  colSpan="4"
-                  style={{ textAlign: "center", padding: "10px" }}
-                >
-                  No products selected
+                <th style={styles.th}>Description</th>
+                <th style={styles.th}>Touch</th>
+                <th style={styles.th}>Weight</th>
+                <th style={styles.th}>Pure</th>
+              </tr>
+            </thead>
+            <tbody>
+              {billItems.length > 0 ? (
+                billItems.map((item, index) => (
+                  <tr key={index}>
+                    <td style={styles.td}>{item.name}</td>
+                    <td style={styles.td}>{item.touch}</td>
+                    <td style={styles.td}>{item.weight}</td>
+                    <td style={styles.td}>{item.pure}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="4"
+                    style={{ textAlign: "center", padding: "10px" }}
+                  >
+                    No products selected
+                  </td>
+                </tr>
+              )}
+              <tr>
+                <td colSpan="3" style={styles.td}>
+                  <strong>Total</strong>
+                </td>
+                <td style={styles.td}>{calculateTotal()}</td>
+              </tr>
+              <tr>
+                <td colSpan="3" style={styles.td}>
+                  <strong>Less: {calculateTotal()} X 99.92%</strong>
+                </td>
+                <td style={styles.td}>{calculateLess(calculateTotal())}</td>
+              </tr>
+              <tr>
+                <td colSpan="3" style={styles.td}>
+                  <strong>Less: {calculateTotal()} X 99.92%</strong>
+                </td>
+                <td style={styles.td}>{calculateLess(calculateTotal())}</td>
+              </tr>
+              <tr>
+                <td colSpan="3" style={styles.td}>
+                  <strong>Closing</strong>
+                </td>
+                <td style={styles.td}>
+                  {calculateClosing(
+                    calculateTotal(),
+                    calculateLess(calculateTotal())
+                  )}
                 </td>
               </tr>
-            )}
-            <tr>
-              <td colSpan="3" style={styles.td}>
-                <strong>Total</strong>
-              </td>
-              <td style={styles.td}>{calculateTotal()}</td>
-            </tr>
-            <tr>
-              <td colSpan="3" style={styles.td}>
-                <strong>Less: {calculateTotal()} X 99.92%</strong>
-              </td>
-              <td style={styles.td}>{calculateLess(calculateTotal())}</td>
-            </tr>
-            <tr>
-              <td colSpan="3" style={styles.td}>
-                <strong>Less: {calculateTotal()} X 99.92%</strong>
-              </td>
-              <td style={styles.td}>{calculateLess(calculateTotal())}</td>
-            </tr>
-            <tr>
-              <td colSpan="3" style={styles.td}>
-                <strong>Closing</strong>
-              </td>
-              <td style={styles.td}>
-                {calculateClosing(
-                  calculateTotal(),
-                  calculateLess(calculateTotal())
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </Box> */}
-
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handlePrint}
-        sx={styles.printButton}
-        style={{ display: isPrinting ? "none" : "block" }}
-      >
-        Print Bill
-      </Button>
+            </tbody>
+          </table>
+        </Box>
+  
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handlePrint}
+          sx={styles.printButton}
+          style={{ display: isPrinting ? "none" : "block" }}
+        >
+          Print Bill
+        </Button>
+       </Box>
+  
+    <Box sx={styles.rightPanel}>
+      <Table sx={styles.table}>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={styles.th}>S.No</TableCell>
+            <TableCell sx={styles.th}>Product Finish Weight</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {productWeight.length > 0 ? (
+            productWeight.map((product, index) => (
+              <TableRow key={index}>
+                <TableCell sx={styles.td}>{index + 1}</TableCell>
+                <TableCell sx={styles.td}>{product.value}</TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell sx={styles.td} colSpan={2}>
+                No product weight data
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </Box>
+  </Box>
+  
   );
 };
 
 const styles = {
-  container: {
-    width: "50%",
-    margin: "20px auto",
+  wrapper: {
+    display: "flex",
+    gap: "20px",
+    alignItems: "flex-start",
+    padding: "20px",
+  },
+  leftPanel: {
+    width: "60%",
     padding: "20px",
     border: "1px solid #ccc",
     borderRadius: "10px",
-    fontFamily: "Arial, sans-serif",
     backgroundColor: "#f9f9f9",
+    fontFamily: "Arial, sans-serif",
+  },
+  rightPanel: {
+    width: "40%",
+    padding: "20px",
+    border: "1px solid #ccc",
+    borderRadius: "10px",
+    backgroundColor: "#fff",
+    fontFamily: "Arial, sans-serif",
   },
   heading: { textAlign: "center", color: "black" },
   billInfo: {
@@ -340,8 +376,18 @@ const styles = {
   },
   itemsSection: { marginTop: "20px" },
   table: { width: "100%", borderCollapse: "collapse" },
-  th: { border: "1px solid #ddd", padding: "10px", backgroundColor: "#f2f2f2" },
-  td: { border: "1px solid #ddd", padding: "10px" },
+  th: {
+    border: "1px solid #ddd",
+    padding: "10px",
+    backgroundColor: "#f2f2f2",
+    textAlign: "left",
+    fontWeight: "bold",
+  },
+  td: {
+    border: "1px solid #ddd",
+    padding: "10px",
+    textAlign: "left",
+  },
   printButton: {
     marginTop: "20px",
     display: "block",
@@ -349,6 +395,7 @@ const styles = {
     marginRight: "auto",
   },
 };
+
 
 export default Billing;
 

@@ -1,5 +1,4 @@
 const { PrismaClient } = require("@prisma/client");
-const { report } = require("../routes/jewelType.routes");
 const prisma = new PrismaClient()
 
 // //createJewelType
@@ -52,7 +51,8 @@ const billingProductWeight = async (req, res) => {
     });
 
     if (!mapper || mapper.length === 0) {
-      return res.status(404).json({ error: "Item not found in MasterJewelItemMapper" });
+      console.log(mapper.length)
+      return res.status(404).json({'productWeight':[] });
     }
 
     const allActiveProducts = [];
@@ -64,11 +64,13 @@ const billingProductWeight = async (req, res) => {
           product_status: "active"
         }
       });
-
-      allActiveProducts.push(...activeProducts); // Merge results
+       if(activeProducts){
+        allActiveProducts.push(...activeProducts); // Merge results
+      }
     }
     const productWeight = []
 
+   
     for (const activeProducts of allActiveProducts) {
       console.log('activeProducts', activeProducts.item_id)
       const weight = await prisma.attributeValue.findMany({
@@ -82,7 +84,7 @@ const billingProductWeight = async (req, res) => {
       })
       productWeight.push(...weight)
     }
-
+    
     // ✅ Only send response after all mapper items are processed
     return res.send({ 'productsWeight': productWeight });
 
