@@ -20,7 +20,7 @@ import {
 import { Edit, Delete } from "@mui/icons-material";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import axios, { Axios } from "axios";
 import { REACT_APP_BACKEND_SERVER_URL } from "../../config/config";
 
 function Customer() {
@@ -37,12 +37,13 @@ function Customer() {
   const [viewOpen, setViewOpen] = useState(false);
   const [viewCustomer, setViewCustomer] = useState(null);
   const [itemList, setItemList] = useState([]);
-  const [save,setSave] =useState([])
+  const [save, setSave] = useState([])
 
   const handleView = async (customer) => {
     setViewCustomer(customer);
     try {
-      const response = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getAllJewelTypes`);
+      const response = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getJewelDetails/${customer.customer_id}`);
+      console.log('response from customer item list', response.data)
       setItemList(response.data);
       setViewOpen(true);
     } catch (error) {
@@ -75,7 +76,7 @@ function Customer() {
         `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customerinfo`
       );
       setCustomers(response.data);
-      console.log('customer data',response.data)
+      console.log('customer data', response.data)
     } catch (error) {
       toast.error("Error fetching customers!", { containerId: "custom-toast" });
       console.error("Error:", error);
@@ -162,7 +163,40 @@ function Customer() {
   const filteredCustomers = customers.filter((cust) =>
     cust.customer_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const handleItemPercentage = (itemIndex, customerId, master_jewel_id, value) => {
+   console.log('values from itemPercentage function',itemIndex,customerId,master_jewel_id,value)
 
+   const tempItem=[...itemList];
+   const tempObj=tempItem.filter((item,index)=>index===itemIndex)
+   const newEntry={
+    customer_id:customerId,
+    masterJewel_id:master_jewel_id,
+    value:parseFloat(value)?parseFloat(value):"",
+
+   }
+   if(tempObj[0].MasterJewelTypeCustomerValue.length===0){
+    tempObj[0].MasterJewelTypeCustomerValue.push(newEntry)
+   }else{
+    tempObj[0].MasterJewelTypeCustomerValue[0]=newEntry
+   }
+  
+   setItemList(tempItem)
+  }
+  const handleSaveItem = async () => {
+    try {
+      const response = await axios.post(
+        `${REACT_APP_BACKEND_SERVER_URL}/api/jewelType/createCustomerJewelPercentage`,
+        { itemList }
+      );
+      console.log(response.data); //  log the response
+     setViewOpen(false)
+      toast.success(response.data.message, { autoClose: 2000 }); // optional: success toast
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save percentage!", { autoClose: 2000 });
+    }
+  };
+  
   return (
     <div
       style={{
@@ -296,7 +330,7 @@ function Customer() {
             <TableBody>
               {filteredCustomers.map((cust, index) => (
                 <TableRow
-                  key={cust.id}
+                  key={cust.customer_id}
                   style={index % 2 === 0 ? styles.evenRow : styles.oddRow}
                 >
                   <TableCell style={styles.cell}>{cust.customer_name}</TableCell>
@@ -350,6 +384,8 @@ function Customer() {
                     <TableCell>{item.jewel_name}</TableCell>
                     <TableCell>
                       <input
+                        value={item.MasterJewelTypeCustomerValue.length === 0 ? "" : item.
+                          MasterJewelTypeCustomerValue[0].value}
                         type="text"
                         placeholder="Enter value"
                         style={{
@@ -358,6 +394,7 @@ function Customer() {
                           borderRadius: "4px",
                           border: "1px solid #ccc",
                         }}
+                        onChange={(e) => { handleItemPercentage(index, viewCustomer?.customer_id, item.master_jewel_id, e.target.value) }}
                       />
                     </TableCell>
                   </TableRow>
@@ -367,10 +404,10 @@ function Customer() {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-        <Button> Save</Button>
+          <Button onClick={()=>{handleSaveItem()}}> Save</Button>
           <Button onClick={handleViewClose} color="primary">
             Close
-          </Button>       
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

@@ -23,9 +23,10 @@ const Billing = () => {
     const fetchCustomers = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/customerinfo`
+          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/getCustomerValueWithPercentage`
         );
         console.log("Fetched Customers:", response.data);
+
         setCustomers(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         toast.error("Error fetching customers!", {
@@ -73,10 +74,35 @@ const Billing = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleProductSelect = (event, newValue) => {
-    if (newValue && !billItems.some((item) => item.id === newValue.id)) {
-      setBillItems((prevItems) => [...prevItems, newValue]);
+  const handleProductSelect = (itemIndex) => {
+    const tempProducts=[...productWeight]
+    const tempSelectProduct=tempProducts.filter((item,index)=>itemIndex===index)
+    console.log('masterjewelid',selectedProduct.master_jewel_id)
+    const customerData=customers.filter((item,index)=>item.customer_id===selectedCustomer.customer_id)
+    const filterMasterItem=customerData[0].MasterJewelTypeCustomerValue.filter((item,index)=>item.masterJewel_id===selectedProduct.master_jewel_id)
+    if(filterMasterItem.length===0){
+      alert('Percentage is Required')
+    }else{
+      const billObj={
+         productName:tempSelectProduct[0].item_name,
+         productTouch:tempSelectProduct[0].touchValue+filterMasterItem[0].value,
+         productWeight:tempSelectProduct[0].value,
+         productPure:0
+      }
+   
+      billObj.productPure=(billObj.productTouch * billObj.productWeight)/100
+      console.log('pure',billObj.productPure)
+      const tempBill=[...billItems]
+      tempBill.push(billObj)
+      setBillItems(tempBill)
+      tempProducts.splice(itemIndex,1)
+      setProductWeight(tempProducts)
+      
+     
+      
     }
+    
+   
   };
 
   const handlePrint = () => {
@@ -99,7 +125,7 @@ const Billing = () => {
   };
 
   const calculateTotal = () => {
-    return billItems.reduce((total, item) => total + item.pure, 0).toFixed(3);
+    return billItems.reduce((total, item) => total + item.productPure, 0).toFixed(3);
   };
 
   const calculateLess = (total) => {
@@ -116,12 +142,13 @@ const Billing = () => {
        const fetchWeight=async()=>{
           try{
              const productsWeight=await axios.get( `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`)
-             console.log('responseWeight',productsWeight.data.productsWeight)
+             
              setProductWeight(productsWeight.data.productsWeight)
-             if(productsWeight.status===404){
-               setProductWeight(productsWeight.data.productsWeight)
-             }
+             
           }catch(err){
+            if(err.status===400){
+              setProductWeight([])
+            }
             if(err.status===500){
               alert("server Error")
             }else{
@@ -241,10 +268,10 @@ const Billing = () => {
               {billItems.length > 0 ? (
                 billItems.map((item, index) => (
                   <tr key={index}>
-                    <td style={styles.td}>{item.name}</td>
-                    <td style={styles.td}>{item.touch}</td>
-                    <td style={styles.td}>{item.weight}</td>
-                    <td style={styles.td}>{item.pure}</td>
+                    <td style={styles.td}>{item.productName}</td>
+                    <td style={styles.td}>{item.productTouch}</td>
+                    <td style={styles.td}>{item.productWeight}</td>
+                    <td style={styles.td}>{item.productPure}</td>
                   </tr>
                 ))
               ) : (
@@ -312,7 +339,7 @@ const Billing = () => {
         <TableBody>
           {productWeight.length > 0 ? (
             productWeight.map((product, index) => (
-              <TableRow key={index}>
+              <TableRow key={index} onClick={()=>{handleProductSelect(index)}} style={{cursor:'pointer'}}>
                 <TableCell sx={styles.td}>{index + 1}</TableCell>
                 <TableCell sx={styles.td}>{product.value}</TableCell>
               </TableRow>

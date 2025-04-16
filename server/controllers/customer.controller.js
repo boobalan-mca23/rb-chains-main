@@ -92,6 +92,21 @@ const getCustomerById = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch customer" });
   }
 };
+//get Customer detail with Percentage value
+const getCustomerValueWithPercentage = async (req, res) => {
+  try {
+    const customers = await prisma.customerInfo.findMany({
+      include: {
+        MasterJewelTypeCustomerValue: true, // include related percentage data
+      },
+    });
+
+    res.status(200).json(customers);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch customer percentage" });
+  }
+};
 
 module.exports = {
   createCustomer,
@@ -99,4 +114,5 @@ module.exports = {
   updateCustomer,
   getAllCustomers,
   getCustomerById,
+  getCustomerValueWithPercentage
 };

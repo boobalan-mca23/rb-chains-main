@@ -89,66 +89,81 @@ const updateJewelType =async(req,res)=>{
 
 
 const getJewelWithCustomerValues = async (req, res) => {
-  const { master_jewel_id } = req.params;
-  
+  const { customer_id } = req.params;
+  console.log('customer id',customer_id);
+
   try {
-    const jewelData = await prisma.masterJewelType.findUnique({
-      where: { master_jewel_id: parseInt(master_jewel_id) },
-      include: {
+    const jewelData = await prisma.masterJewelType.findMany({
+      select: {
+        master_jewel_id: true,
+        jewel_name: true,
         MasterJewelTypeCustomerValue: {
+          where: {
+            customer_id: Number(customer_id)
+          },
           select: {
+            id:true,
             customer_id: true,
             masterJewel_id: true,
-            value: true,
-            attribute1: true,
-            attribute2: true
+            value: true
           }
         }
       }
     });
-
-    if (!jewelData) {
-      return res.status(404).json({ message: 'Jewel type not found' });
-    }
-
-    const resultArray = [{
-      master_jewel_id: jewelData.master_jewel_id,
-      jewel_name: jewelData.jewel_name,
-      MasterJewelTypeCustomerValue: jewelData.MasterJewelTypeCustomerValue
-    }];
-
-    return res.json(resultArray);
-
+    console.log('res from jewel',jewelData)
+    return res.status(200).json(jewelData);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("Error fetching jewels:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
+// createCutomer percentage
 
+const createCustomerJewelPercentage = async (req, res) => {
+  const { itemList } = req.body;
 
+  try {
+    if (!itemList || itemList.length === 0) {
+      return res.status(400).json({ error: "itemList is required" });
+    }
 
+    for (const item of itemList) {
+      const valueData = item.MasterJewelTypeCustomerValue?.[0];
 
-// //createJewelType
+      if (valueData && valueData.value !== "") {
+        if (!valueData. id  ) {
+          // Create new record
+          await prisma.masterJewelTypeCustomerValue.create({
+            data: {
+              customer_id: valueData.customer_id,
+              masterJewel_id: valueData.masterJewel_id,
+              value: valueData.value,
+            
+            },
+          });
+        } else {
+          //  update case
+          await prisma.masterJewelTypeCustomerValue.update({
+            where: { id: valueData.id },
+            data: {
+              customer_id: valueData.customer_id,
+              masterJewel_id: valueData.masterJewel_id,
+              value: valueData.value,
 
-// exports.createJewelType=async(req,res)=>{
-//     const{jewelName}=req.body
-//     console.log('req.body',req.body)
+            },
+          });
+        }
+      }
+    }
 
-//     try{
-//       if(!jewelName){
-//         return res.status(400).json({error:"jewelName is required"})
-//       }
-//       const newJeweltype=await prisma.MasterJeweltType.create({
-//         data:{
-//             jewel_name :jewelName
-//         },
-//       })
-//       return res.status(201).json({message:"newJewelCreated",newJewel:newJeweltype})
-//     }catch(err){
-//       return res.status(500).json({error:"Failed to Create a JewelType",})
-//     }
-// }
+    res.status(200).json({ message: "Customer Jewel Percentages created successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save customer percentages" });
+  }
+};
+
 
 //get JewelType
 const getJewelType = async (req, res) => {
@@ -183,7 +198,7 @@ const billingProductWeight = async (req, res) => {
 
     if (!mapper || mapper.length === 0) {
       console.log(mapper.length)
-      return res.status(404).json({'productWeight':[] });
+      return res.status(400).json({'productWeight':[] });
     }
 
     const allActiveProducts = [];
@@ -210,7 +225,9 @@ const billingProductWeight = async (req, res) => {
           process_step_id: 32
         },
         select: {
-          value: true
+          item_name:true,
+          value: true,
+          touchValue:true
         }
       })
       productWeight.push(...weight)
@@ -225,7 +242,7 @@ const billingProductWeight = async (req, res) => {
   }
 };
 
-module.exports={createJewelType,deleteJewelType,getAllJewelTypes,updateJewelType, getJewelWithCustomerValues,getJewelType, billingProductWeight }
+module.exports={createJewelType,deleteJewelType,getAllJewelTypes,updateJewelType, getJewelWithCustomerValues,getJewelType, billingProductWeight,createCustomerJewelPercentage }
 
 
 

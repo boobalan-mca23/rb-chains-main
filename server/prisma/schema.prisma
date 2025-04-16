@@ -176,8 +176,8 @@ model MasterJewelTypeCustomerValue {
   customer_id       Int
   masterJewel_id    Int
   value             Float
-  attribute1        Float
-  attribute2        Float
+  attribute1        Float?
+  attribute2        Float?
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
   CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 

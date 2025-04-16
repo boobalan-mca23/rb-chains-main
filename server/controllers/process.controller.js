@@ -172,6 +172,7 @@ const saveProcess = async (req, res) => {
                       attribute_id: attrValue.attribute_id,
                       items_id: newItem.item_id,
                       value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                      touchValue:attrValue.touchValue ? parseFloat(attrValue.touchValue) : null,
                       item_name: attrValue.item_name
                     },
                   });
@@ -195,6 +196,7 @@ const saveProcess = async (req, res) => {
                       attribute_id: attrValue.attribute_id,
                       items_id: existingChildItems[attrValue.index],
                       value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                      touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null,
                       item_name: attrValue.item_name
 
                     },
@@ -228,7 +230,8 @@ const saveProcess = async (req, res) => {
                       attribute_id: attrValue.attribute_id,
                       items_id:existingChildItems[attrValue.index],
                       item_name: attrValue.item_name,
-                      value: attrValue.value === null ? null : parseFloat(attrValue.value)
+                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                      touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
 
                     },
                   });
@@ -403,7 +406,8 @@ const saveProcess = async (req, res) => {
                     attribute_id: attrValue.attribute_id,
                     items_id: attrValue.items_id,
                     item_name: attrValue.item_name,
-                    value: attrValue.value === null ? null : parseFloat(attrValue.value)
+                    value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                    touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
                   },
                 });
               }
