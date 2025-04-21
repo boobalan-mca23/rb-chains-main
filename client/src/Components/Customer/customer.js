@@ -127,6 +127,7 @@ function Customer() {
     }
   };
 
+
   const handleEdit = (index) => {
     const selectedCustomer = customers[index];
     setCustomer({
@@ -163,12 +164,17 @@ function Customer() {
   const filteredCustomers = customers.filter((cust) =>
     cust.customer_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+
   const handleItemPercentage = (itemIndex, customerId, master_jewel_id, value) => {
    console.log('values from itemPercentage function',itemIndex,customerId,master_jewel_id,value)
 
    const tempItem=[...itemList];
+   const currentItem = tempItem[itemIndex];
+   const existingValue = currentItem.MasterJewelTypeCustomerValue?.[0] || {};
    const tempObj=tempItem.filter((item,index)=>index===itemIndex)
    const newEntry={
+    id:existingValue.id || undefined,
     customer_id:customerId,
     masterJewel_id:master_jewel_id,
     value:parseFloat(value)?parseFloat(value):"",
@@ -178,11 +184,14 @@ function Customer() {
     tempObj[0].MasterJewelTypeCustomerValue.push(newEntry)
    }else{
     tempObj[0].MasterJewelTypeCustomerValue[0]=newEntry
-   }
-  
+   }  
    setItemList(tempItem)
   }
+
+
+
   const handleSaveItem = async () => {
+    console.log(itemList)
     try {
       const response = await axios.post(
         `${REACT_APP_BACKEND_SERVER_URL}/api/jewelType/createCustomerJewelPercentage`,
@@ -196,6 +205,7 @@ function Customer() {
       toast.error("Failed to save percentage!", { autoClose: 2000 });
     }
   };
+
   
   return (
     <div
