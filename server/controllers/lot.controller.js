@@ -59,8 +59,6 @@ const createLotInfo = async (req, res) => {
 
   console.log("Incoming payload:", req.body); 
 
- 
-
   try {
     // Step 1: Create Lot Entry
     const newLot = await prisma.lotInfo.create({

@@ -120,6 +120,53 @@ const getJewelWithCustomerValues = async (req, res) => {
 
 // createCutomer percentage
 
+// const createCustomerJewelPercentage = async (req, res) => {
+//   const { itemList } = req.body;
+//   console.log(itemList)
+
+//   try {
+//     if (!itemList || itemList.length === 0) {
+//       return res.status(400).json({ error: "itemList is required" });
+//     }
+
+//     for (const item of itemList) {
+//       const valueData = item.MasterJewelTypeCustomerValue?.[0];
+//       console.log('value',valueData);
+
+//       if (valueData && valueData.value !== "") {
+//         if (!valueData. id  ) {
+//           // Create new record
+//           await prisma.masterJewelTypeCustomerValue.create({
+//             data: {
+//               customer_id: valueData.customer_id,
+//               masterJewel_id: valueData.masterJewel_id,
+//               value: valueData.value,
+            
+//             },
+//           });
+//         } else {
+//           //  update case
+//           console.log('percentage',valueData.value)
+//           await prisma.masterJewelTypeCustomerValue.update({
+//             where: { id: valueData.id },
+//             data: {
+//               customer_id: valueData.customer_id,
+//               masterJewel_id: valueData.masterJewel_id,
+//               value: valueData.value,
+
+//             },
+//           });
+//         }
+//       }
+//     }
+
+//     res.status(200).json({ message: "Customer Jewel Percentages created successfully" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Failed to save customer percentages" });
+//   }
+// };
+
 const createCustomerJewelPercentage = async (req, res) => {
   const { itemList } = req.body;
 
@@ -131,40 +178,42 @@ const createCustomerJewelPercentage = async (req, res) => {
     for (const item of itemList) {
       const valueData = item.MasterJewelTypeCustomerValue?.[0];
 
-      if (valueData && valueData.value !== "") {
-        if (!valueData.id) {
-          // Create new record
-          console.log('created time')
-          await prisma.masterJewelTypeCustomerValue.create({
-            data: {
-              customer_id: valueData.customer_id,
-              masterJewel_id: valueData.masterJewel_id,
-              value: valueData.value,
-            
-            },
-          });
-        } else {
-          //  update case
-          console.log('Updated timeeeeeeeeee')
-          await prisma.masterJewelTypeCustomerValue.update({
-            where: { id:valueData.id },
-            data: {
-              customer_id: valueData.customer_id,
-              masterJewel_id: valueData.masterJewel_id,
-              value: valueData.value,
 
-            },
-          });
-        }
+
+      // Skip if no value or empty string
+      if (!valueData || valueData.value === "") continue;
+
+      if (valueData.id) {
+        // ✅ If ID exists: Update existing entry
+        await prisma.masterJewelTypeCustomerValue.update({
+          where: { id: valueData.id },
+          data: {
+            customer_id: valueData.customer_id,
+            masterJewel_id: valueData.masterJewel_id,
+            value: valueData.value,
+          },
+        });
+      } else {
+        // ✅ If no ID: Create new entry
+        await prisma.masterJewelTypeCustomerValue.create({
+          data: {
+            customer_id: valueData.customer_id,
+            masterJewel_id: valueData.masterJewel_id,
+            value: valueData.value,
+          },
+        });
+
       }
     }
 
-    res.status(200).json({ message: "Customer Jewel Percentages created successfully" });
+    res.status(200).json({ message: "Customer Jewel Percentages saved successfully" });
+
   } catch (err) {
-    console.error(err);
+    console.error("Error saving percentages:", err);
     res.status(500).json({ error: "Failed to save customer percentages" });
   }
 };
+
 
 
 //get JewelType
