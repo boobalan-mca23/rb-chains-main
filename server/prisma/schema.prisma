@@ -121,7 +121,6 @@ model Item {
   LotInfo        LotInfo @relation("LotItems", fields: [lot_id], references: [id])  
   AttributeValues AttributeValue[] 
   ProductStocks  ProductStocks[]  
-  OrderItems     OrderItem[]  
   MasterJewelItemMapper MasterJewelItemMapper[]   
 
   @@map("item")
@@ -132,7 +131,7 @@ model ProductStocks {
   product_status  String
 
   Item            Item     @relation(fields: [item_id], references: [item_id])  
-
+  orderItems      OrderItem[]
   @@map("ProductStocks")
 }
 
@@ -163,7 +162,7 @@ model OrderItem {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
   MasterOrder   MasterOrder @relation(fields: [order_id], references: [id])
-  Item          Item        @relation(fields: [stock_id], references: [item_id]) 
+  ProductStocks ProductStocks @relation(fields: [stock_id], references: [id])
 
   @@map("orderItems")
 }
