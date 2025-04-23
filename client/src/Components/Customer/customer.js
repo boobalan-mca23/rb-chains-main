@@ -183,6 +183,7 @@ function Customer() {
    setItemList(tempItem)
   }
   const handleSaveItem = async () => {
+     console.log('itemList from billing',itemList)
     try {
       const response = await axios.post(
         `${REACT_APP_BACKEND_SERVER_URL}/api/jewelType/createCustomerJewelPercentage`,

@@ -132,8 +132,9 @@ const createCustomerJewelPercentage = async (req, res) => {
       const valueData = item.MasterJewelTypeCustomerValue?.[0];
 
       if (valueData && valueData.value !== "") {
-        if (!valueData. id  ) {
+        if (!valueData.id) {
           // Create new record
+          console.log('created time')
           await prisma.masterJewelTypeCustomerValue.create({
             data: {
               customer_id: valueData.customer_id,
@@ -144,8 +145,9 @@ const createCustomerJewelPercentage = async (req, res) => {
           });
         } else {
           //  update case
+          console.log('Updated timeeeeeeeeee')
           await prisma.masterJewelTypeCustomerValue.update({
-            where: { id: valueData.id },
+            where: { id:valueData.id },
             data: {
               customer_id: valueData.customer_id,
               masterJewel_id: valueData.masterJewel_id,
@@ -210,7 +212,7 @@ const billingProductWeight = async (req, res) => {
           product_status: "active"
         }
       });
-       if(activeProducts){
+       if(activeProducts){// if condition is check that item exits stock
         allActiveProducts.push(...activeProducts); // Merge results
       }
     }
@@ -230,7 +232,12 @@ const billingProductWeight = async (req, res) => {
           touchValue:true
         }
       })
-      productWeight.push(...weight)
+      const enrichedWeights = weight.map(weight => ({
+        ...weight,
+        stock_id: activeProducts.id
+      }));
+
+      productWeight.push(...enrichedWeights)
     }
     
     // ✅ Only send response after all mapper items are processed

@@ -6,6 +6,7 @@ const lotRoutes = require("./routes/lot.routes");
 const customerRoutes = require("./routes/customer.routes");
 const processRoutes  = require("./routes/process.routes");
 const jewelTypeRoutes=require("./routes/jewelType.routes.js");
+const billRoutes=require("./routes/bill.routes.js");
 
 const app = express();
 const PORT = 5000;
@@ -24,9 +25,10 @@ app.use("/api/customer", customerRoutes);
 app.use("/api/process", processRoutes);
 
 // JewelType routes
-
-
 app.use("/api/jewelType", jewelTypeRoutes);
+
+//Bill routes
+app.use("/api/bill",billRoutes)
 
 
 app.listen(PORT, () => {
