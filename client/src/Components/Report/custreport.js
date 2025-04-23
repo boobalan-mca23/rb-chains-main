@@ -115,17 +115,7 @@ const CustReport = () => {
       setSelectedBill([])
     } else {
       //Closing Balance Api
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/closing/${selectedCustomer.customer_id}`
-        );
-        console.log("Closing Balance:", response.data.closingBalance.closing_balance);
-        setClosingBalance(response.data.closingBalance.closing_balance)
-        // You can now use response.data as needed
-      } catch (error) {
-        console.error("Error fetching closing balance:", error.response?.data || error.message);
-        // Optionally show a toast or alert to the user
-      }
+      
 
       if (fromDate > toDate) {
         alert('Enter Date Correct')
