@@ -14,7 +14,9 @@ import {
   Typography,
   colors,
   TableFooter,
+  Autocomplete
 } from "@mui/material";
+
 import AddIcon from '@mui/icons-material/Add';
 import { Select, MenuItem } from "@mui/material";
 import { toast, ToastContainer } from "react-toastify";
@@ -88,28 +90,28 @@ const ProcessTable = () => {
   const docalculation = (arrayItems) => {
     // Calculation
     const tempData = [...arrayItems];
-   
+
     let lotTotal = tempData.reduce((acc, item) => acc + item.data[0].ProcessSteps[0].AttributeValues[0].value, 0)
     const tempCalculation = [...calculation];//over lot all raw gold total
     tempCalculation[0].rawGold = lotTotal;
 
     let finishTotal = 0;
     tempData.forEach((lotData, lotIndex) => {// lot wise finishing(After weight on finishing process) total
-      if (lotData.data[8].ProcessSteps[1].AttributeValues.length!=0) {
-         lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+      if (lotData.data[8].ProcessSteps[1].AttributeValues.length != 0) {
+        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
           finishTotal += arrItem.value
         })
-      } 
+      }
     })
     tempCalculation[2].process[7].Weight[1].aw = finishTotal
-    console.log('finishTotal',finishTotal)
-    
+    console.log('finishTotal', finishTotal)
+
 
     let finsihAfterValue = 0;
     let lotFinishValue = 0;
 
     tempData.forEach((lotData, lotIndex) => {// this calculation for lotDifferent Total
- 
+
       if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
         finsihAfterValue = 0;
       } else {
@@ -122,41 +124,41 @@ const ProcessTable = () => {
       }
     })
     tempCalculation[3].lotTotal = lotFinishValue
-   
+
     //calculation for total scarp value and loss total
-   for(let i=1;i<=8;i++){
-      let scarpTotal=0,lossTotal=0,pureTotal=0;
-      let innerScarp=0,innerLoss=0,innerPure=0;
-      for(let j=0;j<tempData.length;j++){
-        if(tempData[j].data[i].ProcessSteps[2].AttributeValues.length!==0){
+    for (let i = 1; i <= 8; i++) {
+      let scarpTotal = 0, lossTotal = 0, pureTotal = 0;
+      let innerScarp = 0, innerLoss = 0, innerPure = 0;
+      for (let j = 0; j < tempData.length; j++) {
+        if (tempData[j].data[i].ProcessSteps[2].AttributeValues.length !== 0) {
 
-          tempData[j].data[i].ProcessSteps[2].AttributeValues.forEach((attrItem,attrIndex)=>{
-                  if(i==7){
-                    innerPure+=tempData[j].data[i].ProcessSteps[4].AttributeValues[attrIndex].value
-                  }
-                 innerScarp+=tempData[j].data[i].ProcessSteps[2].AttributeValues[attrIndex].value
-                 innerLoss+=tempData[j].data[i].ProcessSteps[3].AttributeValues[attrIndex].value
+          tempData[j].data[i].ProcessSteps[2].AttributeValues.forEach((attrItem, attrIndex) => {
+            if (i == 7) {
+              innerPure += tempData[j].data[i].ProcessSteps[4].AttributeValues[attrIndex].value
+            }
+            innerScarp += tempData[j].data[i].ProcessSteps[2].AttributeValues[attrIndex].value
+            innerLoss += tempData[j].data[i].ProcessSteps[3].AttributeValues[attrIndex].value
           })
-       }
+        }
       }
-      scarpTotal+=innerScarp;
-      lossTotal+=innerLoss;
-      pureTotal+=innerPure;
-      
-      
-      tempCalculation[2].process[i-1].Weight[2].sw=scarpTotal
-      tempCalculation[2].process[i-1].Weight[3].lw=lossTotal
-      if(i===7){
-        tempCalculation[2].process[6].Weight[4].pw=pureTotal
-      }
-      console.log('tempCalculation for scw,losw',tempCalculation)
-   
+      scarpTotal += innerScarp;
+      lossTotal += innerLoss;
+      pureTotal += innerPure;
 
-    
+
+      tempCalculation[2].process[i - 1].Weight[2].sw = scarpTotal
+      tempCalculation[2].process[i - 1].Weight[3].lw = lossTotal
+      if (i === 7) {
+        tempCalculation[2].process[6].Weight[4].pw = pureTotal
+      }
+      console.log('tempCalculation for scw,losw', tempCalculation)
+
+
+
 
     }
-    
-   
+
+
 
 
 
@@ -192,19 +194,20 @@ const ProcessTable = () => {
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
 
-    console.log('lotData from function',lotData)
+    console.log('lotData from function', lotData)
 
 
     console.log('touch', lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue);
     lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue = parseFloat(value);
     //when user change touch value that time also we need to change pure weight
-    if (lotData[0].data[7].ProcessSteps[2].AttributeValues.length!=0) {
-            lotData[0].data[7].ProcessSteps[2].AttributeValues.forEach((item,index)=>{
-              lotData[0].data[7].ProcessSteps[4].AttributeValues[index].value=lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[7].ProcessSteps[2].AttributeValues[index].value / 100
-      })}
-    
-           
- 
+    if (lotData[0].data[7].ProcessSteps[2].AttributeValues.length != 0) {
+      lotData[0].data[7].ProcessSteps[2].AttributeValues.forEach((item, index) => {
+        lotData[0].data[7].ProcessSteps[4].AttributeValues[index].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[7].ProcessSteps[2].AttributeValues[index].value / 100
+      })
+    }
+
+
+
     tempData.splice(index, 1, lotData[0]);
     setItems(tempData)
     console.log('itemsData', items)
@@ -236,7 +239,7 @@ const ProcessTable = () => {
           // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
           attribute_id: attribute_id,
           items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-          value:parseFloat(value)
+          value: parseFloat(value)
         }
 
         if (lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 0) {
@@ -249,7 +252,7 @@ const ProcessTable = () => {
             items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
             // item_name:lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
             attribute_id: 2,
-            value:parseFloat(value)
+            value: parseFloat(value)
           }
           lotData[0].data[2].ProcessSteps[0].AttributeValues.push(nextProcessObj);
 
@@ -380,7 +383,7 @@ const ProcessTable = () => {
           items_id: null,
           attribute_id: j + 1,
           value: null,
-          touchValue:null,
+          touchValue: null,
           index: null,
           master_jewel_id: null
         }
@@ -397,7 +400,7 @@ const ProcessTable = () => {
       item_name: " ",
       items_id: null,
       attribute_id: 6,
-      touchValue:null,
+      touchValue: null,
       value: null,
       index: null,
       master_jewel_id: null
@@ -413,23 +416,23 @@ const ProcessTable = () => {
 
 
   };
-  const handleChildItemName = (lotid, childIndex, itemName, lotIndex,master_jewel_id,touchValue) => {
+  const handleChildItemName = (lotid, childIndex, itemName, lotIndex, master_jewel_id, touchValue) => {
 
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
 
-    
+
     for (let i = 3; i <= 8; i++) {//this create childItem name Each Process and store jewelItem also
       for (let j = 0; j <= 3; j++) {
         lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].item_name = String(itemName);
         lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
-        lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].touchValue=touchValue;
+        lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].touchValue = touchValue;
       }
     }
     //Store Item name and Item id to PureWeight
     lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].item_name = String(itemName);
     lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
-    lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].touchValue=touchValue;
+    lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].touchValue = touchValue;
     for (let i = 3; i <= 8; i++) {//this create Index  Each Process
       if (i === 7) {
         lotData[0].data[i].ProcessSteps[4].AttributeValues[childIndex].index = childIndex
@@ -474,7 +477,7 @@ const ProcessTable = () => {
       setTouchValue("");// Clear input field
       setOpen(false);
       setIsLotCreated(true);
-      toast.success("Lot Created",{ autoClose: 2000 });
+      toast.success("Lot Created", { autoClose: 2000 });
     } catch (error) {
       console.error("Error creating lot:", error);
     }
@@ -497,7 +500,7 @@ const ProcessTable = () => {
     console.log('res from save function', res.data.data)
     setItems(res.data.data)
     setCalculation(docalculation(res.data.data))
-    toast.success("Lot Saved",{ autoClose: 2000 });
+    toast.success("Lot Saved", { autoClose: 2000 });
 
   }
   const allData = async () => {
@@ -944,39 +947,39 @@ const ProcessTable = () => {
                       <TableRow key={key} >
                         <StyledTableCell colSpan={11}></StyledTableCell>
 
-
-                        <Select
+                        <Autocomplete
+                          style={{margin:"10px"}}
+                          options={productName}
+                          getOptionLabel={(option) => option.jewel_name || ""}
                           value={{
                             jewel_name: lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].item_name || "",
                             master_jewel_id: lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].master_jewel_id || "",
                           }}
-                          onChange={(e) =>
-                            handleChildItemName(
-                              lotItem.lotid,
-                              key,
-                              e.target.value.jewel_name,
-                              lotIndex,
-                              e.target.value.master_jewel_id ,// pass the master_jewel_id too
-                              lotItem.data[0]?.ProcessSteps[0]?.AttributeValues[0].touchValue
-                            )
+                          onChange={(event, newValue) => {
+                            if (newValue) {
+                              handleChildItemName(
+                                lotItem.lotid,
+                                key,
+                                newValue.jewel_name,
+                                lotIndex,
+                                newValue.master_jewel_id,
+                                lotItem.data[0]?.ProcessSteps[0]?.AttributeValues[0].touchValue
+                              );
+                            }
+                          }}
+                          isOptionEqualToValue={(option, value) =>
+                            option.master_jewel_id === value.master_jewel_id
                           }
-                          displayEmpty
-                          style={{ width: "120px", fontSize: "14px" }}
-                          renderValue={(selected) => selected.jewel_name || "Select Item"}
-                        >
-                          <MenuItem value="" disabled>Select Item</MenuItem>
-                          {productName.map((item) => (
-                            <MenuItem
-                              key={item.master_jewel_id}
-                              value={{
-                                jewel_name: item.jewel_name,
-                                master_jewel_id: item.master_jewel_id,
-                              }}
-                            >
-                              {item.jewel_name}
-                            </MenuItem>
-                          ))}
-                        </Select>
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Select Item"
+                              size="small"
+                              sx={{ width: "150px", fontSize: "14px" }}
+                            />
+                          )}
+                        />
+
 
 
                         <StyledTableCell>
@@ -1205,7 +1208,7 @@ const ProcessTable = () => {
                   <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}ScarpTotal:{item.Weight[2].sw}</p></StyledTableCell>
                   <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}LossTotal:{item.Weight[3].lw}</p></StyledTableCell>
                   {
-                    item.processName==="Cutting"?( <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}PureTotal:{item.Weight[4].pw}</p></StyledTableCell>):("")
+                    item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}PureTotal:{item.Weight[4].pw}</p></StyledTableCell>) : ("")
                   }
 
                   {
@@ -1226,9 +1229,9 @@ const ProcessTable = () => {
             <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>LotTotal:{calculation[3].lotTotal}</p></StyledTableCell>
           </TableFooter>
         </Table>
-        <ToastContainer/>
+        <ToastContainer />
       </StyledTableContainer>
-      
+
 
       <Modal open={open} onClose={handleClose}>
         <Box

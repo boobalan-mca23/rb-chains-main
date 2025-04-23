@@ -178,6 +178,8 @@ const createCustomerJewelPercentage = async (req, res) => {
     for (const item of itemList) {
       const valueData = item.MasterJewelTypeCustomerValue?.[0];
 
+
+
       // Skip if no value or empty string
       if (!valueData || valueData.value === "") continue;
 
@@ -200,6 +202,7 @@ const createCustomerJewelPercentage = async (req, res) => {
             value: valueData.value,
           },
         });
+
       }
     }
 
@@ -258,7 +261,7 @@ const billingProductWeight = async (req, res) => {
           product_status: "active"
         }
       });
-       if(activeProducts){
+       if(activeProducts){// if condition is check that item exits stock
         allActiveProducts.push(...activeProducts); // Merge results
       }
     }
@@ -278,7 +281,12 @@ const billingProductWeight = async (req, res) => {
           touchValue:true
         }
       })
-      productWeight.push(...weight)
+      const enrichedWeights = weight.map(weight => ({
+        ...weight,
+        stock_id: activeProducts.id
+      }));
+
+      productWeight.push(...enrichedWeights)
     }
     
     // ✅ Only send response after all mapper items are processed

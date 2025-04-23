@@ -28,6 +28,8 @@ model CustomerInfo {
   address            String?
   MasterOrders       MasterOrder[]
   MasterJewelTypeCustomerValue MasterJewelTypeCustomerValue[]
+  ClosingBalance     ClosingBalance[]
+  Balance            Balance[]
 
   @@map("customerInfo")
 }
@@ -143,20 +145,25 @@ model MasterOrder {
   updated_at        DateTime @updatedAt
 
   CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id])  
-  OrderItems        OrderItem[] 
+  OrderItems        OrderItem[]
+  Balance           Balance[]
+ 
 
   @@map("masterOrder")
 }
 
 model OrderItem {
-  id          Int      @id @default(autoincrement())
-  order_id    Int
-  stock_id    Int      
-  final_price Int
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  MasterOrder MasterOrder @relation(fields: [order_id], references: [id])
-  Item        Item        @relation(fields: [stock_id], references: [item_id]) 
+  id            Int      @id @default(autoincrement())
+  order_id      Int
+  stock_id      Int
+  itemName      String
+  touchValue    Float
+  productWeight Float
+  final_price   Float
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  MasterOrder   MasterOrder @relation(fields: [order_id], references: [id])
+  Item          Item        @relation(fields: [stock_id], references: [item_id]) 
 
   @@map("orderItems")
 }
@@ -195,4 +202,26 @@ model MasterJewelItemMapper{
    MasterJewelType    MasterJewelType @relation(fields: [master_jewel_id], references: [master_jewel_id])
    Item               Item?@relation(fields: [item_id], references: [item_id])  
    @@map("masterjewelItemMapper") 
+}
+model Balance{
+  balance_id              Int @id @default(autoincrement())
+  order_id                Int
+  customer_id             Int
+  gold_weight             Float
+  gold_touch              Float
+  gold_pure               Float
+  remaining_gold_balance  Float
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+  CustomerInfo            CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
+  MasterOrder             MasterOrder @relation(fields: [order_id], references: [id])
+
+}
+model ClosingBalance{
+  id                Int @id @default(autoincrement())
+  customer_id       Int @unique
+  closing_balance   Float
+  CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 }
