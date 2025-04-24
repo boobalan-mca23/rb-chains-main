@@ -8,8 +8,6 @@ import { toast } from "react-toastify";
 import { FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
-
-
 const Billing = () => {
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -86,10 +84,19 @@ const Billing = () => {
     setTotalPrice(calculateTotal(billItems))
 
   }, [billItems])
-  useEffect(()=>{
-    setClosing(totalPrice-calculateClosing(balanceRow))
+  useEffect(
+    ()=>{
+
+    if(balanceRow.length===0){
+  setClosing(totalPrice)
+    }else{
+      setClosing(totalPrice-calculateClosing(balanceRow))
+    }
      
-  },[balanceRow])
+  },[balanceRow] 
+
+)
+
 
   const handleProductSelect = (itemIndex,stockId) => {
     const tempProducts = [...productWeight]
@@ -139,7 +146,7 @@ const Billing = () => {
           "totalPrice": totalPrice,
           "orderItems":billItems,
           "balance":balanceRow,
-          "closingbalance":(closing).toFixed(2)
+          "closingbalance":balanceRow.length===0? totalPrice:closing
           
         }
          console.log('payload', payLoad)
@@ -235,14 +242,14 @@ const Billing = () => {
       <Box sx={styles.leftPanel} ref={billRef}>
         <h1 style={styles.heading}>Estimate Only</h1>
 
-        <Box sx={styles.billInfo}>
+        {/* <Box sx={styles.billInfo}>
          
           <p>
             <strong>Date:</strong> {date} <br />
             <br></br>
             <strong>Time:</strong> {time}
           </p>
-        </Box>
+        </Box> */}
 
         <Box
           sx={styles.searchSection}
@@ -277,9 +284,7 @@ const Billing = () => {
               />
             )}
             sx={styles.smallAutocomplete}
-          />
-
-        
+          />        
         </Box>
 
         {selectedCustomer && (
@@ -373,11 +378,9 @@ const Billing = () => {
             <TableBody>
            {balanceRow.map((row, index) => (
                 <TableRow key={index}>
-                  <TableCell style={styles.td}>
-                    <input
-                     
-                      type="number"
-                      
+                  <TableCell >
+                    <input                     
+                      type="number"                      
                       value={row.givenGold}
                       onChange={(e) =>
                         handleBalanceInputChange(index, "givenGold", e.target.value)
@@ -385,7 +388,7 @@ const Billing = () => {
                       style={styles.input}
                     />
                   </TableCell>
-                  <TableCell style={styles.td}>
+                  <TableCell>
                     <input
                       type="number"
                       placeholder="Touch"
@@ -396,7 +399,7 @@ const Billing = () => {
                       style={styles.input}
                     />
                   </TableCell>
-                  <TableCell style={styles.td}>
+                  <TableCell>
                     <input
                       type="number"
                       placeholder="Weight"
@@ -414,7 +417,8 @@ const Billing = () => {
                 <TableCell >Closing</TableCell>
                 <TableCell ></TableCell>
                 <TableCell ></TableCell>
-                <TableCell >{(closing).toFixed(2)}</TableCell>
+                {/* <TableCell >{(closing).toFixed(2)}</TableCell> */}
+                <TableCell>{(balanceRow.length === 0 ? totalPrice : closing).toFixed(2)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

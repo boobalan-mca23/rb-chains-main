@@ -45,48 +45,96 @@ const saveBill = async (req, res) => {
     }
 
     // Validate and save balances
-    if (!balance || balance.length === 0) {
-      return res.status(400).json({ error: 'Balance is required' });
-    }
+    if (balance.length >=1) {
+      // return res.status(400).json({ error: 'Balance is required' });
 
-    if (!closingbalance) {
-      return res.status(400).json({ error: 'Closing balance is required' });
-    }
+      for (const balanceData of balance) {
+        await prisma.balance.create({
+          data: {
+            order_id: newOrder.id,
+            customer_id: customer_id,
+            gold_weight: parseFloat(balanceData.givenGold),
+            gold_touch: parseFloat(balanceData.touch),
+            gold_pure: parseFloat(balanceData.pure),
+            remaining_gold_balance: parseFloat(closingbalance)
+          }
+        });
+      }
 
-    for (const balanceData of balance) {
-      await prisma.balance.create({
-        data: {
-          order_id: newOrder.id,
-          customer_id: customer_id,
-          gold_weight: parseFloat(balanceData.givenGold),
-          gold_touch: parseFloat(balanceData.touch),
-          gold_pure: parseFloat(balanceData.pure),
-          remaining_gold_balance: parseFloat(closingbalance)
-        }
+      const existingCustomer = await prisma.closingBalance.findFirst({
+        where: { customer_id: customer_id }
       });
-    }
+      if (!existingCustomer) {
+  
+        await prisma.closingBalance.create({
+          data: {
+            customer_id: customer_id,
+            closing_balance: parseFloat(closingbalance)
+          }
+        })    
+       
+      } 
+      const updatedValue = parseFloat(existingCustomer.closing_balance) + parseFloat(closingbalance);
+        await prisma.closingBalance.update({
+          where: { customer_id: customer_id },
+          data: { closing_balance : updatedValue }
+        });
 
-    // Handle closing balance
-    const existingCustomer = await prisma.closingBalance.findFirst({
+      // await prisma.closingBalance.create({
+      //   data: {
+      //     customer_id: customer_id,
+      //     closing_balance: parseFloat(closingbalance)
+      //   }
+      // })
+    }
+    else{ 
+       const existingCustomer = await prisma.closingBalance.findFirst({
       where: { customer_id: customer_id }
     });
-
     if (!existingCustomer) {
-      // Create new closing balance
+
       await prisma.closingBalance.create({
         data: {
           customer_id: customer_id,
           closing_balance: parseFloat(closingbalance)
         }
-      });
-    } else {
-      // Update closing balance by adding new value
+      })    
+     
+    } else{
+      console.log('update')
       const updatedValue = parseFloat(existingCustomer.closing_balance) + parseFloat(closingbalance);
       await prisma.closingBalance.update({
         where: { customer_id: customer_id },
         data: { closing_balance : updatedValue }
       });
     }
+
+    
+
+  
+  }
+
+    
+
+
+
+    // Handle closing balance
+    // const existingCustomer = await prisma.closingBalance.findFirst({
+    //   where: { customer_id: customer_id }
+    // });
+
+    // if (!existingCustomer) {
+      // Create new closing balance
+     
+    // } 
+    // else {
+    //   // Update closing balance by adding new value
+    //   const updatedValue = parseFloat(existingCustomer.closing_balance) + parseFloat(closingbalance);
+    //   await prisma.closingBalance.update({
+    //     where: { customer_id: customer_id },
+    //     data: { closing_balance : updatedValue }
+    //   });
+    // }
 
     res.status(201).json({ message: "Bill, items, balances, and closing balance saved!", data: newOrder });
   } catch (error) {
