@@ -58,6 +58,12 @@ const UpdateBill = () => {
           // Set balance rows if available
           if (billData.Balance && billData.Balance.length > 0) {
             setBalanceRow(billData.Balance);
+            setClosing  ( billData.Balance[billData.Balance.length-1].
+              remaining_gold_balance
+              )
+          }
+          else{
+            setClosing( billData.total_price)
           }
     
         } catch (err) {
@@ -92,11 +98,13 @@ const UpdateBill = () => {
     setTotalPrice(calculateTotal(billItems))
 
   }, [billItems])
-  useEffect(()=>{
-    setClosing(totalPrice-calculateClosing(balanceRow))
-     
-  },[balanceRow])
+  
 
+  useEffect(() => {
+    const receivedGold = calculateClosing(balanceRow);
+    const updatedClosing = totalPrice - receivedGold;
+    setClosing(updatedClosing);
+  }, [balanceRow, totalPrice]);
   
 
 
@@ -112,13 +120,13 @@ const UpdateBill = () => {
   const calculateClosing = (balanceRow) => {
     return balanceRow.reduce((acc, currValue) => {
       
-      return acc + currValue.pure
+      return acc + currValue.gold_pure
     }, 0)
   };
  
   const handleBalanceRow = () => {
     if(selectedCustomer){
-      const tempRow = [...balanceRow, { 'customer_id':selectedCustomer.customer_id,'givenGold': 0, 'touch': 0, 'pure': 0 }]
+      const tempRow = [...balanceRow, { 'customer_id':selectedCustomer.customer_id,'gold_weight': 0, 'gold_touch': 0, 'gold_pure': 0 }]
       setBalanceRow(tempRow)
     }
   }
@@ -126,8 +134,8 @@ const UpdateBill = () => {
     const updatedRows = [...balanceRow];
     updatedRows[index][field] = value;
 
-    if(field==="touch"){
-     updatedRows[index]['pure']=updatedRows[index]['givenGold'] *  updatedRows[index]['touch']/100;
+    if(field==="gold_touch"){
+     updatedRows[index]['gold_pure']=updatedRows[index]['gold_weight'] *  updatedRows[index]['gold_touch']/100;
     }
 
     setBalanceRow(updatedRows);
@@ -256,7 +264,7 @@ const UpdateBill = () => {
   </Box>
   <Box sx={styles.billInfo}>
     <p>
-      <strong>Date:</strong> {date}<br />
+      <strong>Date:</strong> {date}<br /> <br/>
       <strong>Time:</strong> {time}
     </p>
   </Box>
@@ -352,9 +360,9 @@ const UpdateBill = () => {
                   <TableCell >
                     <input                     
                       type="number"                      
-                      value={row.givenGold}
+                      value={row.gold_weight}
                       onChange={(e) =>
-                        handleBalanceInputChange(index, "givenGold", e.target.value)
+                        handleBalanceInputChange(index, "gold_weight", e.target.value)
                       }
                       style={styles.input}
                     />
@@ -363,9 +371,9 @@ const UpdateBill = () => {
                     <input
                       type="number"
                       placeholder="Touch"
-                      value={row.touch}
+                      value={row.gold_touch}
                       onChange={(e) =>
-                        handleBalanceInputChange(index, "touch", e.target.value)
+                        handleBalanceInputChange(index, "gold_touch", e.target.value)
                       }
                       style={styles.input}
                     />
@@ -374,7 +382,7 @@ const UpdateBill = () => {
                     <input
                       type="number"
                       placeholder="Weight"
-                      value={(row.pure).toFixed(3)}
+                      value={(row.gold_pure).toFixed(3)}
                       style={styles.input}
                     />
                   </TableCell>
@@ -389,7 +397,8 @@ const UpdateBill = () => {
                 <TableCell ></TableCell>
                 <TableCell ></TableCell>
                 {/* <TableCell >{(closing).toFixed(2)}</TableCell> */}
-                <TableCell>{(balanceRow.length === 0 ? totalPrice : closing).toFixed(2)}</TableCell>
+                <TableCell>{Number(balanceRow.length === 0 ? totalPrice : closing).toFixed(2)}</TableCell>
+               
               </TableRow>
             </TableBody>
           </Table>
@@ -440,6 +449,7 @@ const styles = {
     borderRadius: "10px",
     backgroundColor: "#f9f9f9",
     fontFamily: "Arial, sans-serif",
+    marginLeft:'17rem'
   },
   rightPanel: {
     width: "40%",
@@ -450,11 +460,7 @@ const styles = {
     fontFamily: "Arial, sans-serif",
   },
   heading: { textAlign: "center", color: "black" },
-  billInfo: {
-    display: "flex",
-    justifyContent: "end",
-    marginBottom: "20px",
-  },
+ 
   searchSection: { display: "flex", gap: "10px", marginBottom: "20px" },
   smallAutocomplete: {
     width: "48%",
@@ -525,9 +531,10 @@ const styles = {
   billInfo: {
     flex: 1,
     textAlign: "right",
+    marginBottom: "20px",
     
   },
-  
+   
   
 };
 
