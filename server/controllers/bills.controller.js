@@ -11,6 +11,7 @@ const saveBill = async (req, res) => {
     closingbalance
   } = req.body;
 
+  console.log('closingBlance',closingbalance)
   try {
     // Save master order
     const newOrder = await prisma.masterOrder.create({
@@ -74,11 +75,13 @@ const saveBill = async (req, res) => {
         })    
        
       } 
-      const updatedValue = parseFloat(existingCustomer.closing_balance) + parseFloat(closingbalance);
+      else{
+        const updatedValue = parseFloat(existingCustomer.closing_balance) + parseFloat(closingbalance);
         await prisma.closingBalance.update({
           where: { customer_id: customer_id },
           data: { closing_balance : updatedValue }
         });
+      }
 
       // await prisma.closingBalance.create({
       //   data: {
@@ -176,4 +179,8 @@ const saveBill = async (req, res) => {
           res.send(err)
         }
   }
-  module.exports={saveBill,getBill,getCustomerBillDetails}
+  //updateBill
+  const updateBill=()=>{
+    console.log('upDate')
+  }
+  module.exports={saveBill,getBill,getCustomerBillDetails,updateBill}
