@@ -1,10 +1,11 @@
 const express = require('express');
 const router=express.Router()
-const{saveBill,getBill,getCustomerBillDetails}=require('../controllers/bills.controller')
+const{saveBill,getBill,getCustomerBillDetails,updateBill}=require('../controllers/bills.controller')
 
 router.post('/saveBill',saveBill);
 router.get('/getbill/:masterid',getBill);
 router.get('/getCustomerBillDetails',getCustomerBillDetails)
+router.put('/updateBill/:id',updateBill)
 
 module.exports=router;
 
