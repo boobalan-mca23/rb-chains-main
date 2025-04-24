@@ -109,41 +109,53 @@ const CustReport = () => {
 
   const handleCustomerBill = async () => {
     console.log(fromDate)
-    const bill = billInfo.filter((item) => item.customer_id === selectedCustomer.customer_id)
-    if (bill.length === 0) {
-      console.log(bill)
-      setSelectedBill([])
-    } else {
-      //Closing Balance Api
+      if(fromDate&&toDate){
+        if(selectedCustomer){
+
+
+          const bill = billInfo.filter((item) => item.customer_id === selectedCustomer.customer_id)
+          if (bill.length === 0) {
+            console.log(bill)
+            setSelectedBill([])
+          } else {
+            //Closing Balance Api
+            
       
-
-      if (fromDate > toDate) {
-        alert('Enter Date Correct')
-      }
-      else {
-        const tempSelectedBill = []
-        let boolean = false;
-        let openBalanceData = 0
-        bill.map((item, key) => {
-          if (item.date >= fromDate && item.date <= toDate) {
-            tempSelectedBill.push(item)
-            boolean = true;
-
-          }
-          if (item.date < fromDate) {
-            openBalanceData += item.Balance
-          }
-
-        })
-        setOpenBalance(openBalanceData)
-        if (boolean) {
-          setSelectedBill(tempSelectedBill)
-        } else {
-          setSelectedBill([])
+            if (fromDate > toDate) {
+              alert('Enter Date Correct')
+            }
+            else {
+              const tempSelectedBill = []
+              let boolean = false;
+              let openBalanceData = 0
+              bill.map((item, key) => {
+                if (item.date >= fromDate && item.date <= toDate) {
+                  tempSelectedBill.push(item)
+                  boolean = true;
+      
+                }
+                if (item.date < fromDate) {
+                  openBalanceData += item.Balance
+                }
+      
+              })
+              setOpenBalance(openBalanceData)
+              if (boolean) {
+                setSelectedBill(tempSelectedBill)
+              } else {
+                setSelectedBill([])
+              }
+            }
         }
+  
+        }
+        else{
+           alert('Select Customer id')
+         }
+      }else{
+        alert('Select Date first')
       }
-
-    }
+     
   }
 
   useEffect(() => {
