@@ -108,11 +108,32 @@ const getCustomerValueWithPercentage = async (req, res) => {
   }
 };
 
+//get closing balance for customer
+const getCustomerClosing = async (req, res) => {
+  console.log(req.params)
+  try {
+    const closingBalance = await prisma.closingBalance.findFirst({
+      where:{
+        customer_id:parseInt(req.params.id)
+      },
+      select:{
+        closing_balance:true
+      }
+
+    });
+
+    res.status(200).json({closingBalance:closingBalance});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch customer closingBalance" });
+  }
+};
 module.exports = {
   createCustomer,
   deleteCustomer,
   updateCustomer,
   getAllCustomers,
   getCustomerById,
-  getCustomerValueWithPercentage
+  getCustomerValueWithPercentage,
+  getCustomerClosing
 };

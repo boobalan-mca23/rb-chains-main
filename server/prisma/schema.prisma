@@ -162,7 +162,7 @@ model OrderItem {
   updated_at    DateTime @updatedAt
   MasterOrder   MasterOrder @relation(fields: [order_id], references: [id])
   ProductStocks ProductStocks @relation(fields: [stock_id], references: [id])
- 
+
   @@map("orderItems")
 }
 model MasterJewelType {
