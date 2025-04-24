@@ -1,13 +1,13 @@
 generator client {
   provider = "prisma-client-js"
 }
-
+ 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-
+ 
 }
-
+ 
 model LotInfo {
   id                 Int       @id @default(autoincrement())
   lot_initial_weight Float?
@@ -16,8 +16,8 @@ model LotInfo {
   updatedAt          DateTime  @default(now())
   MasterProcess      MasterProcess? @relation(fields: [master_id], references: [id])
   items              Item[]    @relation("LotItems") 
-  AttributeValues    AttributeValue[] 
-
+  AttributeValues    AttributeValue[]
+ 
   @@map("lotInfo")
 }
 model CustomerInfo {
@@ -30,69 +30,69 @@ model CustomerInfo {
   MasterJewelTypeCustomerValue MasterJewelTypeCustomerValue[]
   ClosingBalance     ClosingBalance[]
   Balance            Balance[]
-
+ 
   @@map("customerInfo")
 }
-
+ 
 model MasterProcess {
   id                 Int      @id @default(autoincrement())
   process_name       String
   LotInfos           LotInfo[]       
   MasterProcessMappers MasterProcessMapper[]
   ProcessSteps       ProcessSteps[]   
-
+ 
   @@map("masterProcess")
 }
-
+ 
 model MasterProcessMapper {
   id                 Int       @id @default(autoincrement())
   master_id          Int
   process_id         Int
   process_order_sort Int
-
+ 
   MasterProcess      MasterProcess @relation(fields: [master_id], references: [id])
   LotProcess         LotProcess    @relation(fields: [process_id], references: [id])
-
+ 
   @@map("masterProcessMapper")
 }
-
+ 
 model AttributeInfo {
   attribute_id      Int      @id @default(autoincrement())
   attribute_type    String
   attribute_name    String
   ProcessSteps      ProcessSteps[]     
   AttributeValues   AttributeValue[]  
-
+ 
   @@map("attributeInfo")
 }
-
+ 
 model LotProcess {
   id                   Int               @id @default(autoincrement())
   process_name         String
   process_description  String?
-
+ 
   MasterProcessMappers MasterProcessMapper[] 
   ProcessSteps         ProcessSteps[]    
-
+ 
   @@map("LotProcess")
 }
-
+ 
 model ProcessSteps {
   id                Int          @id @default(autoincrement())
   process_id        Int
   attribute_id      Int
   created_at        DateTime     @default(now())
   updated_at        DateTime     @updatedAt
-
+ 
   LotProcess        LotProcess   @relation(fields: [process_id], references: [id])
   AttributeInfo     AttributeInfo @relation(fields: [attribute_id], references: [attribute_id])  
   master            MasterProcess[]
-
+ 
   AttributeValues   AttributeValue[] @relation("ProcessStepsToAttributeValue")
-
+ 
   @@map("processSteps")
 }
-
+ 
 model AttributeValue {
   id              Int         @id @default(autoincrement())
   lot_id          Int?
@@ -102,40 +102,38 @@ model AttributeValue {
   touchValue      Float?
   item_name       String?
   process_step_id Int    
-
+ 
   LotInfo         LotInfo?      @relation(fields: [lot_id], references: [id])
   Item            Item?         @relation(fields: [items_id], references: [item_id])  
   AttributeInfo   AttributeInfo @relation(fields: [attribute_id], references: [attribute_id])
   ProcessSteps    ProcessSteps  @relation(fields: [process_step_id], references: [id], name: "ProcessStepsToAttributeValue")
-
+ 
   @@map("attributeValue")
 }
-
-
+ 
+ 
 model Item {
   item_id        Int     @id @default(autoincrement())
   lot_id         Int
   item_type      String?
   item_name      String?
-  
   LotInfo        LotInfo @relation("LotItems", fields: [lot_id], references: [id])  
   AttributeValues AttributeValue[] 
   ProductStocks  ProductStocks[]  
-  OrderItems     OrderItem[]  
   MasterJewelItemMapper MasterJewelItemMapper[]   
-
+ 
   @@map("item")
 }
 model ProductStocks {
   id              Int      @id @default(autoincrement())
   item_id         Int
   product_status  String
-
+ 
   Item            Item     @relation(fields: [item_id], references: [item_id])  
-
+  orderItems      OrderItem[]
   @@map("ProductStocks")
 }
-
+ 
 model MasterOrder {
   id                Int      @id @default(autoincrement())
   order_status      String
@@ -143,15 +141,15 @@ model MasterOrder {
   total_price       Float
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
-
+ 
   CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id])  
   OrderItems        OrderItem[]
   Balance           Balance[]
- 
 
+ 
   @@map("masterOrder")
 }
-
+ 
 model OrderItem {
   id            Int      @id @default(autoincrement())
   order_id      Int
@@ -163,8 +161,8 @@ model OrderItem {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
   MasterOrder   MasterOrder @relation(fields: [order_id], references: [id])
-  Item          Item        @relation(fields: [stock_id], references: [item_id]) 
-
+  ProductStocks ProductStocks @relation(fields: [stock_id], references: [id])
+ 
   @@map("orderItems")
 }
 model MasterJewelType {
@@ -174,10 +172,10 @@ model MasterJewelType {
   updated_at         DateTime @updatedAt
   MasterJewelTypeCustomerValue MasterJewelTypeCustomerValue[]
   MasterJewelItemMapper MasterJewelItemMapper[]
-
+ 
   @@map("master_jewel_type") 
 }
-
+ 
 model MasterJewelTypeCustomerValue {
   id                Int      @id @default(autoincrement())
   customer_id       Int
@@ -189,10 +187,10 @@ model MasterJewelTypeCustomerValue {
   updated_at        DateTime @updatedAt
   CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
   MasterJewelType   MasterJewelType @relation(fields: [masterJewel_id], references: [master_jewel_id])
-
+ 
   @@map("master_jewel_type_customer_value") 
 }
-
+ 
 model MasterJewelItemMapper{
    id                 Int      @id @default(autoincrement())
    item_id            Int
@@ -215,7 +213,7 @@ model Balance{
   updated_at              DateTime @updatedAt
   CustomerInfo            CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
   MasterOrder             MasterOrder @relation(fields: [order_id], references: [id])
-
+ 
 }
 model ClosingBalance{
   id                Int @id @default(autoincrement())

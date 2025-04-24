@@ -25,6 +25,15 @@ import { createLot, getAllLot, saveLot, getLotDatewise, getProductName } from ".
 import { styled } from "@mui/material/styles";
 import { processStepId } from "../../ProcessStepId/processStepId";
 import axios from "axios";
+import  { useRef } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+
+
+
+
+
+
 const processes = [
   "Melting",
   "Kambi",
@@ -56,6 +65,10 @@ const StyledInput = styled(TextField)({
   },
   width: "80px",
 });
+
+
+
+
 
 const ProcessTable = () => {
   const [data, setData] = useState([]);
@@ -685,8 +698,48 @@ const ProcessTable = () => {
     getProduct()
 
   }, [])
+
+  
+
+  const billRef = useRef(null);
+
+  const handleDownloadPdf = async () => {
+    const input = billRef.current;
+  
+    if (!input) return;
+  
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+    });
+  
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+  
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  
+    let heightLeft = imgHeight;
+    let position = 0;
+  
+    pdf.addImage(imgData, "PNG", 0, position, pdfWidth, imgHeight);
+    heightLeft -= pdfHeight;
+  
+    while (heightLeft > 0) {
+      position -= pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+  
+    pdf.save(`Bill-${ 'Generated'}.pdf`);
+  };
+  
+
   return (
-    <Box sx={{ padding: "20px" }}>
+    <Box sx={{ padding: "20px" }} ref={billRef}>
       <Box sx={{ textAlign: "right", marginBottom: "10px" }}>
         <Button
           variant="contained"
@@ -1231,6 +1284,10 @@ const ProcessTable = () => {
         </Table>
         <ToastContainer />
       </StyledTableContainer>
+      <Button variant="contained" color="primary" onClick={handleDownloadPdf}>
+  Download as PDF
+</Button>
+
 
 
       <Modal open={open} onClose={handleClose}>
