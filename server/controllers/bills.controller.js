@@ -74,11 +74,14 @@ const saveBill = async (req, res) => {
         })    
        
       } 
-      const updatedValue = parseFloat(existingCustomer.closing_balance) + parseFloat(closingbalance);
+      else{
+        const updatedValue = parseFloat(existingCustomer.closing_balance) + parseFloat(closingbalance);
         await prisma.closingBalance.update({
           where: { customer_id: customer_id },
           data: { closing_balance : updatedValue }
         });
+      }
+     
 
       // await prisma.closingBalance.create({
       //   data: {
@@ -152,6 +155,7 @@ const saveBill = async (req, res) => {
                 id:parseInt(req.params.masterid)
             },
             select:{
+                total_price:true,
                 OrderItems:true,
                 Balance:true,
                 CustomerInfo:true
