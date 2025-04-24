@@ -83,6 +83,7 @@ const saveBill = async (req, res) => {
         });
       }
 
+
       // await prisma.closingBalance.create({
       //   data: {
       //     customer_id: customer_id,
@@ -155,6 +156,7 @@ const saveBill = async (req, res) => {
                 id:parseInt(req.params.masterid)
             },
             select:{
+                total_price:true,
                 OrderItems:true,
                 Balance:true,
                 CustomerInfo:true
