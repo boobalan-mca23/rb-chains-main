@@ -181,8 +181,25 @@ const saveBill = async (req, res) => {
           res.send(err)
         }
   }
+
+
+  //getSalesBillDetails 
+
+  const getSalesBillDetails=async(req,res)=>{
+    try{
+     const billInfo=await prisma.masterOrder.findMany({
+       include:{
+        CustomerInfo:true,
+       }
+     })
+     res.send({'billInfo':billInfo})
+     
+    }catch(err){
+      res.send(err)
+    }
+}
   //updateBill
   const updateBill=()=>{
     console.log('upDate')
   }
-  module.exports={saveBill,getBill,getCustomerBillDetails,updateBill}
+  module.exports={saveBill,getBill,getCustomerBillDetails,updateBill,getSalesBillDetails}
