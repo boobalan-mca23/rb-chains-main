@@ -7,6 +7,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { Height } from "@mui/icons-material";
 
 const Billing = () => {
   const [customers, setCustomers] = useState([]);
@@ -353,7 +354,7 @@ const Billing = () => {
                   <tr key={index}>
                     <td style={styles.td}>{item.productName}</td>
                     <td style={styles.td}>{item.productTouch}</td>
-                    <td style={styles.td}><input value={item.productPercentage} type="number" onChange={(e)=>{handleChangePercentage(index,e.target.value)}}></input></td>
+                    <td style={styles.td}><input value={item.productPercentage} type="number" onChange={(e)=>{handleChangePercentage(index,e.target.value)}} ></input></td>
                     <td style={styles.td}>{item.productWeight}</td>
                     <td style={styles.td}>{item.productPure}</td>
                     <td style={styles.td}><Button onClick={()=>{hanldeRemoveOrder(index,item.productName,item.productTouch,item.productWeight,item.stockId)}}><FaTrash></FaTrash></Button></td>
@@ -418,6 +419,7 @@ const Billing = () => {
                       style={styles.input}
                     />
                   </TableCell>
+                  
                   <TableCell>
                     <input
                       type="number"
@@ -539,19 +541,33 @@ const styles = {
     backgroundColor: "#fff",
   },
   itemsSection: { marginTop: "20px" },
-  table: { width: "100%", borderCollapse: "collapse" },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    tableLayout: "fixed", // Forces all cells to respect width
+  },
   th: {
     border: "1px solid #ddd",
     padding: "10px",
     backgroundColor: "#f2f2f2",
     textAlign: "left",
     fontWeight: "bold",
+    width: "16.66%", // For 6 columns (100 / 6)
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   td: {
     border: "1px solid #ddd",
     padding: "10px",
     textAlign: "left",
+    width: "16.66%",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
+  
   saveButton: {
     marginTop: "20px",
     display: "block",
@@ -565,17 +581,18 @@ const styles = {
     marginRight: "auto",
     fontSize: "18 px"
   },
+
   input: {
-    width: "100%",
-    padding: "8px 12px",
-    borderRadius: "6px",
+    padding: "6px 8px",
     border: "1px solid #ccc",
+    borderRadius: "4px",
     fontSize: "14px",
     fontFamily: "inherit",
     backgroundColor: "#fff",
-    boxSizing: "border-box",
+    boxSizing: "border-box", 
     outline: "none",
   },
+  
   delButton:{
     margin: "10px",
     display: "block",

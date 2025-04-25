@@ -50,16 +50,24 @@ const SalesReport = () => {
     fetchBillDetails();
   }, []);
 
-  useEffect(() => {
+
+useEffect(() => {
+    const currentDate = new Date().toISOString().split('T')[0]; // Get the current date in YYYY-MM-DD format
+  
     if (fromDate && toDate) {
+      // If both fromDate and toDate are provided, filter the data within the range
       const filtered = billInfo.filter(
         (bill) => bill.formattedDate >= fromDate && bill.formattedDate <= toDate
       );
       setFilteredData(filtered);
     } else {
-      setFilteredData([]);
+      // If no dates are provided, filter to show only the current date's details
+      const filtered = billInfo.filter(bill => bill.formattedDate === currentDate);
+      setFilteredData(filtered);
     }
   }, [fromDate, toDate, billInfo]);
+  
+  
 
   return (
     <>
@@ -74,6 +82,8 @@ const SalesReport = () => {
       >
         Sales Report
       </Typography>
+
+      
       <div style={{ padding: "20px" }}>
         <Box
           sx={{
@@ -139,6 +149,9 @@ const SalesReport = () => {
     </TableBody>
   </Table>
 </TableContainer>
+<Box textAlign="center" mt={4}>
+</Box>
+
 
         </div>
       </div>

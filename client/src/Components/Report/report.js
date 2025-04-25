@@ -61,7 +61,16 @@ function Report() {
         </button>
 
     <Link to='/salesreport'> 
-        <button> Sales Report </button> 
+        <button 
+          style={{
+            padding: "10px",
+            backgroundColor: selectedReport === "daily" ? "darkblue" : "blue",
+            color: "white",
+            border: "none",
+            cursor: selectedReport === "daily" ? "not-allowed" : "pointer",
+            opacity: selectedReport === "daily" ? 0.5 : 1,
+          }}
+        > Sales Report </button> 
         </Link>
 
       </div>
