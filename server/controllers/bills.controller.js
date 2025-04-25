@@ -182,7 +182,46 @@ const saveBill = async (req, res) => {
         }
   }
   //updateBill
-  const updateBill=()=>{
-    console.log('upDate')
+  const updateBill=async(req,res)=>{
+     const order_id=req.params.id;
+     const balanceData=req.body
+     console.log(balanceData)
+     const closing=balanceData[balanceData.length-1].closing
+     console.log(closing)
+     try{
+       for(const bal of balanceData){
+            if(bal.balance_id===0){
+               const newBalance=await prisma.balance.create({
+                 data:{
+                  order_id:parseInt(order_id),
+                  customer_id:bal.customer_id,
+                  gold_weight:parseFloat(bal.gold_weight),
+                  gold_touch:parseFloat(bal.gold_touch),
+                  gold_pure:parseFloat(bal.gold_pure),
+                  remaining_gold_balance:parseFloat(closing)
+                 }
+               })
+               const existingClosing=await prisma.closingBalance.findFirst({
+                where:{
+                  customer_id:newBalance.customer_id
+                }
+              
+               })
+               const updateValue=existingClosing.closing_balance-newBalance.gold_pure
+               await prisma.closingBalance.update({
+                where:{
+                  customer_id:newBalance.customer_id
+                },
+                data:{
+                  closing_balance:parseFloat(updateValue)
+                }
+               })
+            }
+       }
+       res.status(200).json({message:"update Suceess"})
+     }catch(err){
+       res.status(500).json({message:"Error on Update bill"})
+     }
+ 
   }
   module.exports={saveBill,getBill,getCustomerBillDetails,updateBill}

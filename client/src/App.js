@@ -68,6 +68,7 @@ import Customerreport from "./Components/Report/custreport";
 import Master from './Components/MasterFile/Master'
 import Item from "./Components/ItemFile/Item";
 import UpdateBill from "./Components/Billing/updateBill";
+import StockReport from "./Components/Report/stockreport";
 
 
 
@@ -88,6 +89,7 @@ function Layout() {
         <Route path="/report" element={<Report />} />
         <Route path="/dailyreport" element={<Dailyreport />} />
         <Route path="/customerreport" element={<Customerreport />} />
+        <Route path="/stockReport" element={<StockReport/>} />
         <Route path="/master" element={<Master/>} />
         <Route path="/item" element={<Item/>} />
         <Route path="/billing/:id" element={<UpdateBill/>}/>

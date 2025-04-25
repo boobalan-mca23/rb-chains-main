@@ -124,15 +124,15 @@ const UpdateBill = () => {
   };
  
   const handleBalanceRow = () => {
-    if(selectedCustomer){
-      const tempRow = [...balanceRow, { 'id':undefined',customer_id':selectedCustomer.customer_id,'gold_weight': 0, 'gold_touch': 0, 'gold_pure': 0 }]
+  
+      const tempRow = [...balanceRow, { 'balance_id':0,'customer_id':selectedCustomer.customer_id,'gold_weight': 0, 'gold_touch': 0, 'gold_pure': 0 }]
       setBalanceRow(tempRow)
-    }
+    
   }
   const handleBalanceInputChange = (index, field, value) => {
     const updatedRows = [...balanceRow];
     updatedRows[index][field] = value;
- 
+
     if(field==="gold_touch"){
      updatedRows[index]['gold_pure']=updatedRows[index]['gold_weight'] *  updatedRows[index]['gold_touch']/100;
     }
@@ -179,45 +179,27 @@ const UpdateBill = () => {
  
   };
  
-  const handleSaveBill = async() => {
+  const handleUpdateBill = async() => {
     // validation for bill
-    if(!selectedCustomer){
-      alert('Customer Name is Required')
-    }
-    if(!selectedProduct){
-        alert('Jewel Name is Required')
-    }
-   
-    else{
-       if(selectedCustomer){
- 
-        const payLoad = {
-          "customer_id": selectedCustomer.customer_id,
-          "order_status": "completed",
-          "totalPrice": totalPrice,
-          "orderItems":billItems,
-          "balance":balanceRow,
-          "closingbalance":(closing).toFixed(2)
-         
-        }
-         console.log('payload', payLoad)
- 
+    if(balanceRow.length===0){
+      alert('Give Some New Balance Entry')
+    } else{
+        const tempBalRow=[...balanceRow]
+        tempBalRow.push({'closing':(closing).toFixed(2)})
+        console.log('balanceRow',tempBalRow)
         try{
-            const response= await axios.post(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,payLoad);
-            if(response.status===201){
-              console.log(response.data.data.id)
-               navigate(`/billing/${response.data.data.id}`)
-            }
-          }catch(err){
-               alert(err.message)
+          const response=await axios.put(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/updateBill/${billNo}`,tempBalRow)
+          if(response.status===200){
+            toast.success(response.data.message)
+            
           }
-         
-         
-       }else{
-        alert('Products is Required')
-       }
-   
+
+        }catch(err){
+           console.log(err)
+        }
     }
+ 
+   
    
    
   }
@@ -386,7 +368,9 @@ const UpdateBill = () => {
                     />
                   </TableCell>
                   <TableCell>
+                  {!isPrinting && (
                     <Button style={styles.delButton} onClick={(e)=>{handleRemoveBalanceRow(index)}}><FaTrash></FaTrash></Button>
+                  )}
                   </TableCell>
                  
                 </TableRow>
@@ -409,7 +393,7 @@ const UpdateBill = () => {
     <Button
       variant="contained"
       color="primary"
-      onClick={handleSaveBill}
+      onClick={handleUpdateBill}
       sx={styles.saveButton}
     >
       Save

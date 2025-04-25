@@ -677,6 +677,7 @@ const ProcessTable = () => {
       console.log('fromDate', fromDate);
       console.log('toDate', toDate);
 
+    
       if (fromDate > toDate) {
         alert('Your Date Order was Wrong');
         return;
@@ -688,7 +689,7 @@ const ProcessTable = () => {
       console.log('itemsAfterDateWiseFilter', items);
     } catch (error) {
       console.error('Error fetching data by date:', error.message);
-      alert('Something went wrong while fetching data. Please try again.');
+      alert('Select Date First.');
     }
   };
 
