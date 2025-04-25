@@ -7,9 +7,7 @@ import { useParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
- 
- 
- 
+
 const UpdateBill = () => {
   const [customers, setCustomers] = useState([]);
   const [billItems, setBillItems] = useState([]);
@@ -28,8 +26,6 @@ const UpdateBill = () => {
   const [productWeight, setProductWeight] = useState([])
   const [products, setProducts] = useState([]);
   const navigate=useNavigate()
- 
- 
  
     useEffect(() => {
       const fetchBill = async () => {
@@ -113,18 +109,14 @@ const UpdateBill = () => {
       return acc + currValue.productPure
     }, 0)
   };
- 
- 
- 
+  
   const calculateClosing = (balanceRow) => {
-    return balanceRow.reduce((acc, currValue) => {
-     
+    return balanceRow.reduce((acc, currValue) => {    
       return acc + currValue.gold_pure
     }, 0)
   };
  
-const handleBalanceRow = () => {
-  
+const handleBalanceRow = () => {  
       const tempRow = [...balanceRow, { 'balance_id':0,'customer_id':selectedCustomer.customer_id,'gold_weight': 0, 'gold_touch': 0, 'gold_pure': 0 }]
       setBalanceRow(tempRow)
     
@@ -145,9 +137,6 @@ const handleBalanceRow = () => {
     tempBalRow.splice(index,1)
     setBalanceRow(tempBalRow)
   }
- 
- 
- 
  
   const handleProductSelect = (itemIndex,stockId) => {
     const tempProducts = [...productWeight]
@@ -173,10 +162,7 @@ const handleBalanceRow = () => {
       setBillItems(tempBill)
       tempProducts.splice(itemIndex, 1)
       setProductWeight(tempProducts)
- 
     }
- 
- 
   };
  
   const handleUpdateBill = async() => {
@@ -197,14 +183,8 @@ const handleBalanceRow = () => {
         }catch(err){
            console.log(err)
         }
-    }
- 
-   
-   
-   
+    }    
   }
- 
- 
   const handleDownloadPdf = () => {
     setIsPrinting(true);
  
@@ -215,12 +195,10 @@ const handleBalanceRow = () => {
  
       html2canvas(input, { scale: 2 }).then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("p", "mm", "a4");
- 
+        const pdf = new jsPDF("p", "mm", "a4"); 
         const imgProps = pdf.getImageProperties(imgData);
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
- 
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width; 
         pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
         pdf.save(`Bill-${billNo || 'download'}.pdf`);
         setIsPrinting(false);
@@ -228,17 +206,12 @@ const handleBalanceRow = () => {
     }, 300); // slight delay to allow re-render before taking screenshot
   };
  
- 
- 
   return (
     <>
    
- 
 <Box sx={styles.wrapper}>
       <Box sx={styles.leftPanel} ref={billRef}>
         <h1 style={styles.heading}>Estimate Only</h1>
-     
- 
 <Box sx={styles.billHeader}>
   <Box sx={styles.billNumber}>
     <p><strong>Bill No: {id}</strong></p>
@@ -250,9 +223,6 @@ const handleBalanceRow = () => {
     </p>
   </Box>
 </Box>
- 
- 
- 
         {selectedCustomer && (
           <Box sx={styles.customerDetails}>
             <h3>Customer Info</h3>
@@ -261,12 +231,7 @@ const handleBalanceRow = () => {
             <p><strong>Address:</strong> {selectedCustomer.address}</p>
             <p><strong>Shop Name:</strong> {selectedCustomer.customer_shop_name}</p>
           </Box>
-        )}
- 
-       
- 
-     
- 
+        )} 
         <Box sx={styles.itemsSection}>
           <h3>Order Items:</h3>
           <table style={styles.table}>
@@ -421,17 +386,16 @@ const handleBalanceRow = () => {
     >
       Download as Pdf
     </Button>
+ 
   </>
 )}
- 
       </Box>
-    </Box>
- 
-    </>
-   
+    </Box> 
+    </>  
  
   );
 };
+
  
 const styles = {
   wrapper: {
@@ -531,11 +495,8 @@ const styles = {
     textAlign: "right",
     marginBottom: "20px",
    
-  },
-   
- 
+  },  
 };
- 
  
 export default UpdateBill;
  
