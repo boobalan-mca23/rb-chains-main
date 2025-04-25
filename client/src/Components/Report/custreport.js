@@ -104,7 +104,7 @@ const CustReport = () => {
   }
 
   const handleViewBill = (billNo) => {
-    navigate(`/billing`);
+    navigate(`/billing/${billNo}`);
   };
 
   const handleCustomerBill = async () => {

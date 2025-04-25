@@ -112,10 +112,12 @@ const Billing = () => {
         productTouch: tempSelectProduct[0].touchValue,
         productWeight: tempSelectProduct[0].value,
         productPure: 0,
+        productPercentage:0,
         stockId:stockId
       }
-
+       console.log('testing',billObj)
       billObj.productPure = ((billObj.productTouch + filterMasterItem[0].value) * billObj.productWeight) / 100
+      billObj.productPercentage=filterMasterItem[0].value
       console.log('pure', billObj.productPure)
       const tempBill = [...billItems]
       tempBill.push(billObj)
@@ -138,6 +140,10 @@ const Billing = () => {
     }
     
     else{
+       if(billItems.length===0){
+         alert('Bill Items is Required ')
+         return;
+       }
        if(selectedCustomer){
 
         const payLoad = {
@@ -236,6 +242,23 @@ const Billing = () => {
     setBalanceRow(tempBalRow)
   }
   
+  const handleChangePercentage=(itemIndex,value)=>{
+     const tempBill=[...billItems]
+     const filteredbill=tempBill.filter((item,index)=>index===itemIndex)
+      filteredbill[0].productPercentage=parseInt(value)
+      filteredbill[0].productPure=((filteredbill[0].productTouch+parseInt(value))*filteredbill[0].productWeight)/100
+      tempBill.splice(itemIndex,1,filteredbill[0])
+      setBillItems(tempBill)
+  }
+  const hanldeRemoveOrder=(index,item_name,touchValue,value,stock_id)=>{
+    console.log(item_name,touchValue,value,stock_id)
+        const tempBill=[...billItems]
+        tempBill.splice(index,1)
+        setBillItems(tempBill)
+        const tempProduct=[...productWeight]
+        tempProduct.push({'item_name':item_name,'stock_id':stock_id,'touchValue':touchValue,'value':value})
+        setProductWeight(tempProduct)
+  }
 
   return (
     <Box sx={styles.wrapper}>
@@ -318,8 +341,10 @@ const Billing = () => {
               <tr>
                 <th style={styles.th}>Description</th>
                 <th style={styles.th}>Touch</th>
+                <th style={styles.th}>%</th>
                 <th style={styles.th}>Weight</th>
                 <th style={styles.th}>Pure</th>
+                <th style={styles.th}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -328,8 +353,10 @@ const Billing = () => {
                   <tr key={index}>
                     <td style={styles.td}>{item.productName}</td>
                     <td style={styles.td}>{item.productTouch}</td>
+                    <td style={styles.td}><input value={item.productPercentage} type="number" onChange={(e)=>{handleChangePercentage(index,e.target.value)}}></input></td>
                     <td style={styles.td}>{item.productWeight}</td>
                     <td style={styles.td}>{item.productPure}</td>
+                    <td style={styles.td}><Button onClick={()=>{hanldeRemoveOrder(index,item.productName,item.productTouch,item.productWeight,item.stockId)}}><FaTrash></FaTrash></Button></td>
                   </tr>
                 ))
               ) : (
@@ -343,12 +370,15 @@ const Billing = () => {
                 </tr>
               )}
               <tr>
-                <td colSpan="3" style={styles.td}>
+                <td colSpan="4" style={styles.td}>
                   <strong>Total</strong>
                 </td>
                 <td style={styles.td}>{totalPrice}</td>
+                  
               </tr>
               <tr>
+                <td></td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td></td>

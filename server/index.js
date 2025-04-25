@@ -7,6 +7,7 @@ const customerRoutes = require("./routes/customer.routes");
 const processRoutes  = require("./routes/process.routes");
 const jewelTypeRoutes=require("./routes/jewelType.routes.js");
 const billRoutes=require("./routes/bill.routes.js");
+const stockRoutes=require("./routes/stock.routes.js")
 
 const app = express();
 const PORT = 5000;
@@ -30,6 +31,8 @@ app.use("/api/jewelType", jewelTypeRoutes);
 //Bill routes
 app.use("/api/bill",billRoutes)
 
+//Stock routes
+app.use("/api/stock",stockRoutes)
 
 app.listen(PORT, () => {
   console.log(chalk.green(`Server running on http://localhost:${PORT}`));

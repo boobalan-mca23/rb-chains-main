@@ -128,6 +128,8 @@ model ProductStocks {
   id              Int      @id @default(autoincrement())
   item_id         Int
   product_status  String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @default(now())
  
   Item            Item     @relation(fields: [item_id], references: [item_id])  
   orderItems      OrderItem[]
