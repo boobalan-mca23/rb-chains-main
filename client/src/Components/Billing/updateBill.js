@@ -123,7 +123,7 @@ const UpdateBill = () => {
     }, 0)
   };
  
-  const handleBalanceRow = () => {
+const handleBalanceRow = () => {
   
       const tempRow = [...balanceRow, { 'balance_id':0,'customer_id':selectedCustomer.customer_id,'gold_weight': 0, 'gold_touch': 0, 'gold_pure': 0 }]
       setBalanceRow(tempRow)
@@ -330,43 +330,58 @@ const UpdateBill = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Given Gold</TableCell>
-                <TableCell>Touch</TableCell>
-                <TableCell>Weight</TableCell>
+                <TableCell> <strong>Given Gold </strong></TableCell>
+                <TableCell><strong> Touch</strong></TableCell>
+                <TableCell><strong>Weight </strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
            {balanceRow.map((row, index) => (
                 <TableRow key={index}>
-                  <TableCell >
-                    <input                    
-                      type="number"                      
-                      value={row.gold_weight}
-                      onChange={(e) =>
-                        handleBalanceInputChange(index, "gold_weight", e.target.value)
-                      }
-                      style={styles.input}
-                    />
-                  </TableCell>
+                 
                   <TableCell>
-                    <input
-                      type="number"
-                      placeholder="Touch"
-                      value={row.gold_touch}
-                      onChange={(e) =>
-                        handleBalanceInputChange(index, "gold_touch", e.target.value)
-                      }
-                      style={styles.input}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <input
-                      type="number"
-                      placeholder="Weight"
-                      value={(row.gold_pure).toFixed(3)}
-                      style={styles.input}
-                    />
-                  </TableCell>
+  {isPrinting ? (
+    <span>{row.gold_weight}</span>
+  ) : (
+    <input                    
+      type="number"                      
+      value={row.gold_weight}
+      onChange={(e) =>
+        handleBalanceInputChange(index, "gold_weight", e.target.value)
+      }
+      style={styles.input}
+    />
+  )}
+</TableCell>
+
+<TableCell>
+  {isPrinting ? (
+    <span>{row.gold_touch}</span>
+  ) : (
+    <input
+      type="number"
+      placeholder="Touch"
+      value={row.gold_touch}
+      onChange={(e) =>
+        handleBalanceInputChange(index, "gold_touch", e.target.value)
+      }
+      style={styles.input}
+    />
+  )}
+</TableCell>
+<TableCell>
+  {isPrinting ? (
+    <span>{(row.gold_pure).toFixed(3)}</span>
+  ) : (
+    <input
+      type="number"
+      placeholder="Weight"
+      value={(row.gold_pure).toFixed(3)}
+      style={styles.input}
+    />
+  )}
+</TableCell>
+
                   <TableCell>
                   {!isPrinting && (
                     <Button style={styles.delButton} onClick={(e)=>{handleRemoveBalanceRow(index)}}><FaTrash></FaTrash></Button>
@@ -379,8 +394,8 @@ const UpdateBill = () => {
                 <TableCell >Closing</TableCell>
                 <TableCell ></TableCell>
                 <TableCell ></TableCell>
-                {/* <TableCell >{(closing).toFixed(2)}</TableCell> */}
-                <TableCell>{Number(balanceRow.length === 0 ? totalPrice : closing).toFixed(2)}</TableCell>
+                
+                <TableCell>{Number(balanceRow.length === 0 ? totalPrice : closing).toFixed(3)}</TableCell>
                
               </TableRow>
             </TableBody>

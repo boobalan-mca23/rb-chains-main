@@ -2,7 +2,11 @@
 import React, { useState } from "react";
 import DailyReport from "./dailyreport";
 import CustomerReport from "./custreport";
+
 import StockReport from "./stockreport";
+
+import { Link } from "react-router-dom";
+
 
 function Report() {
   const [selectedReport, setSelectedReport] = useState(null);
@@ -40,6 +44,7 @@ function Report() {
         >
           Customer Report
         </button>
+
         <button
           onClick={() => setSelectedReport("stock")}
           disabled={selectedReport === "stock"}
@@ -54,6 +59,11 @@ function Report() {
         >
           Stock Report
         </button>
+
+    <Link to='/salesreport'> 
+        <button> Sales Report </button> 
+        </Link>
+
       </div>
 
       <div>
