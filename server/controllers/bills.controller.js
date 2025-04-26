@@ -202,11 +202,12 @@ const saveBill = async (req, res) => {
   const updateBill=async(req,res)=>{
      const order_id=req.params.id;
      const balanceData=req.body
-     console.log(balanceData)
+
      const closing=balanceData[balanceData.length-1].closing
-     console.log(closing)
+ 
      try{
        for(const bal of balanceData){
+      
             if(bal.balance_id===0){
                const newBalance=await prisma.balance.create({
                  data:{
@@ -233,10 +234,34 @@ const saveBill = async (req, res) => {
                   closing_balance:parseFloat(updateValue)
                 }
                })
+            }else{
+              
+              if (!bal.balance_id) {
+                console.log("Skipping invalid balance", bal);
+                continue; // skip to next
+              }
+              console.log('balance update',bal.balance_id,order_id,bal.customer_id,bal.gold_weight,bal.gold_touch,bal.gold_pure,closing)
+              //balance update
+              await prisma.balance.updateMany({
+                where: {
+                  balance_id: parseInt(bal.balance_id)
+                },
+                data: {
+                  order_id: parseInt(order_id),
+                  customer_id: bal.customer_id,
+                  gold_weight: parseFloat(bal.gold_weight),
+                  gold_touch: parseFloat(bal.gold_touch),
+                  gold_pure: parseFloat(bal.gold_pure),
+                  remaining_gold_balance: parseFloat(closing)
+                }
+              });
+              
+
             }
        }
-       res.status(200).json({message:"update Suceess"})
+       res.status(200).json({message:" Bill Update Suceess"})
      }catch(err){
+      console.log(err)
        res.status(500).json({message:"Error on Update bill"})
      }
  

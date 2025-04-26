@@ -4,7 +4,8 @@ import { Autocomplete, TextField, Box, Button, Table, TableHead, TableCell, Tabl
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { Height } from "@mui/icons-material";
@@ -162,7 +163,10 @@ const Billing = () => {
             const response= await axios.post(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,payLoad);
             if(response.status===201){
               console.log(response.data.data.id)
-               navigate(`/billing/${response.data.data.id}`)
+              toast.success("Bill Created SucessFully");
+              setTimeout(() => {
+                navigate(`/billing/${response.data.data.id}`);
+              }, 3000);
             }
           }catch(err){
                alert(err.message)
@@ -230,18 +234,22 @@ const Billing = () => {
     const updatedRows = [...balanceRow];
     updatedRows[index][field] = value;
 
-    if(field==="touch"){
+    if(field==="touch" || field==="givenGold"){
      updatedRows[index]['pure']=updatedRows[index]['givenGold'] *  updatedRows[index]['touch']/100;
     }
 
     setBalanceRow(updatedRows);
   };
-  const handleRemoveBalanceRow=(index)=>{
-   
-    const tempBalRow=[...balanceRow]
-    tempBalRow.splice(index,1)
-    setBalanceRow(tempBalRow)
-  }
+  const handleRemoveBalanceRow = (index) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this balance row?");
+    
+    if (confirmDelete) {
+      const tempBalRow = [...balanceRow];
+      tempBalRow.splice(index, 1);
+      setBalanceRow(tempBalRow);
+    }
+  };
+  
   
   const handleChangePercentage=(itemIndex,value)=>{
      const tempBill=[...billItems]
@@ -251,15 +259,22 @@ const Billing = () => {
       tempBill.splice(itemIndex,1,filteredbill[0])
       setBillItems(tempBill)
   }
-  const hanldeRemoveOrder=(index,item_name,touchValue,value,stock_id)=>{
-    console.log(item_name,touchValue,value,stock_id)
-        const tempBill=[...billItems]
-        tempBill.splice(index,1)
-        setBillItems(tempBill)
-        const tempProduct=[...productWeight]
-        tempProduct.push({'item_name':item_name,'stock_id':stock_id,'touchValue':touchValue,'value':value})
-        setProductWeight(tempProduct)
-  }
+  const handleRemoveOrder = (index, item_name, touchValue, value, stock_id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this order item?");
+    
+    if (confirmDelete) {
+      console.log(item_name, touchValue, value, stock_id);
+  
+      const tempBill = [...billItems];
+      tempBill.splice(index, 1);
+      setBillItems(tempBill);
+  
+      const tempProduct = [...productWeight];
+      tempProduct.push({ item_name, stock_id, touchValue, value });
+      setProductWeight(tempProduct);
+    }
+  };
+  
 
   return (
     <Box sx={styles.wrapper}>
@@ -357,7 +372,7 @@ const Billing = () => {
                     <td style={styles.td}><input value={item.productPercentage} type="number" onChange={(e)=>{handleChangePercentage(index,e.target.value)}} ></input></td>
                     <td style={styles.td}>{item.productWeight}</td>
                     <td style={styles.td}>{item.productPure}</td>
-                    <td style={styles.td}><Button onClick={()=>{hanldeRemoveOrder(index,item.productName,item.productTouch,item.productWeight,item.stockId)}}><FaTrash></FaTrash></Button></td>
+                    <td style={styles.td}><Button onClick={()=>{handleRemoveOrder(index,item.productName,item.productTouch,item.productWeight,item.stockId)}}><FaTrash></FaTrash></Button></td>
                   </tr>
                 ))
               ) : (
@@ -492,6 +507,7 @@ const Billing = () => {
             )}
           </TableBody>
         </Table>
+        <ToastContainer/>
       </Box>
     </Box>
 

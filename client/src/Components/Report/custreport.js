@@ -23,6 +23,7 @@ import {
 import { Balance, Visibility } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { teal } from "@mui/material/colors";
 
 const CustReport = () => {
   const [fromDate, setFromDate] = useState("");
@@ -45,7 +46,9 @@ const CustReport = () => {
           `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/getCustomerBillDetails`
         );
         console.log("Fetched Bill:", response.data.billInfo);
-        const tempBill = [...billInfo]
+
+        if(response.data.billInfo.length>=1){
+          const tempBill = [...billInfo]
         response.data.billInfo.map((item, key) => {
           const dateObj = new Date(item.created_at);
           const year = dateObj.getFullYear();
@@ -65,6 +68,16 @@ const CustReport = () => {
 
         })
         setBillInfo(tempBill)
+        const currentDate = new Date().toISOString().split('T')[0];
+        const toDayInfo=[...tempBill]
+        const filteredTodayInfo=toDayInfo.filter((item,index)=>item.date===currentDate)
+        console.log('todaybill',filteredTodayInfo)
+        setSelectedBill(filteredTodayInfo)
+        
+        }else{
+          setBillInfo([])
+          setSelectedBill([])
+        }
 
 
       } catch (error) {
@@ -250,7 +263,7 @@ const CustReport = () => {
         {/* Opening Balance at Top Right */}
         <Box display="flex" justifyContent="flex-end" mt={1} mb={1}>
           <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333" }}>
-            Opening Balance: {openBalance}
+            Opening Balance: {(openBalance).toFixed(2)}
           </Typography>
         </Box>
 
@@ -314,7 +327,7 @@ const CustReport = () => {
         {/* Closing Balance at Bottom Right */}
         <Box display="flex" justifyContent="flex-end" mt={2}>
           <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333" }}>
-            Closing Balance: {(closingBalance).toFixed(3)}
+            Closing Balance: {(closingBalance).toFixed(2)}
           </Typography>
         </Box>
 

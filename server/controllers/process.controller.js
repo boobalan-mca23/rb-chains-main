@@ -309,6 +309,7 @@ const saveProcess = async (req, res) => {
 
                     },
                   });
+                  //Item Name Update
                   await prisma.item.update({
                     where:{
                       item_id:attrValue.items_id
@@ -317,6 +318,18 @@ const saveProcess = async (req, res) => {
                       item_name:attrValue.item_name
                     }
                   })
+                  // MasterJewelItemMapper Update
+                  const existingItem = await prisma.masterJewelItemMapper.findFirst({
+                    where: { item_id: attrValue.items_id }
+                  });
+                  
+                  if (existingItem) {
+                    await prisma.masterJewelItemMapper.update({
+                      where: { id: existingItem.id },
+                      data: { master_jewel_id: attrValue.master_jewel_id }
+                    });
+                  }
+                  
 
                   //Stock moved to Update time
                   if (attrValue.process_step_id === 32) {
