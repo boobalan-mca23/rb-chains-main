@@ -144,7 +144,7 @@ model MasterOrder {
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
  
-  CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id])  
+  CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id],onDelete: Cascade)  
   OrderItems        OrderItem[]
   Balance           Balance[]
 
@@ -162,7 +162,7 @@ model OrderItem {
   final_price   Float
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
-  MasterOrder   MasterOrder @relation(fields: [order_id], references: [id])
+  MasterOrder   MasterOrder @relation(fields: [order_id], references: [id],onDelete: Cascade)
   ProductStocks ProductStocks @relation(fields: [stock_id], references: [id])
 
   @@map("orderItems")
@@ -187,8 +187,8 @@ model MasterJewelTypeCustomerValue {
   attribute2        Float?
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
-  CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
-  MasterJewelType   MasterJewelType @relation(fields: [masterJewel_id], references: [master_jewel_id])
+  CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id],onDelete: Cascade) 
+  MasterJewelType   MasterJewelType @relation(fields: [masterJewel_id], references: [master_jewel_id],onDelete: Cascade)
  
   @@map("master_jewel_type_customer_value") 
 }
@@ -199,7 +199,7 @@ model MasterJewelItemMapper{
    master_jewel_id    Int
    created_at         DateTime @default(now())
    updated_at         DateTime @updatedAt
-   MasterJewelType    MasterJewelType @relation(fields: [master_jewel_id], references: [master_jewel_id])
+   MasterJewelType    MasterJewelType @relation(fields: [master_jewel_id], references: [master_jewel_id],onDelete: Cascade)
    Item               Item?@relation(fields: [item_id], references: [item_id])  
    @@map("masterjewelItemMapper") 
 }
@@ -213,15 +213,15 @@ model Balance{
   remaining_gold_balance  Float
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
-  CustomerInfo            CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
-  MasterOrder             MasterOrder @relation(fields: [order_id], references: [id])
+  CustomerInfo            CustomerInfo @relation(fields: [customer_id], references: [customer_id],onDelete: Cascade) 
+  MasterOrder             MasterOrder @relation(fields: [order_id], references: [id],onDelete: Cascade)
  
 }
 model ClosingBalance{
   id                Int @id @default(autoincrement())
   customer_id       Int @unique
   closing_balance   Float
-  CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id]) 
+  CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id],onDelete: Cascade) 
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 }
