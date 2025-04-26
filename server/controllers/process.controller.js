@@ -295,7 +295,7 @@ const saveProcess = async (req, res) => {
                   
 
                 } else {
-                        await prisma.attributeValue.updateMany({
+                      await prisma.attributeValue.updateMany({
                     where: {
                       process_step_id: attrValue.process_step_id,
                       lot_id: attrValue.lot_id,
@@ -309,6 +309,14 @@ const saveProcess = async (req, res) => {
 
                     },
                   });
+                  await prisma.item.update({
+                    where:{
+                      item_id:attrValue.items_id
+                    },
+                    data:{
+                      item_name:attrValue.item_name
+                    }
+                  })
 
                   //Stock moved to Update time
                   if (attrValue.process_step_id === 32) {

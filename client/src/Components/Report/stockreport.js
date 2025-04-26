@@ -47,7 +47,7 @@ function StockReport() {
     }
     return (
         <>
-            <h3>Stock Report</h3>
+           
             <Box  sx={{
             display: "flex",
             alignItems: "center",
