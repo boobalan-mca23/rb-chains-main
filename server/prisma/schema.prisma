@@ -205,7 +205,7 @@ model MasterJewelItemMapper{
 }
 model Balance{
   balance_id              Int @id @default(autoincrement())
-  order_id                Int
+  order_id                Int 
   customer_id             Int
   gold_weight             Float
   gold_touch              Float

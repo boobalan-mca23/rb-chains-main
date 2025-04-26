@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import {  Box, Button, Table, TableHead, TableCell, TableRow, TableBody} from "@mui/material";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { FaTrash } from "react-icons/fa";
 import { useParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
@@ -125,18 +126,20 @@ const handleBalanceRow = () => {
     const updatedRows = [...balanceRow];
     updatedRows[index][field] = value;
 
-    if(field==="gold_touch"){
+    if(field==="gold_touch" || field==="gold_weight"){
      updatedRows[index]['gold_pure']=updatedRows[index]['gold_weight'] *  updatedRows[index]['gold_touch']/100;
     }
  
     setBalanceRow(updatedRows);
   };
-  const handleRemoveBalanceRow=(index)=>{
-   
-    const tempBalRow=[...balanceRow]
-    tempBalRow.splice(index,1)
-    setBalanceRow(tempBalRow)
-  }
+  const handleRemoveBalanceRow = (index) => {
+    if (window.confirm("Are you sure you want to delete this balance row?")) {
+      const tempBalRow = [...balanceRow];
+      tempBalRow.splice(index, 1);
+      setBalanceRow(tempBalRow);
+    }
+  };
+  
  
   const handleProductSelect = (itemIndex,stockId) => {
     const tempProducts = [...productWeight]
@@ -176,7 +179,7 @@ const handleBalanceRow = () => {
         try{
           const response=await axios.put(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/updateBill/${billNo}`,tempBalRow)
           if(response.status===200){
-            toast.success(response.data.message)
+            toast.success(response.data.message, { autoClose: 2000 });
             
           }
 
@@ -365,6 +368,7 @@ const handleBalanceRow = () => {
               </TableRow>
             </TableBody>
           </Table>
+          <ToastContainer/>
         </Box>
  
        
