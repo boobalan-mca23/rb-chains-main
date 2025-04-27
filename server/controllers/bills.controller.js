@@ -242,7 +242,34 @@ const saveBill = async (req, res) => {
               }
               console.log('balance update',bal.balance_id,order_id,bal.customer_id,bal.gold_weight,bal.gold_touch,bal.gold_pure,closing)
               //balance update
-              await prisma.balance.updateMany({
+
+              const existingGoldWeight=await prisma.balance.findFirst({
+                where:{
+                  balance_id:bal.balance_id
+                },
+                select:{
+                  gold_pure:true
+                }
+              })
+              const existingClosing=await prisma.closingBalance.findFirst({
+                where:{
+                  customer_id:bal.customer_id
+                },
+                select:{
+                  closing_balance:true
+                }
+              })
+              const addClosing=parseFloat(existingGoldWeight.gold_pure)+parseFloat(existingClosing.closing_balance)
+              console.log('addclosing',addClosing)
+              await prisma.closingBalance.update({
+                where:{
+                  customer_id:bal.customer_id
+                },
+                data:{
+                  closing_balance:parseInt(addClosing)
+                }
+              })
+              const updateBal=await prisma.balance.updateMany({
                 where: {
                   balance_id: parseInt(bal.balance_id)
                 },
@@ -255,6 +282,18 @@ const saveBill = async (req, res) => {
                   remaining_gold_balance: parseFloat(closing)
                 }
               });
+             //closing update
+            
+             const newClose=addClosing-parseFloat(bal.gold_pure)
+             console.log('newClose',newClose)
+              await prisma.closingBalance.update({
+                where:{
+                  customer_id:bal.customer_id
+                },
+                data:{
+                  closing_balance:parseFloat(newClose)
+                }
+              })
               
 
             }

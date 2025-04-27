@@ -143,7 +143,7 @@ const Billing = () => {
     
     else{
        if(billItems.length===0){
-         alert('Bill Items is Required ')
+         alert('Order Items is Required ')
          return;
        }
        if(selectedCustomer){
@@ -226,8 +226,18 @@ const Billing = () => {
   }, [selectedCustomer, selectedProduct]);
   const handleBalanceRow = () => {
     if(selectedCustomer){
-      const tempRow = [...balanceRow, { 'customer_id':selectedCustomer.customer_id,'givenGold': 0, 'touch': 0, 'pure': 0 }]
-      setBalanceRow(tempRow)
+      if(selectedProduct){
+        if(billItems.length>=1){
+          const tempRow = [...balanceRow, { 'customer_id':selectedCustomer.customer_id,'givenGold': 0, 'touch': 0, 'pure': 0 }]
+          setBalanceRow(tempRow)
+        }else{
+          toast.warning('Select Product Weight',{autoClose:2000})
+        }
+      }else{
+        toast.warning('Select Product Name',{autoClose:2000})
+      }
+    }else{
+       toast.warning('Select Customer Name',{autoClose:2000})
     }
   }
   const handleBalanceInputChange = (index, field, value) => {
@@ -390,7 +400,7 @@ const Billing = () => {
                   <strong>Total</strong>
                 </td>
                 <td style={styles.td}>{totalPrice}</td>
-                  
+                
               </tr>
               <tr>
                 <td></td>
