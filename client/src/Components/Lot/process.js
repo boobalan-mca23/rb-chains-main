@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Button, Box, Modal, Typography, colors, TableFooter, Autocomplete } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { toast, ToastContainer } from "react-toastify";
@@ -166,6 +166,7 @@ const ProcessTable = () => {
     return null; // Return null if no match is found
   };
 
+
   const handleSingleItem = (index, lotid, process_id, attribute_id, value, lotIndex) => {
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
@@ -211,6 +212,7 @@ const ProcessTable = () => {
           items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
           value: value
         }
+       
 
         if (lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.length === 0) {
           lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(obj);
@@ -219,14 +221,17 @@ const ProcessTable = () => {
             process_step_id: 5,
             items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
             attribute_id: 2,
-            value: (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value
+            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length===1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length===1 ?(lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value:0
           }
           lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
          tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
         } else {// Melting Process ScrapValue Update
           lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = parseFloat(value);
-          lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
+          if( lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length===1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length===1){
+            lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) -parseFloat(value)
+          }
+          
           tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
         }
@@ -269,7 +274,7 @@ const ProcessTable = () => {
             process_step_id: 9,
             items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
             attribute_id: 2,
-            value: (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value
+            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length===1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length===1 ?(lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value:0
           }
           lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
 
@@ -277,7 +282,9 @@ const ProcessTable = () => {
           setItems(tempData)
         } else {// Kambi Process ScrapValue Update
           lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = parseFloat(value);
-          lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
+          if( lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length===1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length===1){
+            lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
+          }
           tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
         }
@@ -582,6 +589,8 @@ const ProcessTable = () => {
       const res = await getLotDatewise(fromDate, toDate);
       console.log('DateWiseFilter', res.data.data);
       setItems(res.data.data)
+      setCalculation(docalculation(res.data.data))
+      getProduct()
       console.log('itemsAfterDateWiseFilter', items);
     } catch (error) {
       console.error('Error fetching data by date:', error.message);
@@ -590,11 +599,15 @@ const ProcessTable = () => {
   };
 
 
+
   useEffect(() => {
     allData()
     getProduct()
 
   }, [])
+  // useEffect(()=>{
+  //   setCalculation(docalculation(items))
+  // },[items])
 
   const billRef = useRef(null);
 
@@ -1184,11 +1197,11 @@ const ProcessTable = () => {
                   <>
 
                     <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
-                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName === 'Finishing' ? "FinishTotal" : "Total"}:{item.Weight[1].aw}</p></StyledTableCell>
-                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}ScarpTotal:{item.Weight[2].sw}</p></StyledTableCell>
-                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}LossTotal:{item.Weight[3].lw}</p></StyledTableCell>
+                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName === 'Finishing' ? "FinishTotal" : "Total"}:{(item.Weight[1].aw).toFixed(3)}</p></StyledTableCell>
+                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}ScarpTotal:{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>
+                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}LossTotal:{(item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
                     {
-                      item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}PureTotal:{item.Weight[4].pw}</p></StyledTableCell>) : ("")
+                      item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}PureTotal:{(item.Weight[4].pw).toFixed(3)}</p></StyledTableCell>) : ("")
                     }
 
                     {
@@ -1206,7 +1219,7 @@ const ProcessTable = () => {
                 ))
               }
               <StyledTableCell></StyledTableCell>
-              <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>LotTotal:{calculation[3].lotTotal}</p></StyledTableCell>
+              <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>LotTotal:{(calculation[3].lotTotal).toFixed(3)}</p></StyledTableCell>
             </TableFooter>
           </Table>
           <ToastContainer />
