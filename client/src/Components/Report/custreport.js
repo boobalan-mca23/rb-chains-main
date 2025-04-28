@@ -189,6 +189,11 @@ const CustReport = () => {
     fetchClosing();
   }, [selectedCustomer?.customer_id]);
   
+  useEffect(()=>{
+    const currentDate = new Date().toISOString().split('T')[0];
+    setFromDate(currentDate)
+    setToDate(currentDate)
+  },[])
   return (
     <>
       <Typography
@@ -282,10 +287,10 @@ const CustReport = () => {
                   Date
                 </TableCell>
                 <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  value
+                  Value
                 </TableCell>
                 <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  recivedAmount
+                  Recived Amount
                 </TableCell>
                 <TableCell style={{ color: "black", fontWeight: "bold" }}>
                   Balance
