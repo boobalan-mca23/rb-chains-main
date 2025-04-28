@@ -6,7 +6,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { createLot, getAllLot, saveLot, getLotDatewise, getProductName } from "../../Api/processTableApi";
 import { styled } from "@mui/material/styles";
 import { processStepId } from "../../ProcessStepId/processStepId";
-import axios from "axios";
 import { useRef } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -1279,6 +1278,8 @@ const ProcessTable = () => {
         </Box>
       </Modal>
     </Box>
+
+    
 
   );
 };
