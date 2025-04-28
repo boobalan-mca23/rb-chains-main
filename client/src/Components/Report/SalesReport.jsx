@@ -15,60 +15,107 @@ import {
 import { toast } from "react-toastify";
 import './SalesReport.css'
 
+
+
 const SalesReport = () => {
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+
+  const today = new Date().toISOString().split('T')[0];
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
   const [billInfo, setBillInfo] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
 
-  useEffect(() => {
-    const fetchBillDetails = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:5000/api/bill/getSalesBillDetails"
-        );
-        const processed = response.data.billInfo.map((item) => {
-          const dateObj = new Date(item.created_at);
-          const year = dateObj.getFullYear();
-          const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-          const day = String(dateObj.getDate()).padStart(2, "0");
-          const formattedDate = `${year}-${month}-${day}`;
-          return {
-            ...item,
-            formattedDate,
-            customer_name: item.CustomerInfo?.customer_name || "",
-          };
-        });
-        console.log(processed)
-        setBillInfo(processed);
-      } catch (error) {
-        toast.error("Failed to fetch sales bill details");
-        console.error(error);
-      }
-    };
 
-    fetchBillDetails();
-  }, []);
+
 
 
 useEffect(() => {
-    const currentDate = new Date().toISOString().split('T')[0]; // Get the current date in YYYY-MM-DD format
-  
-    if (fromDate && toDate) {
-      // If both fromDate and toDate are provided, filter the data within the range
-      const filtered = billInfo.filter(
-        (bill) => bill.formattedDate >= fromDate && bill.formattedDate <= toDate
+  const fetchBillDetails = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:5000/api/bill/getSalesBillDetails"
       );
-      setFilteredData(filtered);
-    } else {
-      // If no dates are provided, filter to show only the current date's details
-      const filtered = billInfo.filter(bill => bill.formattedDate === currentDate);
-      setFilteredData(filtered);
+      const processed = response.data.billInfo.map((item) => {
+        const dateObj = new Date(item.created_at);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const day = String(dateObj.getDate()).padStart(2, "0");
+        const formattedDate = `${year}-${month}-${day}`;
+        return {
+          ...item,
+          formattedDate,
+          customer_name: item.CustomerInfo?.customer_name || "",
+        };
+      });
+      setBillInfo(processed);
+    } catch (error) {
+      toast.error("Failed to fetch sales bill details");
+      console.error(error);
     }
-  }, [fromDate, toDate, billInfo]);
-  
-  
+  };
 
+  fetchBillDetails();
+}, []);
+
+useEffect(() => {
+  if (fromDate && toDate) {
+    const filtered = billInfo.filter(
+      (bill) => bill.formattedDate >= fromDate && bill.formattedDate <= toDate
+    );
+    setFilteredData(filtered);
+  }
+}, [fromDate, toDate, billInfo]);
+
+//   useEffect(() => {
+//     const fetchBillDetails = async () => {
+//       try {
+//         const response = await axios.get(
+//           "http://localhost:5000/api/bill/getSalesBillDetails"
+//         );
+//         const processed = response.data.billInfo.map((item) => {
+//           const dateObj = new Date(item.created_at);
+//           const year = dateObj.getFullYear();
+//           const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+//           const day = String(dateObj.getDate()).padStart(2, "0");
+//           const formattedDate = `${year}-${month}-${day}`;
+//           return {
+//             ...item,
+//             formattedDate,
+//             customer_name: item.CustomerInfo?.customer_name || "",
+//           };
+//         });
+//         console.log(processed)
+//         setBillInfo(processed);
+//       } catch (error) {
+//         toast.error("Failed to fetch sales bill details");
+//         console.error(error);
+//       }
+//     };
+
+//     fetchBillDetails();
+//   }, []);
+
+
+
+
+// useEffect(() => {
+  
+//     const currentDate = new Date().toISOString().split('T')[0]; // Get the current date in YYYY-MM-DD format
+  
+//     if (fromDate && toDate) {
+//       // If both fromDate and toDate are provided, filter the data within the range
+//       const filtered = billInfo.filter(
+//         (bill) => bill.formattedDate >= fromDate && bill.formattedDate <= toDate
+//       );
+//       setFilteredData(filtered);
+//     } else {
+//       // If no dates are provided, filter to show only the current date's details
+//       const filtered = billInfo.filter(bill => bill.formattedDate === currentDate);
+//       setFilteredData(filtered);
+//     }
+//   }, [fromDate, toDate, billInfo]);
+  
+  
   return (
     <>
       <Typography
@@ -82,8 +129,7 @@ useEffect(() => {
       >
         Sales Report
       </Typography>
-
-      
+     
       <div style={{ padding: "20px" }}>
         <Box
           sx={{
@@ -152,12 +198,10 @@ useEffect(() => {
 <Box textAlign="center" mt={4}>
 </Box>
 
-
         </div>
       </div>
     </>
   );
 };
-
 
 export default SalesReport;

@@ -1,11 +1,8 @@
 
 import React, { useState } from "react";
-import DailyReport from "./dailyreport";
 import CustomerReport from "./custreport";
-
 import StockReport from "./stockreport";
-
-import { Link } from "react-router-dom";
+import SalesReport from "./SalesReport";
 
 
 function Report() {
@@ -14,21 +11,6 @@ function Report() {
   return (
     <div style={{ padding: "20px" }}>
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        <button
-          onClick={() => setSelectedReport("daily")}
-          disabled={selectedReport === "daily"}
-          style={{
-            padding: "10px",
-            backgroundColor: selectedReport === "daily" ? "darkblue" : "blue",
-            color: "white",
-            border: "none",
-            cursor: selectedReport === "daily" ? "not-allowed" : "pointer",
-            opacity: selectedReport === "daily" ? 0.5 : 1,
-          }}
-        >
-          Daily Report
-        </button>
-
         <button
           onClick={() => setSelectedReport("customer")}
           disabled={selectedReport === "customer"}
@@ -60,25 +42,26 @@ function Report() {
           Stock Report
         </button>
 
-    <Link to='/salesreport'> 
         <button 
+         onClick={() => setSelectedReport("sales")}
+         disabled={selectedReport === "sales"}
           style={{
             padding: "10px",
-            backgroundColor: selectedReport === "daily" ? "darkblue" : "blue",
+            backgroundColor: selectedReport === "sales" ? "darkblue" : "blue",
             color: "white",
             border: "none",
-            cursor: selectedReport === "daily" ? "not-allowed" : "pointer",
-            opacity: selectedReport === "daily" ? 0.5 : 1,
+            cursor: selectedReport === "sales" ? "not-allowed" : "pointer",
+            opacity: selectedReport === "sales" ? 0.5 : 1,
           }}
         > Sales Report </button> 
-        </Link>
 
       </div>
 
       <div>
-        {selectedReport === "daily" && <DailyReport />}
+
         {selectedReport === "customer" && <CustomerReport />}
         {selectedReport === "stock" && <StockReport />}
+        {selectedReport ==="sales" && <SalesReport/> }
       </div>
     </div>
   );
