@@ -1,18 +1,42 @@
 
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import CustomerReport from "./custreport";
 import StockReport from "./stockreport";
 import SalesReport from "./SalesReport";
+import { useNavigate ,useLocation} from "react-router-dom";
+import CustReport from "./custreport";
 
 
 function Report() {
   const [selectedReport, setSelectedReport] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Get query params from URL when page loads or reloads
+    const params = new URLSearchParams(location.search);
+    const url = params.get("type");
+   
+
+    if (url) {
+      setSelectedReport(url)
+      
+      
+    }
+
+    // Fetch Bill and Customer data
+ 
+  }, [location.search]);
 
   return (
     <div style={{ padding: "20px" }}>
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
         <button
-          onClick={() => setSelectedReport("customer")}
+          // onClick={() => setSelectedReport("customer")}
+          onClick={() => {setSelectedReport("customer")
+          navigate("/report?type=customer")
+        }}
+          
           disabled={selectedReport === "customer"}
           style={{
             padding: "10px",
@@ -63,7 +87,9 @@ function Report() {
         {selectedReport === "stock" && <StockReport />}
         {selectedReport ==="sales" && <SalesReport/> }
       </div>
+      
     </div>
+    
   );
 }
 
