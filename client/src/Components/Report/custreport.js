@@ -505,6 +505,13 @@ const CustReport = () => {
     fetchClosing();
   }, [selectedCustomer?.customer_id]);
 
+  
+  useEffect(()=>{
+    const currentDate = new Date().toISOString().split('T')[0];
+    setFromDate(currentDate)
+    setToDate(currentDate)
+  },[])
+
   return (
     <>
       <Typography
@@ -585,13 +592,29 @@ const CustReport = () => {
           <Table>
             <TableHead style={{ backgroundColor: "aliceblue" }}>
               <TableRow>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>S.NO</TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>Bill.NO</TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>Date</TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>Value</TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>Received Amount</TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>Balance</TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>Action</TableCell>
+
+                <TableCell style={{ color: "black", fontWeight: "bold" }}>
+                  S.NO
+                </TableCell>
+                <TableCell style={{ color: "black", fontWeight: "bold" }}>
+                  Bill.NO
+                </TableCell>
+                <TableCell style={{ color: "black", fontWeight: "bold" }}>
+                  Date
+                </TableCell>
+                <TableCell style={{ color: "black", fontWeight: "bold" }}>
+                  Value
+                </TableCell>
+                <TableCell style={{ color: "black", fontWeight: "bold" }}>
+                  Recived Amount
+                </TableCell>
+                <TableCell style={{ color: "black", fontWeight: "bold" }}>
+                  Balance
+                </TableCell>
+                <TableCell style={{ color: "black", fontWeight: "bold" }}>
+                  Action
+                </TableCell>
+
               </TableRow>
             </TableHead>
             <TableBody>

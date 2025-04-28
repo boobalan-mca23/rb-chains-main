@@ -15,7 +15,7 @@ import { DownloadTableExcel } from 'react-export-table-to-excel';
 import autoTable from "jspdf-autotable";
 import "jspdf-autotable";
 
-const processes = ["Melting","Kambi","Wire","Machine","Soldrine","Joint","Cutting","Finishing",];
+const processes = ["Melting", "Kambi", "Wire", "Machine", "Soldrine", "Joint", "Cutting", "Finishing",];
 const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "8px" });
 const StyledTableContainer = styled(TableContainer)({ margin: "20px auto", maxWidth: "100%", border: "1px solid #ccc" });
 const StyledInput = styled(TextField)({ "& .MuiOutlinedInput-notchedOutline": { border: "none" }, "& .MuiInputBase-input": { textAlign: "center", padding: "5px" }, width: "80px" });
@@ -183,7 +183,7 @@ const ProcessTable = () => {
         }
         if (lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 0) {
           lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.push(obj);
-         const nextProcessObj = {
+          const nextProcessObj = {
             lot_id: lotid,
             process_step_id: 6,
             items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
@@ -211,7 +211,7 @@ const ProcessTable = () => {
           items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
           value: value
         }
-       
+
 
         if (lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.length === 0) {
           lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(obj);
@@ -220,17 +220,17 @@ const ProcessTable = () => {
             process_step_id: 5,
             items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
             attribute_id: 2,
-            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length===1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length===1 ?(lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value:0
+            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1 ? (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value : 0
           }
           lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
-         tempData.splice(lotIndex, 1, lotData[0]);
+          tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
         } else {// Melting Process ScrapValue Update
           lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = parseFloat(value);
-          if( lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length===1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length===1){
-            lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) -parseFloat(value)
+          if (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1) {
+            lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
           }
-          
+
           tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
         }
@@ -268,12 +268,12 @@ const ProcessTable = () => {
         }
         if (lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.length === 0) {
           lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(obj);
-         const lossObj = {
+          const lossObj = {
             lot_id: lotid,
             process_step_id: 9,
             items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
             attribute_id: 2,
-            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length===1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length===1 ?(lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value:0
+            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1 ? (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value : 0
           }
           lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
 
@@ -281,7 +281,7 @@ const ProcessTable = () => {
           setItems(tempData)
         } else {// Kambi Process ScrapValue Update
           lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = parseFloat(value);
-          if( lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length===1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length===1){
+          if (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1) {
             lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
           }
           tempData.splice(lotIndex, 1, lotData[0]);
@@ -579,7 +579,7 @@ const ProcessTable = () => {
       console.log('fromDate', fromDate);
       console.log('toDate', toDate);
 
-    
+
       if (fromDate > toDate) {
         alert('Your Date Order was Wrong');
         return;
@@ -596,7 +596,11 @@ const ProcessTable = () => {
       alert('Select Date First.');
     }
   };
-
+  useEffect(() => {
+    const currentDate = new Date().toISOString().split('T')[0];
+    setFromDate(currentDate)
+    setToDate(currentDate)
+  }, [])
 
 
   useEffect(() => {
@@ -1196,7 +1200,12 @@ const ProcessTable = () => {
                   <>
 
                     <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
-                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName === 'Finishing' ? "FinishTotal" : "Total"}:{(item.Weight[1].aw).toFixed(3)}</p></StyledTableCell>
+                    <StyledTableCell>
+                      <p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>
+                        {item.processName === 'Finishing' ? `FinishTotal ${(item.Weight[1].aw).toFixed(3)}` : ""}
+                      </p>
+                    </StyledTableCell>
+
                     <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}ScarpTotal:{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>
                     <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}LossTotal:{(item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
                     {
