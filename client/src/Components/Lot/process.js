@@ -1,5 +1,5 @@
 import React, { useState, useEffect, use } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Button, Box, Modal, Typography, colors, TableFooter, Autocomplete } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Button, Box, Modal, Typography, colors, TableFooter, Autocomplete, Hidden } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -14,6 +14,8 @@ import { saveAs } from 'file-saver';
 import { DownloadTableExcel } from 'react-export-table-to-excel';
 import autoTable from "jspdf-autotable";
 import "jspdf-autotable";
+import './process.css'
+
 
 const processes = ["Melting", "Kambi", "Wire", "Machine", "Soldrine", "Joint", "Cutting", "Finishing",];
 const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "8px" });
@@ -603,6 +605,7 @@ const ProcessTable = () => {
   }, [])
 
 
+
   useEffect(() => {
     allData()
     getProduct()
@@ -662,18 +665,6 @@ const ProcessTable = () => {
     input.style.overflow = originalOverflow;
   };
 
-
-  // const exportToExcel = () => {
-  //   const table = billRef.current;
-  //   const workbook = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
-  //   const excelBuffer = XLSX.write(workbook, {
-  //     bookType: "xlsx",
-  //     type: "array"
-  //   });
-  //   const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-  //   saveAs(data, "ProcessDetails.xlsx");
-  // };
-
   const exportToExcel = () => {
     const tableElement = tableRef.current;
 
@@ -699,7 +690,7 @@ const ProcessTable = () => {
 
   return (
     <Box sx={{ padding: "20px" }} ref={billRef}>
-      <Box sx={{ textAlign: "right", marginBottom: "10px" }}>
+      <Box sx={{ textAlign: "right", marginBottom: "0px" }}>
         <Button
           variant="contained"
           color="primary"
@@ -717,13 +708,13 @@ const ProcessTable = () => {
 
         >
           Save
-        </Button>
+        </Button>       
 
       </Box>
       {/* DateWiseFilter */}
 
       <div style={{ padding: 20 }}>
-        <div style={{ display: "flex", gap: "10px", marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: "10px", marginBottom: 0, position:'relative' }}>
           <TextField
             label="From Date"
             type="date"
@@ -744,17 +735,18 @@ const ProcessTable = () => {
 
 
       <StyledTableContainer component={Paper}>
-        <div ref={tableRef}>
+        <div ref={tableRef}style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh' }}>
           {/* <Table> */}
           <Table >
-            <TableHead>
+            <TableHead style={{position:'sticky', top:"0px", zIndex:10, backgroundColor:'#d8e3e6'}} >
+
               <TableRow>
-                <StyledTableCell>
+                <StyledTableCell >
                   <b>Raw Gold</b>
                 </StyledTableCell>
-                <StyledTableCell>
+                <StyledTableCell >
                   <b>Touch</b>
-                </StyledTableCell>
+                </StyledTableCell >
                 {processes.map((process) => {
                   let colSpanValue = 4;
 
@@ -765,41 +757,41 @@ const ProcessTable = () => {
                   }
 
                   return (
-                    <StyledTableCell key={process} colSpan={colSpanValue}>
+                    <StyledTableCell key={process} colSpan={colSpanValue} >
                       <b>{process}</b>
                     </StyledTableCell>
                   );
                 })}
 
 
-                <StyledTableCell>
+                <StyledTableCell >
                   <b>Item Diffrent</b>
                 </StyledTableCell>
-                <StyledTableCell>
+                <StyledTableCell >
                   <b>Total Diffrent</b>
-                </StyledTableCell>
+                </StyledTableCell >
 
 
               </TableRow>
               <TableRow>
-                <StyledTableCell colSpan={2} />
+                <StyledTableCell colSpan={2}  />
                 {processes.map((process) => (
                   <React.Fragment key={process}>
-                    <StyledTableCell>
+                    <StyledTableCell >
                       <b>Before</b>
                     </StyledTableCell>
-                    <StyledTableCell>
+                    <StyledTableCell >
                       <b>After</b>
                     </StyledTableCell>
-                    <StyledTableCell>
+                    <StyledTableCell >
                       <b>Scarp</b>
                     </StyledTableCell>
-                    <StyledTableCell>
+                    <StyledTableCell >
                       <b>Loss</b>
                     </StyledTableCell>
                     {
                       process === "Cutting" && (
-                        <StyledTableCell>
+                        <StyledTableCell >
                           <b>Scarp Pure</b>
                         </StyledTableCell>
                       )
@@ -807,7 +799,7 @@ const ProcessTable = () => {
 
                     {process === "Kambi" && (
                       <>
-                        <StyledTableCell>
+                        <StyledTableCell >
                           <b>Action</b>
                         </StyledTableCell>
 
@@ -816,22 +808,21 @@ const ProcessTable = () => {
                     {process === "Kambi" && (
                       <>
 
-                        <StyledTableCell>
+                        <StyledTableCell >
                           <b>Name</b>
                         </StyledTableCell>
-                        <StyledTableCell>
+                        <StyledTableCell >
                           <b>Weight</b>
                         </StyledTableCell>
-                        <StyledTableCell>
+                        <StyledTableCell >
                           <b>Diffrent</b>
                         </StyledTableCell>
                       </>
                     )}
                   </React.Fragment>
                 ))}
-                <StyledTableCell />
-                <StyledTableCell />
-
+                <StyledTableCell  />
+                <StyledTableCell  />
 
               </TableRow>
             </TableHead>
@@ -1233,15 +1224,10 @@ const ProcessTable = () => {
           <ToastContainer />
         </div>
       </StyledTableContainer>
-
       <Button variant="contained" color="primary" onClick={handleDownloadPdf}>
         Download as PDF
       </Button>
-
-
-      <Button variant="contained" onClick={exportToExcel}>Export to Excel</Button>
-
-
+      <Button variant="contained" onClick={exportToExcel} style={{marginLeft:'1rem'}}>Excel</Button>
 
       <Modal open={open} onClose={handleClose}>
         <Box
@@ -1286,9 +1272,7 @@ const ProcessTable = () => {
           </Box>
         </Box>
       </Modal>
-    </Box>
-
-    
+    </Box>    
 
   );
 };
