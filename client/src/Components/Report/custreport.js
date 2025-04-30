@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+
+import { REACT_APP_BACKEND_SERVER_URL } from '../../config/config'
 import {
   TextField,
   MenuItem,
@@ -20,12 +22,16 @@ import {
   Box,
   Button,
 } from "@mui/material";
-import { Balance, Visibility } from "@mui/icons-material";
-import { useNavigate,useLocation } from "react-router-dom";
+
+
+import { Balance, ElevatorSharp, Visibility } from "@mui/icons-material";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { teal } from "@mui/material/colors";
 
 const CustReport = () => {
+  const location = useLocation();
+
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,48 +41,90 @@ const CustReport = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [openBalance, setOpenBalance] = useState(0);
   const [closingBalance, setClosingBalance] = useState(0);
-  const [selectedBill, setSelectedBill] = useState([])
+
 
   const navigate = useNavigate();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const from = params.get("fromDate");
+    const to = params.get("toDate");
+
+    if (from && to) {
+      setFromDate(from);
+      setToDate(to);
+    }
+  }, [location.search])
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const customer_id = params.get("custId");
+
+    if (customer_id && customers.length > 0) {
+      const match = customers.find(
+        (cust) => String(cust.customer_id) === String(customer_id)
+      );
+      if (match) setSelectedCustomer(match);
+    }
+  }, [location.search, customers]); // depends on both URL and customers
+
 
   useEffect(() => {
     const fetchBill = async () => {
+      const params = new URLSearchParams(location.search);
+      const from = params.get("fromDate");
+      const to = params.get("toDate");
+      const customer_id = params.get("custId")
+      billInfo.splice(0, billInfo.length)
+      if (customer_id) {
+        const cust = customers.find((item) => item.customer_id.toString() === customer_id);
+        if (cust) {
+          console.log('customer name', cust)
+          setSelectedCustomer(cust); // ✅ Set the selected customer in Autocomplete
+        }
+      }
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/getCustomerBillDetails`
-        );
-        console.log("Fetched Bill:", response.data.billInfo);
-
-        if(response.data.billInfo.length>=1){
-          const tempBill = [...billInfo]
-        response.data.billInfo.map((item, key) => {
-          const dateObj = new Date(item.created_at);
-          const year = dateObj.getFullYear();
-          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-          const day = String(dateObj.getDate()).padStart(2, '0');
-
-          const formattedDate = `${year}-${month}-${day}`;
-          const billObj = {
-            'id': item.id,
-            'customer_id': item.customer_id,
-            'date': formattedDate,
-            'value': item.total_price,
-            'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
-            'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
+        const res = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/bill/getCustomerBillWithDate`, {
+          params: {
+            fromDate: from,
+            toDate: to,
+            customer_id: customer_id ? customer_id : null
           }
-          tempBill.push(billObj)
+        });
+        console.log("Fetched Bill:", res);
 
-        })
-        setBillInfo(tempBill)
-        const currentDate = new Date().toISOString().split('T')[0];
-        const toDayInfo=[...tempBill]
-        const filteredTodayInfo=toDayInfo.filter((item,index)=>item.date===currentDate)
-        console.log('todaybill',filteredTodayInfo)
-        setSelectedBill(filteredTodayInfo)
-        
-        }else{
+        if (res.data.data.billInfo.length >= 1) {
+          const tempBill = [...billInfo]
+          res.data.data.billInfo.map((item, key) => {
+            const dateObj = new Date(item.created_at);
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+
+            const formattedDate = `${year}-${month}-${day}`;
+            const billObj = {
+              'id': item.id,
+              'customer_id': item.customer_id,
+              'date': formattedDate,
+              'value': item.total_price,
+              'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
+              'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
+            }
+            tempBill.push(billObj)
+
+          })
+          console.log('temp bill', tempBill)
+          setBillInfo(tempBill)
+          setOpenBalance(res.data.data.openingBalance)
+
+          setClosingBalance(res.data.data.closingAmount)
+
+        } else {
           setBillInfo([])
-          setSelectedBill([])
+          setOpenBalance(res.data.data.openingBalance)
+
+          setClosingBalance(res.data.data.closingAmount)
+
+
         }
 
 
@@ -87,6 +135,13 @@ const CustReport = () => {
         console.error("Error:", error);
       }
     };
+
+
+    fetchBill();
+
+  }, [location.search]);
+
+  useEffect(() => {
     const fetchCustomer = async () => {
       try {
         const response = await axios.get(
@@ -103,10 +158,8 @@ const CustReport = () => {
         console.error("Error:", error);
       }
     }
-
-    fetchBill();
     fetchCustomer();
-  }, []);
+  }, [])
 
 
   const calculateRecivedAmount = (Balance) => {
@@ -116,143 +169,137 @@ const CustReport = () => {
     }, 0)
   }
 
-  // const handleViewBill = (billNo) => {
-  //   navigate(`/billing/${billNo}`);
-  // };
+  const handleCustomerBill = async () => {
 
+    if (selectedCustomer) {
+      navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}&custId=${selectedCustomer.customer_id}`);
 
-  useEffect(()=>{
-    const currentDate = new Date().toISOString().split('T')[0];
-    setFromDate(currentDate)
-    setToDate(currentDate)
-  },[])
- 
+    } else {
+      navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}&custId=null`);
 
-  // const handleCustomerBill = async () => {
-  //   console.log(fromDate)
-  //     if(fromDate&&toDate){
-  //       if(selectedCustomer){
+    }
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    billInfo.splice(0, billInfo.length)
 
+    if (from <= to) {
+      try {
 
-  //         const bill = billInfo.filter((item) => item.customer_id === selectedCustomer.customer_id)
-  //         if (bill.length === 0) {
-  //           console.log(bill)
-  //           setSelectedBill([])
-  //         } else {
-  //           //Closing Balance Api
-            
-      
-  //           if (fromDate > toDate) {
-  //             alert('Enter Date Correct')
-  //           }
-  //           else {
-  //             const tempSelectedBill = []
-  //             let boolean = false;
-  //             let openBalanceData = 0
-  //             bill.map((item, key) => {
-  //               if (item.date >= fromDate && item.date <= toDate) {
-  //                 tempSelectedBill.push(item)
-  //                 boolean = true;
-      
-  //               }
-  //               if (item.date < fromDate) {
-  //                 openBalanceData += item.Balance
-  //               }
-      
-  //             })
-  //             setOpenBalance(openBalanceData)
-  //             if (boolean) {
-  //               setSelectedBill(tempSelectedBill)
-  //             } else {
-  //               setSelectedBill([])
-  //             }
-  //           }
-  //       }
-  
-  //       }
-  //       else{
-  //          alert('Select Customer id')
-  //        }
-  //     }else{
-  //       alert('Select Date first')
-  //     }
-     
-  // }
+        const res = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/bill/getCustomerBillWithDate`, {
+          params: {
+            fromDate: fromDate,
+            toDate: toDate,
+            customer_id: selectedCustomer ? selectedCustomer.customer_id : null
+          }
+        });
+        console.log(res)
+        if (res.data.data.billInfo.length >= 1) {
 
-  useEffect(() => {
-    const fetchClosing = async () => {
-      if (selectedCustomer?.customer_id) {
-        try {
-          const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/closing/${selectedCustomer.customer_id}`
-          );
-          setClosingBalance(response.data.closingBalance.closing_balance);
-        } catch (error) {
-          setClosingBalance(0)
-          
+          const tempBill = [...billInfo]
+          res.data.data.billInfo.map((item, key) => {
+            const dateObj = new Date(item.created_at);
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+
+            const formattedDate = `${year}-${month}-${day}`;
+            const billObj = {
+              'id': item.id,
+              'customer_id': item.customer_id,
+              'date': formattedDate,
+              'value': item.total_price,
+              'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
+              'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
+            }
+            tempBill.push(billObj)
+
+          })
+          console.log('closingAmount', res.data)
+          setBillInfo(tempBill)
+          setOpenBalance(res.data.data.openingBalance)
+          setClosingBalance(res.data.data.closingAmount)
+        } else {
+          setBillInfo([])
+          setOpenBalance(res.data.data.openingBalance)
+
+          setClosingBalance(res.data.data.closingAmount)
+
         }
+      } catch (err) {
+        alert(err.message)
       }
-    };
-  
-    fetchClosing();
-  }, [selectedCustomer?.customer_id]);
-
-
-  const location = useLocation();
-
-  useEffect(() => {
-    // Get query params from URL when page loads or reloads
-    const params = new URLSearchParams(location.search);
-    const urlFromDate = params.get("fromDate");
-    const urlToDate = params.get("toDate");
-    const billNo = params.get("billNo");
-
-    if (urlFromDate && urlToDate) {
-      setFromDate(urlFromDate);
-      setToDate(urlToDate);
+    } else {
+      alert('Select correct date: From Date must be before To Date');
     }
 
-    // Fetch Bill and Customer data
-    fetchBill();
-  }, [location.search]); // Re-run on query change
-
-  useEffect(() => {
-    fetchBill();
-  }, []); // Fetch bill info when component mounts
-
-  const fetchBill = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/getCustomerBillDetails`
-      );
-      setBillInfo(response.data.billInfo);
-    } catch (error) {
-      toast.error("Error fetching Bills!");
-    }
   };
 
-  const handleCustomerBill = () => {
-    // if (fromDate && toDate) {
-    //   // Update URL with fromDate and toDate
-    //   navigate(`/report?type=customer_data&fromDate=${fromDate}&toDate=${toDate}`);
-    // } else {
-    //   alert('Select Date first');
-    // }
 
-    
-    
 
-  };
+
+
+  // const location = useLocation();
+
+  // useEffect(() => {
+  //   // Get query params from URL when page loads or reloads
+  //   const params = new URLSearchParams(location.search);
+  //   const urlFromDate = params.get("fromDate");
+  //   const urlToDate = params.get("toDate");
+  //   const custId = params.get("custId");
+
+  //   const fetchFliterData=async()=>{
+  //     billInfo.splice(0,billInfo.length)
+  //     try{
+  //       const res= await getCustomerBillWithDate(urlFromDate,urlToDate,custId)
+  //       //  setBillInfo(res.data.data.billInfo)
+
+  //         const tempBill = [...billInfo]
+  //         res.data.data.billInfo.map((item, key) => {
+  //         const dateObj = new Date(item.created_at);
+  //         const year = dateObj.getFullYear();
+  //         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  //         const day = String(dateObj.getDate()).padStart(2, '0');
+
+  //         const formattedDate = `${year}-${month}-${day}`;
+  //         const billObj = {
+  //           'id': item.id,
+  //           'customer_id': item.customer_id,
+  //           'date': formattedDate,
+  //           'value': item.total_price,
+  //           'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
+  //           'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
+  //         }
+  //         tempBill.push(billObj)
+
+  //       })
+  //        console.log('closingAmount',res.data)
+  //        setBillInfo(tempBill)
+  //        setOpenBalance(res.data.data.openingBalance)
+  //        setClosingBalance(res.data.data.closingAmount)
+
+  //     }catch(err){
+  //       alert(err.message)
+  //     }
+  //   }
+  //   fetchFliterData()
+  //   // Fetch Bill and Customer data
+
+  // }, [location.search]); // Re-run on query change
+
+  // Fetch bill info when component mounts
+
+
+
+
 
   const handleViewBill = (billNo) => {
     // Update URL with the specific billNo
-    navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}&billNo=${billNo}`);
-    navigate(`/billing/${billNo}`);
+    navigate(`/billing/${billNo}`)
   };
-  
+
   return (
     <>
-    
+
       <Typography
         variant="h5"
         style={{
@@ -293,6 +340,7 @@ const CustReport = () => {
             sx={{ minWidth: 200 }}
           />
           <Autocomplete
+            value={selectedCustomer || null}
             options={customers}
             getOptionLabel={(option) => option.customer_name || ""}
             onChange={(event, newValue) => setSelectedCustomer(newValue)}
@@ -301,6 +349,8 @@ const CustReport = () => {
             )}
             sx={{ minWidth: 300 }}
           />
+
+
           <Button
             variant="contained"
             onClick={handleCustomerBill}
@@ -358,8 +408,8 @@ const CustReport = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {selectedBill.length > 0 ? (
-                selectedBill.map((item, index) => (
+              {billInfo.length > 0 ? (
+                billInfo.map((item, index) => (
                   <TableRow key={item.id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{item.id}</TableCell>

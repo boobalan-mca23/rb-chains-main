@@ -10,6 +10,7 @@ import { FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { Height } from "@mui/icons-material";
 
+
 const Billing = () => {
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -90,7 +91,7 @@ const Billing = () => {
     ()=>{
 
     if(balanceRow.length===0){
-  setClosing(totalPrice)
+     setClosing(totalPrice)
     }else{
       setClosing(totalPrice-calculateClosing(balanceRow))
     }
@@ -102,9 +103,15 @@ const Billing = () => {
 
   const handleProductSelect = (itemIndex,stockId) => {
     const tempProducts = [...productWeight]
+    let customerData
     const tempSelectProduct = tempProducts.filter((item, index) => itemIndex === index)
     console.log('masterjewelid', selectedProduct.master_jewel_id)
-    const customerData = customers.filter((item, index) => item.customer_id === selectedCustomer.customer_id)
+  if(selectedCustomer){
+     customerData = customers.filter((item, index) => item.customer_id === selectedCustomer.customer_id)
+  }else{
+    alert('Select Customer Name')
+    return
+  }
     const filterMasterItem = customerData[0].MasterJewelTypeCustomerValue.filter((item, index) => item.masterJewel_id === selectedProduct.master_jewel_id)
     if (filterMasterItem.length === 0) {
       alert('Percentage is Required')
@@ -200,7 +207,7 @@ const Billing = () => {
     }, 0)
   };
   useEffect(() => {
-    if (selectedCustomer && selectedProduct) {
+    if ( selectedProduct) {
       console.log('selectedProductId', selectedProduct.master_jewel_id)
       const fetchWeight = async () => {
         try {
@@ -223,7 +230,7 @@ const Billing = () => {
       fetchWeight()
     }
 
-  }, [selectedCustomer, selectedProduct]);
+  }, [selectedProduct]);
   const handleBalanceRow = () => {
     if(selectedCustomer){
       if(selectedProduct){
@@ -284,7 +291,31 @@ const Billing = () => {
       setProductWeight(tempProduct);
     }
   };
-  
+  useEffect(()=>{
+   
+    setBillItems([])
+    const fetchWeight = async () => {
+      try {
+        const productsWeight = await axios.get(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`)
+
+        setProductWeight(productsWeight.data.productsWeight)
+        console.log('productFinish',productsWeight.data.productsWeight)
+
+      } catch (err) {
+        if (err.status === 400) {
+          setProductWeight([])
+        }
+        if (err.status === 500) {
+          alert("server Error")
+        } else {
+          toast.error('No Products')
+        }
+      }
+    }
+    if(selectedProduct){
+      fetchWeight()
+    }
+  },[selectedCustomer])
 
   return (
     <Box sx={styles.wrapper}>

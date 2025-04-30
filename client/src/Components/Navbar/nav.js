@@ -3,11 +3,15 @@ import React from "react";
 import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import logo from "../../Assets/rb logo.jpg";
+import { useState } from "react";
 // import image from "../../Assets/bg.jpg";
 
 function Nav() {
   const navigate = useNavigate();
   const navbarHeight = "70px"; 
+  const today = new Date().toISOString().split('T')[0];
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
 
   return (
     <>
@@ -50,7 +54,7 @@ function Nav() {
               Billing
             </Button>
             <Button
-              onClick={() => navigate("/report")}
+              onClick={() => navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}`)}
               sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
             >
               Report

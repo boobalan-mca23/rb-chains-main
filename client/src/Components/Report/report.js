@@ -8,7 +8,11 @@ import CustReport from "./custreport";
 
 
 function Report() {
+  const today = new Date().toISOString().split('T')[0];
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
   const [selectedReport, setSelectedReport] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -34,7 +38,7 @@ function Report() {
         <button
           // onClick={() => setSelectedReport("customer")}
           onClick={() => {setSelectedReport("customer")
-          navigate("/report?type=customer")
+          navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}`)
         }}
           
           disabled={selectedReport === "customer"}
