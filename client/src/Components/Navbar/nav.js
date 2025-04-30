@@ -10,8 +10,7 @@ function Nav() {
   const navbarHeight = "70px"; 
 
   return (
-    <>
-  
+    <> 
       <AppBar
         position="fixed" 
         sx={{
@@ -90,5 +89,3 @@ function Nav() {
 }
 
 export default Nav;
-
-
