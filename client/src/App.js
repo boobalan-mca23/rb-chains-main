@@ -71,18 +71,20 @@ import UpdateBill from "./Components/Billing/updateBill";
 import StockReport from "./Components/Report/stockreport";
 import SalesReport from "./Components/Report/SalesReport";
 
-
-
-
 function Layout() {
   const location = useLocation();
 
   // Show navbar on all pages except the Home page
   const showNavbar = location.pathname !== "/";
+const isPrintPage = location.pathname.startsWith("/billing/");
 
   return (
     <>
-      {showNavbar && <Nav />}
+       {showNavbar && (
+        <div className={isPrintPage ? "navbar print-hide" : "navbar"}>
+          <Nav />
+        </div>
+      )}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/process" element={<Process />} />
@@ -95,8 +97,7 @@ function Layout() {
         <Route path="/master" element={<Master/>} />
         <Route path="/item" element={<Item/>} />
         <Route path="/billing/:id" element={<UpdateBill/>}/>
-        <Route path="/salesreport"  element={<SalesReport/>}/>
-        
+        <Route path="/salesreport"  element={<SalesReport/>}/>       
       </Routes>
     </>
   );

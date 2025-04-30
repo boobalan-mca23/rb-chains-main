@@ -8,6 +8,9 @@ import { useParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import PrintIcon from "@mui/icons-material/Print";
+import './updateBill.css'
+
 
 const UpdateBill = () => {
   const [customers, setCustomers] = useState([]);
@@ -188,30 +191,53 @@ const handleBalanceRow = () => {
         }
     }    
   }
+
   const handleDownloadPdf = () => {
     setIsPrinting(true);
- 
+  
     setTimeout(() => {
       const input = billRef.current;
- 
+  
       if (!input) return;
- 
+  
       html2canvas(input, { scale: 2 }).then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("p", "mm", "a4"); 
+        const pdf = new jsPDF("p", "mm", "a4");
         const imgProps = pdf.getImageProperties(imgData);
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width; 
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  
         pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`Bill-${billNo || 'download'}.pdf`);
+  
+        const blob = pdf.output("blob");
+        const blobUrl = URL.createObjectURL(blob);
+  
+        window.open(blobUrl, "_blank"); //  opens PDF in new tab
         setIsPrinting(false);
       });
-    }, 300); // slight delay to allow re-render before taking screenshot
-  };
+    }, 300);
+  }; 
  
   return (
     <>
-   
+<div style={{display:'flex', justifyContent:'end'}} > 
+<div className="button-container print-hide">
+<Button
+      variant="contained"
+      color="primary"
+      onClick={handleDownloadPdf}  
+      className="no-print"   
+    >
+      Download as Pdf
+</Button>
+<Button className="print-button no-print" onClick={() => window.print()}>
+        <PrintIcon />
+</Button>
+</div>
+
+
+</div>
+  
 <Box sx={styles.wrapper}>
       <Box sx={styles.leftPanel} ref={billRef}>
         <h1 style={styles.heading}>Estimate Only</h1>
@@ -284,6 +310,7 @@ const handleBalanceRow = () => {
     color="primary"
     onClick={handleBalanceRow}
     sx={styles.balanceButton}
+    className="no-print" 
   >
     +
   </Button>
@@ -379,17 +406,11 @@ const handleBalanceRow = () => {
       color="primary"
       onClick={handleUpdateBill}
       sx={styles.saveButton}
+      className="no-print" 
     >
       Save
     </Button>
- 
-    <Button
-      variant="contained"
-      color="primary"
-      onClick={handleDownloadPdf}
-    >
-      Download as Pdf
-    </Button>
+     
  
   </>
 )}
@@ -405,6 +426,7 @@ const styles = {
   wrapper: {
     display: "flex",
     gap: "20px",
+    justifyContent:'center',
     alignItems: "flex-start",
     padding: "20px",
   },
@@ -415,15 +437,7 @@ const styles = {
     borderRadius: "10px",
     backgroundColor: "#f9f9f9",
     fontFamily: "Arial, sans-serif",
-    marginLeft:'17rem'
-  },
-  rightPanel: {
-    width: "40%",
-    padding: "20px",
-    border: "1px solid #ccc",
-    borderRadius: "10px",
-    backgroundColor: "#fff",
-    fontFamily: "Arial, sans-serif",
+    
   },
   heading: { textAlign: "center", color: "black" },
  
