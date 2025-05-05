@@ -170,10 +170,9 @@ const Billing = () => {
             const response= await axios.post(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,payLoad);
             if(response.status===201){
               console.log(response.data.data.id)
-              toast.success("Bill Created SucessFully");
-              setTimeout(() => {
-                navigate(`/billing/${response.data.data.id}`);
-              }, 3000);
+              toast.success("Bill Created SucessFully",{autoClose:1000});
+              
+             
             }
           }catch(err){
                alert(err.message)
