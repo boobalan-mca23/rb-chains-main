@@ -67,7 +67,7 @@ const ProcessTable = () => {
         })
       }
     })
-    tempCalculation[2].process[7].Weight[1].aw = finishTotal
+    tempCalculation[2].process[7].Weight[1].aw = Number(finishTotal)
     console.log('finishTotal', finishTotal)
 
     let finsihAfterValue = 0;
@@ -81,11 +81,11 @@ const ProcessTable = () => {
           finsihAfterValue += arrItem.value
 
         })
-        lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finsihAfterValue
+        lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - Number(finsihAfterValue)
         finsihAfterValue = 0;
       }
     })
-    tempCalculation[3].lotTotal = lotFinishValue
+    tempCalculation[3].lotTotal = Number(lotFinishValue)
 
     //calculation for total scarp value and loss total
     for (let i = 1; i <= 8; i++) {
@@ -96,10 +96,10 @@ const ProcessTable = () => {
 
           tempData[j].data[i].ProcessSteps[2].AttributeValues.forEach((attrItem, attrIndex) => {
             if (i == 7) {
-              innerPure += tempData[j].data[i].ProcessSteps[4].AttributeValues[attrIndex].value
+              innerPure += Number(tempData[j].data[i].ProcessSteps[4].AttributeValues[attrIndex].value)
             }
-            innerScarp += tempData[j].data[i].ProcessSteps[2].AttributeValues[attrIndex].value
-            innerLoss += tempData[j].data[i].ProcessSteps[3].AttributeValues[attrIndex].value
+            innerScarp += Number(tempData[j].data[i].ProcessSteps[2].AttributeValues[attrIndex].value)
+            innerLoss += Number(tempData[j].data[i].ProcessSteps[3].AttributeValues[attrIndex].value)
           })
         }
       }
@@ -418,7 +418,7 @@ const ProcessTable = () => {
     const res = await saveLot(items);
     console.log('res from save function', res.data.data)
     setItems(res.data.data)
-    setCalculation(docalculation(res.data.data))
+    // setCalculation(docalculation(res.data.data))
     toast.success("Lot Saved", { autoClose: 2000 });
 
   }
@@ -619,9 +619,9 @@ const ProcessTable = () => {
     getProduct()
 
   }, [])
-  // useEffect(()=>{
-  //   setCalculation(docalculation(items))
-  // },[items])
+  useEffect(()=>{
+    setCalculation(docalculation(items))
+  },[items])
 
   const billRef = useRef(null);
 
@@ -1083,10 +1083,10 @@ const ProcessTable = () => {
                           }
 
                           {
-
+                          //Item Different
                             lotItem.data[8]?.ProcessSteps[1]?.AttributeValues[key]?.value ?
                               (<StyledTableCell>
-                                <p style={{ fontSize: "15px" }}>{lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].value - lotItem.data[8]?.ProcessSteps[1]?.AttributeValues[key].value}</p>
+                                <p style={{ fontSize: "15px" }}>{(lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].value - lotItem.data[8]?.ProcessSteps[1]?.AttributeValues[key].value).toFixed(3)}</p>
                               </StyledTableCell>)
                               : (<StyledTableCell></StyledTableCell>)
                           }

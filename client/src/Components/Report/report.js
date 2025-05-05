@@ -38,7 +38,7 @@ function Report() {
         <button
           // onClick={() => setSelectedReport("customer")}
           onClick={() => {setSelectedReport("customer")
-          navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}`)
+          
         }}
           
           disabled={selectedReport === "customer"}

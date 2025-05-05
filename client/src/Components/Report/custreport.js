@@ -105,6 +105,7 @@ const CustReport = () => {
               'id': item.id,
               'customer_id': item.customer_id,
               'date': formattedDate,
+              'orderItems':item.OrderItems,
               'value': item.total_price,
               'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
               'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
@@ -206,6 +207,7 @@ const CustReport = () => {
             const billObj = {
               'id': item.id,
               'customer_id': item.customer_id,
+              'orderItems':item.OrderItems,
               'date': formattedDate,
               'value': item.total_price,
               'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
@@ -394,10 +396,13 @@ const CustReport = () => {
                   Date
                 </TableCell>
                 <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  value
+                  Description
                 </TableCell>
                 <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  recivedAmount
+                  Weight
+                </TableCell>
+                <TableCell style={{ color: "black", fontWeight: "bold" }}>
+                  Recived Amount
                 </TableCell>
                 <TableCell style={{ color: "black", fontWeight: "bold" }}>
                   Balance
@@ -414,6 +419,13 @@ const CustReport = () => {
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item.date}</TableCell>
+                    <TableCell>
+                      {item.orderItems.map((orderItem,index)=>(
+                        <>
+                         <TableCell>{orderItem.itemName}</TableCell>
+                         <TableCell>{`${orderItem.touchValue}*${orderItem.productWeight}=${orderItem.final_price}`}</TableCell>
+                        </>
+                      ))}</TableCell>
                     <TableCell>{item.value}</TableCell>
                     <TableCell>{item.recivedAmount}</TableCell>
                     <TableCell>{item.Balance}</TableCell>

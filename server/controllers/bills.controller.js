@@ -236,6 +236,7 @@ const getCustomerBillWithDate = async (req, res) => {
       where: filters,
       include: {
         Balance: true,
+        OrderItems:true
       },
     });
     console.log(closingBalance)
