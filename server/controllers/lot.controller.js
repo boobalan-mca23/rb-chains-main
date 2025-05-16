@@ -54,22 +54,35 @@ const prisma = new PrismaClient();
 const createLotInfo = async (req, res) => {
   const {
     initialWeight,
-    touchValue
+    touchValue,
+    today
   } = req.body;
 
   console.log("Incoming payload:", req.body); 
 
   try {
     // Step 1: Create Lot Entry
-    const newLot = await prisma.lotInfo.create({
+    if(!initialWeight||!touchValue){
+      return res.status(400).json({message:"Initial Weight is required"})
+    }
+    const newLot = await prisma.lotInfo.create({//create lot
       data: {
-        lot_initial_weight : parseFloat(initialWeight)  || null
-        
+        lot_initial_weight : parseFloat(initialWeight)  || null,
+        scarpDate:String(today) || null
       },
     });
+    const newScarp=await prisma.scarpInfo.create({
+       data:{
+        lot_id:newLot.id,
+        scarpDate:String(today) || null,
+        itemTotal :0,
+        scarp:0,
+        totalScarp:0
+      }
+    })
 
     // Step 2: Create Item Entry Linked to Lot
-    const newItem = await prisma.item.create({
+    const newItem = await prisma.item.create({ 
       data: {
         lot_id: newLot.id,
         item_type: "Initial",
@@ -95,35 +108,94 @@ const createLotInfo = async (req, res) => {
         items_id: newItem.item_id, // Dynamically referencing newly created item's ID
         attribute_id: 2, // Assuming attribute_id is always 1
         value:parseFloat(initialWeight) || null,
-        process_step_id:2,
-       
-        
+        process_step_id:2,  
       },
     });
 
-   const processStepIds = await prisma.processSteps.findMany({
-      select: { id: true }
+     
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0); // 12:00 AM
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999); // 11:59:59 PM
+
+    // Fetch lot IDs created today
+    const lotIds = await prisma.lotInfo.findMany({
+      where: {
+        createdAt: {
+          gte: todayDate,  // Greater than or equal to 12:00 AM
+          lte: endOfDay // Less than or equal to 11:59:59 PM
+        },
+      },
+      select: {
+        id: true,
+        scarpDate: true
+      }
     });
 
-    const stepIds = processStepIds.map(step => step.id); // Extract IDs
+    const allLotData = []
+    for (const lot of lotIds) {
 
-    //  Now, fetch LotProcess with nested relations
-    const items = await prisma.lotProcess.findMany({
-      include: { 
-        ProcessSteps: {
-          include: {
-            AttributeInfo: true,
-            AttributeValues: { 
-              where: {
-                lot_id:Number(newLot.id),
-                process_step_id: { in: stepIds } // ✅ Correctly filter step IDs
+
+      const processStepIds = await prisma.processSteps.findMany({
+        select: { id: true }
+      });
+
+      const stepIds = processStepIds.map(step => step.id); // Extract IDs
+
+      //  Now, fetch LotProcess with nested relations
+      const processes = await prisma.lotProcess.findMany({
+        include: {
+
+          ProcessSteps: {
+            include: {
+              AttributeInfo: true,
+              AttributeValues: {
+                where: {
+                  lot_id: lot.id,
+                  process_step_id: { in: stepIds } // ✅ Correctly filter step IDs
+                }
               }
             }
           }
         }
+      })
+
+
+      allLotData.push({ lotid: lot.id, lotDate: lot.scarpDate, data: processes })
+
+    }
+    const finalData = []
+    console.log('lotInfo', allLotData)
+    for (const [index, item] of allLotData.entries()) {
+      if (finalData.length === 0) {
+        finalData.push(item);
+      } else {
+        if (finalData[finalData.length - 1].lotDate === item.lotDate) {
+          finalData.push(item);
+        } else {
+          const scarp = await prisma.scarpInfo.findFirst({
+            where: {
+              scarpDate: finalData[finalData.length - 1].lotDate
+            }
+          });
+          finalData.push({ scarpValue: scarp });
+          finalData.push(item);
+        }
       }
+    }
+
+    // After the loop, push scarpValue for last lot
+    const lastLotDate = finalData[finalData.length - 1].lotDate;
+    const lastScarp = await prisma.scarpInfo.findFirst({
+      where: { scarpDate: lastLotDate }
     });
-    return res.status(200).json({lotid:newLot.id, data:items });
+    finalData.push({ scarpValue: lastScarp });
+
+
+    console.log('finalLot in save contoller', finalData)
+
+    return res.status(200).json(finalData);
   } catch (error) {
     console.error("Error creating lot:", error);
     res.status(400).json({ error: error.message });

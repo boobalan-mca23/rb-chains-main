@@ -1,27 +1,53 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-// getAllLotProcess 
+//getAllLotProcess 
+const dayjs = require('dayjs')
+const utc = require('dayjs/plugin/utc')
+const timezone = require('dayjs/plugin/timezone')
+
+// Load plugins
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+//Convert to Asia/Kolkata time
+
+
 
 
 const getAllLot = async (req, res) => {
   try {
-    // Fetch only lot IDs from lotInfo table
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // 12:00 AM
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999); // 11:59:59 PM
+    // // Get current date (today)
+    // const start = new Date();
+    // start.setHours(0, 0, 0, 0); // Set to 12:00 AM of today
 
-    // Fetch lot IDs created today
+    // const end = new Date();
+    // end.setHours(23, 59, 59, 999); // Set to 11:59:59.999 PM of today
+
+    // console.log('Start of today:', start);
+    // console.log('End of today:', end);
+
+     const start = dayjs().tz('Asia/Kolkata').startOf('day').toDate();  // Start of today (12:00 AM IST)
+    const end = dayjs().tz('Asia/Kolkata').endOf('day').toDate();    // End of today (11:59:59.999 PM IST)
+
+    console.log('Start of today (IST):', start);
+    console.log('End of today (IST):', end);
+
+
+    // Now use these dates in your Prisma query
     const lotIds = await prisma.lotInfo.findMany({
       where: {
         createdAt: {
-          gte: today,  // Greater than or equal to 12:00 AM
-          lte: endOfDay // Less than or equal to 11:59:59 PM
+          gte: start,
+          lte: end
         }
       },
-      select: { id: true }
+      select: {
+        id: true,
+        scarpDate: true
+      }
     });
+
 
     const allLotData = []
     for (const lot of lotIds) {
@@ -51,12 +77,41 @@ const getAllLot = async (req, res) => {
       })
 
 
-      allLotData.push({ lotid: lot.id, data: processes })
+      allLotData.push({ lotid: lot.id, lotDate: lot.scarpDate, data: processes })
+    }
+    const finalData = []
+    console.log('lotInfo', allLotData)
+    if (allLotData.length >= 1) { // if lot data empty return [] array
+      for (const [index, item] of allLotData.entries()) {
+        if (finalData.length === 0) {
+          finalData.push(item);
+        } else {
+          if (finalData[finalData.length - 1].lotDate === item.lotDate) {
+            finalData.push(item);
+          } else {
+            const scarp = await prisma.scarpInfo.findFirst({
+              where: {
+                scarpDate: finalData[finalData.length - 1].lotDate
+              }
+            });
+            finalData.push({ scarpValue: scarp });
+            finalData.push(item);
+          }
+        }
+      }
 
+      // After the loop, push scarpValue for last lot
+      const lastLotDate = finalData[finalData.length - 1].lotDate;
+      const lastScarp = await prisma.scarpInfo.findFirst({
+        where: { scarpDate: lastLotDate }
+      });
+      finalData.push({ scarpValue: lastScarp });
     }
 
 
-    res.status(200).json({ data: allLotData });
+    console.log('finalLot in GetAll contoller', finalData)
+
+    res.status(200).json({ data: finalData });
   } catch (err) {
     console.error("Error fetching lot IDs:", err.message);
     res.status(500).json({ error: "Internal server error" });
@@ -118,16 +173,23 @@ const saveProcess = async (req, res) => {
   try {
     //   const {lotdata} = req.body;
     console.log('req', req.body);
-    for (const lot of req.body.lotdata) {
-      lotId = lot.lotid;
+    const lotData=req.body.lotdata
 
-      if (!lot.data || !Array.isArray(lot.data)) {
-
-        return res.status(400).json({ message: "Invalid request data" });
+    if (!req.body.lotdata) {
+           return res.status(400).json({ status: 'noData', message: "No Lot Data" });
       }
-      for (const process of lot.data) {
 
-        for (const step of process.ProcessSteps) {
+    for (const lot of lotData) {
+      lotId = lot.lotid;
+     if(lot.scarpValue){
+       console.log('objeect data',lot.scarpValue)
+     }
+      
+      if(lot.data){
+        
+          for (const process of lot.data) {
+
+            for (const step of process.ProcessSteps) {
 
 
           if (step.process_id >= 4 && step.process_id <= 9) {//Individual Process object
@@ -139,17 +201,21 @@ const saveProcess = async (req, res) => {
             let index = 0;
             let existingChildItems = [];
 
-
-
-
-
             for (const attrValue of step.AttributeValues) {
-              console.log('childItem',attrValue)
+              console.log('childItem', attrValue)
 
               if (attrValue.items_id === null && attrValue.attribute_id === 2) {
 
                 if (step.process_id === 4) { // child items only created at wiring process 
-                  let newItem = await prisma.item.create({
+                  
+
+                  if (!attrValue.master_jewel_id) {
+                    return res.status(400).json({
+                      statusMsg: "noMasterId",
+                      message: "JewelName is Required"
+                    });
+                  } else {
+                    let newItem = await prisma.item.create({ //item create
                     data: {
                       lot_id: attrValue.lot_id,
                       item_type: "childItem",
@@ -157,26 +223,30 @@ const saveProcess = async (req, res) => {
 
                     }
                   })
-                  await prisma.masterJewelItemMapper.create({
-                    data: {
-                      item_id: newItem.item_id,
-                      master_jewel_id: attrValue.master_jewel_id
-                    }
-                  });
-                  
+                    await prisma.masterJewelItemMapper.create({
+                      data: {
+                        item_id: newItem.item_id,
+                        master_jewel_id: attrValue.master_jewel_id
+                      }
+                    });
 
-                  await prisma.attributeValue.create({
+                    await prisma.attributeValue.create({ //item value
                     data: {
                       process_step_id: attrValue.process_step_id,
                       lot_id: attrValue.lot_id,
                       attribute_id: attrValue.attribute_id,
                       items_id: newItem.item_id,
                       value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                      touchValue:attrValue.touchValue ? parseFloat(attrValue.touchValue) : null,
+                      touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null,
                       item_name: attrValue.item_name
                     },
                   });
-                  console.log('itemIdddddddddddddd',newItem.item_id);
+                  }
+
+
+
+                  
+                  
                 }
                 else {
                   let childItems = await prisma.item.findMany({  // its create other process child items
@@ -188,7 +258,7 @@ const saveProcess = async (req, res) => {
                   });
 
                   existingChildItems = childItems.map(item => item.item_id);
-                  
+
                   createdItems = await prisma.attributeValue.create({
                     data: {
                       process_step_id: attrValue.process_step_id,
@@ -204,10 +274,6 @@ const saveProcess = async (req, res) => {
                   ++index;
 
                 }
-
-
-
-
               }
               else {
                 let childItems = await prisma.item.findMany({  // its stored other weight of child items
@@ -220,26 +286,26 @@ const saveProcess = async (req, res) => {
 
                 // ✅ Store only the primary keys in the array
                 existingChildItems = childItems.map(item => item.item_id);
-             
+
                 if (attrValue.items_id === null) {
 
-                let createdItems= await prisma.attributeValue.create({
+                  let createdItems = await prisma.attributeValue.create({
                     data: {
                       process_step_id: attrValue.process_step_id,
                       lot_id: attrValue.lot_id,
                       attribute_id: attrValue.attribute_id,
-                      items_id:existingChildItems[attrValue.index],
+                      items_id: existingChildItems[attrValue.index],
                       item_name: attrValue.item_name,
                       value: attrValue.value === null ? null : parseFloat(attrValue.value),
                       touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
 
                     },
                   });
-             
+
 
                   ++index;
-                 
-                  if (attrValue.process_step_id === 32) {
+
+                  if (attrValue.process_step_id === 31) {
                     const childItems = await prisma.item.findMany({
                       where: {
                         lot_id: attrValue.lot_id,
@@ -247,9 +313,9 @@ const saveProcess = async (req, res) => {
                       },
                       select: { item_id: true },
                     });
-                  
+
                     const existingChildItems = childItems.map(item => item.item_id);
-                  
+
                     for (const itemId of existingChildItems) {
                       const validAttributes = await prisma.attributeValue.findMany({
                         where: {
@@ -261,10 +327,10 @@ const saveProcess = async (req, res) => {
                           value: true,
                         },
                       });
-                  
+
                       const hasValid = validAttributes.some(attr => attr.value !== null);
                       console.log('console from created time', hasValid);
-                  
+
                       if (hasValid) {
                         // Check if the item_id already exists in ProductStocks
                         const existingStock = await prisma.productStocks.findFirst({
@@ -272,7 +338,7 @@ const saveProcess = async (req, res) => {
                             item_id: itemId,
                           },
                         });
-                  
+
                         if (!existingStock) {
                           // If not exists, create the ProductStocks entry
                           await prisma.productStocks.create({
@@ -288,14 +354,9 @@ const saveProcess = async (req, res) => {
                       }
                     }
                   }
-                  
-                
-                  
-                  
-                  
 
                 } else {
-                      await prisma.attributeValue.updateMany({
+                  await prisma.attributeValue.updateMany({
                     where: {
                       process_step_id: attrValue.process_step_id,
                       lot_id: attrValue.lot_id,
@@ -311,28 +372,28 @@ const saveProcess = async (req, res) => {
                   });
                   //Item Name Update
                   await prisma.item.update({
-                    where:{
-                      item_id:attrValue.items_id
+                    where: {
+                      item_id: attrValue.items_id
                     },
-                    data:{
-                      item_name:attrValue.item_name
+                    data: {
+                      item_name: attrValue.item_name
                     }
                   })
                   // MasterJewelItemMapper Update
                   const existingItem = await prisma.masterJewelItemMapper.findFirst({
                     where: { item_id: attrValue.items_id }
                   });
-                  
+
                   if (existingItem) {
                     await prisma.masterJewelItemMapper.update({
                       where: { id: existingItem.id },
                       data: { master_jewel_id: attrValue.master_jewel_id }
                     });
                   }
-                  
+
 
                   //Stock moved to Update time
-                  if (attrValue.process_step_id === 32) {
+                  if (attrValue.process_step_id === 31) {
                     const childItems = await prisma.item.findMany({
                       where: {
                         lot_id: attrValue.lot_id,
@@ -340,9 +401,9 @@ const saveProcess = async (req, res) => {
                       },
                       select: { item_id: true },
                     });
-                  
+
                     const existingChildItems = childItems.map(item => item.item_id);
-                  
+
                     for (const itemId of existingChildItems) {
                       const validAttributes = await prisma.attributeValue.findMany({
                         where: {
@@ -354,10 +415,10 @@ const saveProcess = async (req, res) => {
                           value: true,
                         },
                       });
-                  
+
                       const hasValid = validAttributes.some(attr => attr.value !== null);
                       console.log('console from created time', hasValid);
-                  
+
                       if (hasValid) {
                         // Check if the item_id already exists in ProductStocks
                         const existingStock = await prisma.productStocks.findFirst({
@@ -365,7 +426,7 @@ const saveProcess = async (req, res) => {
                             item_id: itemId,
                           },
                         });
-                  
+
                         if (!existingStock) {
                           // If not exists, create the ProductStocks entry
                           await prisma.productStocks.create({
@@ -381,11 +442,8 @@ const saveProcess = async (req, res) => {
                       }
                     }
                   }
-                  
 
-              
-                  
-                  
+
                 }
               }
             }
@@ -402,7 +460,7 @@ const saveProcess = async (req, res) => {
             }
 
             for (const attrValue of step.AttributeValues) {
-     
+
               // if (!attrValue.attribute_id) {
               //   console.warn("Skipping attribute with missing attribute_id:", attrValue);
               //   continue;
@@ -449,7 +507,7 @@ const saveProcess = async (req, res) => {
                 });
 
 
-                
+
               }
 
 
@@ -459,7 +517,26 @@ const saveProcess = async (req, res) => {
 
         }
       }
+        
+        
+       
+       
+      }else{
+         // update scarpData
+         await prisma.scarpInfo.updateMany({
+          where:{
+            id:lot.scarpValue.id
+          },
+          data:{
+              itemTotal: lot.scarpValue?.itemTotal ?? 0,
+              scarp: lot.scarpValue?.scarp ?? 0,
+              totalScarp: lot.scarpValue?.totalScarp ?? 0
+          }
+        })
+      }
+    
     }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0); // 12:00 AM
 
@@ -472,9 +549,12 @@ const saveProcess = async (req, res) => {
         createdAt: {
           gte: today,  // Greater than or equal to 12:00 AM
           lte: endOfDay // Less than or equal to 11:59:59 PM
-        }
+        },
       },
-      select: { id: true }
+      select: {
+        id: true,
+        scarpDate: true
+      }
     });
 
     const allLotData = []
@@ -490,6 +570,7 @@ const saveProcess = async (req, res) => {
       //  Now, fetch LotProcess with nested relations
       const processes = await prisma.lotProcess.findMany({
         include: {
+
           ProcessSteps: {
             include: {
               AttributeInfo: true,
@@ -505,19 +586,47 @@ const saveProcess = async (req, res) => {
       })
 
 
-      allLotData.push({ lotid: lot.id, data: processes })
+      allLotData.push({ lotid: lot.id, lotDate: lot.scarpDate, data: processes })
 
+    }
+    const finalData = []
+    console.log('lotInfo', allLotData)
+    if (allLotData.length >= 1) {
+      for (const [index, item] of allLotData.entries()) {
+        if (finalData.length === 0) {
+          finalData.push(item);
+        } else {
+          if (finalData[finalData.length - 1].lotDate === item.lotDate) {
+            finalData.push(item);
+          } else {
+            const scarp = await prisma.scarpInfo.findFirst({
+              where: {
+                scarpDate: finalData[finalData.length - 1].lotDate
+              }
+            });
+            finalData.push({ scarpValue: scarp });
+            finalData.push(item);
+          }
+        }
+      }
+
+      // After the loop, push scarpValue for last lot
+      const lastLotDate = finalData[finalData.length - 1].lotDate;
+      const lastScarp = await prisma.scarpInfo.findFirst({
+        where: { scarpDate: lastLotDate }
+      });
+      finalData.push({ scarpValue: lastScarp });
     }
 
 
-    res.status(200).json({ data: allLotData });
+    console.log('finalLot in save contoller', finalData)
+
+
+    res.status(200).json({ data: finalData });
   } catch (error) {
     console.error("Error creating process:", error);
     return res.status(500).json({ message: "Internal Server Error", error });
   }
-
-
-
 };
 
 // update ecah process atttribute value
@@ -556,20 +665,10 @@ const updateProcess = async (req, res) => {
 
               },
             });
-
-
-
-
-
           }
         }
       }
     }
-
-
-
-
-
 
     const lotIds = await prisma.lotInfo.findMany({  // send response all lot data
       select: {
@@ -615,9 +714,6 @@ const updateProcess = async (req, res) => {
   }
 };
 
-
-
-
 const getLotsByDateRange = async (req, res) => {
   try {
     const { fromDate, toDate } = req.body;
@@ -639,10 +735,14 @@ const getLotsByDateRange = async (req, res) => {
           lte: end
         }
       },
-      select: { id: true }
+      select: {
+        id: true,
+        scarpDate: true
+      }
     });
 
     const allLotData = [];
+    console.log(lotIds)
 
     for (const lot of lotIds) {
       // 2. Get all process step IDs
@@ -662,17 +762,47 @@ const getLotsByDateRange = async (req, res) => {
                 where: {
                   lot_id: lot.id,
                   process_step_id: { in: stepIds }
-                }
+                },
+
               }
             }
           }
         }
       });
 
-      allLotData.push({ lotid: lot.id, data: processes });
+      allLotData.push({ lotid: lot.id, lotDate: lot.scarpDate, data: processes });
+
+    }
+    const finalData = []
+    console.log('filter lot', allLotData)
+    for (const [index, item] of allLotData.entries()) {
+      if (finalData.length === 0) {
+        finalData.push(item);
+      } else {
+        if (finalData[finalData.length - 1].lotDate === item.lotDate) {
+          finalData.push(item);
+        } else {
+          const scarp = await prisma.scarpInfo.findFirst({
+            where: {
+              scarpDate: finalData[finalData.length - 1].lotDate
+            }
+          });
+          finalData.push({ scarpValue: scarp });
+          finalData.push(item);
+        }
+      }
     }
 
-    res.status(200).json({ data: allLotData });
+    // After the loop, push scarpValue for last lot
+    const lastLotDate = finalData[finalData.length - 1].lotDate;
+    const lastScarp = await prisma.scarpInfo.findFirst({
+      where: { scarpDate: lastLotDate }
+    });
+    finalData.push({ scarpValue: lastScarp });
+
+
+    console.log('finalLot', finalData)
+    res.status(200).json({ data: finalData });
   } catch (err) {
     console.error("Error fetching lot data by date range:", err.message);
     res.status(500).json({ error: "Internal server error" });
@@ -686,7 +816,7 @@ module.exports = {
   getAllLot,
   saveProcess,
   updateProcess,
-  
+
 
 };
 

@@ -105,7 +105,7 @@ const CustReport = () => {
               'id': item.id,
               'customer_id': item.customer_id,
               'date': formattedDate,
-              'orderItems':item.OrderItems,
+              'orderItems': item.OrderItems,
               'value': item.total_price,
               'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
               'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
@@ -207,7 +207,7 @@ const CustReport = () => {
             const billObj = {
               'id': item.id,
               'customer_id': item.customer_id,
-              'orderItems':item.OrderItems,
+              'orderItems': item.OrderItems,
               'date': formattedDate,
               'value': item.total_price,
               'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
@@ -420,15 +420,35 @@ const CustReport = () => {
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item.date}</TableCell>
                     <TableCell>
-                      {item.orderItems.map((orderItem,index)=>(
-                        <>
-                         <TableCell>{orderItem.itemName}</TableCell>
-                         <TableCell>{`${orderItem.touchValue}*${orderItem.productWeight}=${orderItem.final_price}`}</TableCell>
-                        </>
-                      ))}</TableCell>
+
+                      <>
+                        {/* <TableCell>{orderItem.itemName}</TableCell>
+                         <TableCell>{`${orderItem.touchValue}*${orderItem.productWeight}=${orderItem.final_price}`}</TableCell> */}
+                        <Table size="small" sx={{ border: '1px solid #ccc' }}>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Item Name</TableCell>
+                              <TableCell>Touch Value</TableCell>
+                              <TableCell>Product Weight</TableCell>
+                              <TableCell>Final Price</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {item.orderItems.map((orderItem, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell>{orderItem.itemName}</TableCell>
+                                <TableCell>{orderItem.touchValue}</TableCell>
+                                <TableCell>{orderItem.productWeight}</TableCell>
+                                <TableCell>{orderItem.final_price}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </>
+                    </TableCell>
                     <TableCell>{item.value}</TableCell>
                     <TableCell>{item.recivedAmount}</TableCell>
-                    <TableCell>{item.Balance}</TableCell>
+                    <TableCell>{(item.Balance).toFixed(3)}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleViewBill(item.id)}>
                         <Visibility style={{ color: "black" }} />
