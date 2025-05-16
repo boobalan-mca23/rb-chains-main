@@ -108,7 +108,7 @@ function StockReport() {
                                     <TableCell>{item.itemDetail.itemName}</TableCell>
                                     <TableCell>{item.itemDetail.touch}</TableCell>
                                     <TableCell>{item.itemDetail.weight}</TableCell>
-                                    <TableCell>{item.itemDetail.pure}</TableCell>
+                                    <TableCell>{(item.itemDetail.pure).toFixed(3)}</TableCell>
                                     <TableCell>{item.product_status}</TableCell>
 
                                 </TableRow>

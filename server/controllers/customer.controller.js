@@ -122,12 +122,13 @@ const getCustomerClosing = async (req, res) => {
 
     });
 
-    res.status(200).json({closingBalance:closingBalance});
+    res.status(200).json({closingBalance:closingBalance?(closingBalance.closing_balance).toFixed(3):0});
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch customer closingBalance" });
   }
 };
+
 module.exports = {
   createCustomer,
   deleteCustomer,
@@ -135,5 +136,6 @@ module.exports = {
   getAllCustomers,
   getCustomerById,
   getCustomerValueWithPercentage,
-  getCustomerClosing
+  getCustomerClosing,
+  
 };

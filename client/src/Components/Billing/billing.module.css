@@ -1,0 +1,42 @@
+@page {
+  size: A6 portrait;
+  margin: 10mm; /* adjust margins as you like */
+}
+
+
+
+@media print {
+   html, body {
+    width: 190mm;
+    height: 190mm;
+    overflow: hidden;
+  }
+
+    .noprint {
+      display: none !important;
+    }
+   
+  }
+
+  
+  @media print {
+  /* make the received‐details table narrower and fix cell wrapping */
+  .receivedtable {
+    width: 100% !important;       /* or any percent/px that suits */
+    table-layout: fixed !important;
+    margin: 0 auto;              /* center it on the printed page */
+  }
+  /* ensure cells wrap rather than stretch */
+  .receivedtable th,
+  .receivedtable td {
+    word-wrap: break-word;
+    white-space: normal !important;
+  }
+  /* make inputs full‐width within that table */
+  .receivedtable input {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+}
+
+  

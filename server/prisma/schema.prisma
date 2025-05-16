@@ -11,12 +11,14 @@ datasource db {
 model LotInfo {
   id                 Int       @id @default(autoincrement())
   lot_initial_weight Float?
+  scarpDate          String 
   master_id          Int?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @default(now())
   MasterProcess      MasterProcess? @relation(fields: [master_id], references: [id])
   items              Item[]    @relation("LotItems") 
   AttributeValues    AttributeValue[]
+  ScarpInfo          ScarpInfo[]
  
   @@map("lotInfo")
 }
@@ -141,6 +143,7 @@ model MasterOrder {
   order_status      String
   customer_id       Int
   total_price       Float
+  oldBalance        Float
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
  
@@ -224,4 +227,14 @@ model ClosingBalance{
   CustomerInfo      CustomerInfo @relation(fields: [customer_id], references: [customer_id],onDelete: Cascade) 
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
+}
+model ScarpInfo{
+   id               Int @id @default(autoincrement())
+   lot_id           Int @unique
+   scarpDate        String 
+   itemTotal        Int
+   scarp            Float
+   totalScarp       Float
+   LotInfo         LotInfo?      @relation(fields: [lot_id], references: [id]) 
+  @@map("scarpInfo") 
 }

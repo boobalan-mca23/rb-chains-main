@@ -1,8 +1,8 @@
 import axios from 'axios';
 import {REACT_APP_BACKEND_SERVER_URL} from '../config/config.js'
 // create Lot
- export const createLot=async(initialWeight,touchValue)=>{
-     const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/lot/lotinfo`,{initialWeight:initialWeight,touchValue:touchValue})
+ export const createLot=async(initialWeight,touchValue,today)=>{
+     const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/lot/lotinfo`,{initialWeight:initialWeight,touchValue:touchValue,today:today})
      return response.data;
 }  
 
@@ -15,8 +15,21 @@ export const getAllLot=async()=>{
 //SaveLot Value
 export const saveLot=async(lotdata)=>{
 
-    const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/process/saveProcess`,{lotdata:lotdata})
-    return response;
+  try{
+      const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/process/saveProcess`,{lotdata:lotdata})
+      return response;
+  }catch(error){
+    if (error.response) {
+        if (error.response.status === 400 && error.response.data.statusMsg === "noMasterId") {
+          alert(error.response.data.message);
+          console.log(error.response)
+        } else {
+          alert(error.response.data.message || "Something went wrong.");
+        }
+      } else {
+        alert("No response from server. Please check your internet connection.");
+      }
+  }
  
 }
 
