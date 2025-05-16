@@ -1,6 +1,10 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+const convertToIST = (date) => {
+  return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+};
+
 const saveBill = async (req, res) => {
   const {
     customer_id,
@@ -20,7 +24,8 @@ const saveBill = async (req, res) => {
         customer_id: customer_id,
         order_status: order_status,
         total_price: parseFloat(totalPrice),
-        oldBalance :parseFloat(oldBalance) 
+        oldBalance :parseFloat(oldBalance),
+        created_at: convertToIST(new Date()) 
       }
     });
 
