@@ -31,6 +31,7 @@ const UpdateBill = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productWeight, setProductWeight] = useState([])
   const [products, setProducts] = useState([]);
+  const [pure, setPure] = useState(0)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -112,6 +113,7 @@ const UpdateBill = () => {
     const receivedGold = calculateClosing(balanceRow);
     const updatedClosing = totalBillAmount - receivedGold;
     setClosing(updatedClosing);
+    setPure(calculateClosing(balanceRow))
   }, [balanceRow]);
 
 
@@ -211,12 +213,12 @@ const UpdateBill = () => {
 
       html2canvas(input, { scale: 2 }).then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("p", "mm", "a4");
+        const pdf = new jsPDF("p", "mm", "a6");
         const imgProps = pdf.getImageProperties(imgData);
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, 150);
 
         const blob = pdf.output("blob");
         const blobUrl = URL.createObjectURL(blob);
@@ -247,7 +249,7 @@ const UpdateBill = () => {
 
       </div>
 
-      <Box sx={styles.wrapper}>
+      <Box sx={styles.wrapper} className="updatebillprint">
         <Box sx={styles.leftPanel} ref={billRef}>
           <h1 style={styles.heading}>Estimate Only</h1>
           <Box sx={styles.billHeader}>
@@ -263,7 +265,7 @@ const UpdateBill = () => {
           </Box>
           {selectedCustomer && (
             <Box sx={styles.customerDetails}>
-              <h3>Customer Info</h3>
+              {!isPrinting && (<h3 className="no-print">Customer Details:</h3>)}
               <p><strong>Name:</strong> {selectedCustomer.customer_name}</p>
               {/* <p><strong>Phone:</strong> {selectedCustomer.phone_number}</p>
               <p><strong>Address:</strong> {selectedCustomer.address}</p>
@@ -271,7 +273,7 @@ const UpdateBill = () => {
             </Box>
           )}
           <Box sx={styles.itemsSection}>
-            <h3>Order Items:</h3>
+            <h3 className="no-print">Order Items:</h3>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -326,8 +328,7 @@ const UpdateBill = () => {
                   <td></td>
                   <td></td>
                   <td>
-
-                    {!isPrinting && (
+                 {!isPrinting && (
                       <Button
                         variant="contained"
                         color="primary"
@@ -344,8 +345,8 @@ const UpdateBill = () => {
                 </tr>
               </tbody>
             </table>
-            <h3>Recevied Details:</h3>
-            <Table>
+              <h3 className="no-print">Recevied Details:</h3>
+            <Table style={{marginBottom:"20px"}} className="no-print">
               <TableHead>
                 <TableRow>
                   <TableCell> <strong>Given Gold </strong></TableCell>
@@ -409,16 +410,31 @@ const UpdateBill = () => {
 
                   </TableRow>
                 ))}
-                <TableRow>
+                {/* <TableRow>
                   <TableCell colSpan={3} >Closing</TableCell>
                
 
                   <TableCell>{Number(balanceRow.length === 0 ? totalBillAmount : closing).toFixed(3)}</TableCell>
 
-                </TableRow>
+                </TableRow> */}
               </TableBody>
             </Table>
             <ToastContainer />
+
+             <Box style={styles.closingBox}>
+            
+                      <p style={styles.closingLine} >
+                        <span>Recevied</span> 
+                        <span >{(pure).toFixed(3)}</span>
+                        
+                      </p>
+            
+                      <p style={styles.closingLine}>
+                        <span>closing</span> 
+                        <span >{(balanceRow.length === 0 ? totalBillAmount : closing).toFixed(2)}</span>
+                        
+                      </p>
+                    </Box>
           </Box>
 
 
@@ -462,7 +478,7 @@ const styles = {
     fontFamily: "Arial, sans-serif",
 
   },
-  heading: { textAlign: "center", color: "black" },
+  heading: { textAlign: "center", color: "black",fontSize: "20px" },
 
   searchSection: { display: "flex", gap: "10px", marginBottom: "20px" },
   smallAutocomplete: {
@@ -526,7 +542,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "20px"
+    marginTop:"10px"
   },
   billNumber: {
     flex: 1
@@ -537,6 +553,20 @@ const styles = {
     marginBottom: "20px",
 
   },
+  closingBox:{
+    width: "60%",
+    padding: "20px",
+    marginLeft:"130px",
+    
+  },
+  closingLine: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    margin: "0 0 14px 0",       // reset default <p> margins
+    padding: "4px 0",
+     // optional vertical padding
+  }
 };
 
 export default UpdateBill;

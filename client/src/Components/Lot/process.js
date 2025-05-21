@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Button, Box, Modal, Typography, colors, TableFooter, Autocomplete, Hidden, Grid } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { toast, ToastContainer } from "react-toastify";
@@ -6,7 +6,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { createLot, getAllLot, saveLot, getLotDatewise, getProductName } from "../../Api/processTableApi";
 import { styled } from "@mui/material/styles";
 import { processStepId } from "../../ProcessStepId/processStepId";
-import { useRef } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import * as XLSX from 'xlsx';
@@ -37,7 +36,6 @@ const ProcessTable = () => {
     {
       process: [
         { processName: "Melting", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
-        { processName: "Kambi", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
         { processName: "Wire", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
         { processName: "Machine", Weight: [{ bw: 0 }, { aw: 0 }, { lw: 0 }] },
         { processName: "Soldrine", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
@@ -51,6 +49,8 @@ const ProcessTable = () => {
     }
   ]);
   const [productName, setProductName] = useState([])
+  const touchRef=useRef()
+  
 
   const docalculation = (arrayItems) => {
     // Calculation
@@ -68,10 +68,10 @@ const ProcessTable = () => {
     tempData.forEach((lotData) => {
       if (
         lotData.data &&
-        lotData.data[8]?.ProcessSteps?.[1]?.AttributeValues &&
-        lotData.data[8].ProcessSteps[1].AttributeValues.length !== 0
+        lotData.data[7]?.ProcessSteps?.[1]?.AttributeValues &&
+        lotData.data[7].ProcessSteps[1].AttributeValues.length !== 0
       ) {
-        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem) => {
+        lotData.data[7].ProcessSteps[1].AttributeValues.forEach((arrItem) => {
           if (arrItem?.value) {
             finishTotal += arrItem.value;
           }
@@ -79,17 +79,17 @@ const ProcessTable = () => {
       }
     });
 
-    tempCalculation[2].process[7].Weight[1].aw = Number(finishTotal)
+    tempCalculation[2].process[6].Weight[1].aw = Number(finishTotal)
     console.log('finishTotal', finishTotal)
 
     let finsihAfterValue = 0;
     let lotFinishValue = 0;
     tempData.forEach((lotData, lotIndex) => {// this calculation for lotDifferent Total
       if(lotData.data){
-         if (lotData.data[8].ProcessSteps[1].AttributeValues.length === 0) {
+         if (lotData.data[7].ProcessSteps[1].AttributeValues.length === 0) {
         finsihAfterValue = 0;
       } else {
-        lotData.data[8].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+        lotData.data[7].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
           finsihAfterValue += arrItem.value
 
         })
@@ -101,7 +101,7 @@ const ProcessTable = () => {
     })
     tempCalculation[3].lotTotal = lotFinishValue
     //calculation for total scarp value and loss total
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 7; i++) {
       let scarpTotal = 0, lossTotal = 0, pureTotal = 0;
       let innerScarp = 0, innerLoss = 0, innerPure = 0;
       for (let j = 0; j < tempData.length; j++) {
@@ -111,11 +111,11 @@ const ProcessTable = () => {
 
         if (attrValues && attrValues.length !== 0) {
           attrValues.forEach((attrItem, attrIndex) => {
-            if (i === 7) {
+            if (i === 6) {
               const pureValue = processSteps?.[4]?.AttributeValues?.[attrIndex]?.value || 0;
               innerPure += Number(pureValue);
             }
-            if (i!==4) {
+            if (i!==3) {
               const scrapValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
               const lossValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
               innerScarp += Number(scrapValue);
@@ -131,14 +131,12 @@ const ProcessTable = () => {
       lossTotal += innerLoss;
       pureTotal += innerPure;
 
-      if (i!== 4) {
+      if (i!== 3) {
          tempCalculation[2].process[i - 1].Weight[2].sw = scarpTotal
          tempCalculation[2].process[i - 1].Weight[3].lw = lossTotal
        } 
        
-      
-
-      if (i === 7) {
+      if (i === 6) {
         tempCalculation[2].process[6].Weight[4].pw = pureTotal
       }
       console.log('tempCalculation for scw,losw', tempCalculation)
@@ -250,7 +248,7 @@ const ProcessTable = () => {
             lot_id: lotid,
             process_step_id: 5,
             items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-            attribute_id: 2,
+            attribute_id: 5,
             value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1 ? (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value : 0
           }
           lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
@@ -267,72 +265,27 @@ const ProcessTable = () => {
         }
       }
     }//Melting ProcessEnd
-    else {
-      //Kambi Process Start
-      if (attribute_id === 3) {//Kambi Process Insert Value
-        const obj = {
-          lot_id: lotid,
-          process_step_id: findProcessStep(process_id, attribute_id),
-          items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-          // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-          attribute_id: attribute_id,
-          value: value
-        }
-        if (lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 0) {
-          lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.push(obj);
-          tempData.splice(lotIndex, 1, lotData[0]);
-          setItems(tempData)
-        } else {
-          lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value = parseFloat(value);
-          tempData.splice(lotIndex, 1, lotData[0]);
-          setItems(tempData)
-          console.log('kambi', items)
-        }//Kambi Process End
-      } else if (attribute_id === 4) {// Kambi Process Scrap Value Insert
-        const obj = {
-          lot_id: lotid,
-          process_step_id: findProcessStep(process_id, attribute_id),
-          // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-          attribute_id: attribute_id,
-          items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-          value: value
-        }
-        if (lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.length === 0) {
-          lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(obj);
-          const lossObj = {
-            lot_id: lotid,
-            process_step_id: 9,
-            items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-            attribute_id: 2,
-            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1 ? (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - value : 0
-          }
-          lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
-
-          tempData.splice(lotIndex, 1, lotData[0]);
-          setItems(tempData)
-        } else {// Kambi Process ScrapValue Update
-          lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = parseFloat(value);
-          if (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1) {
-            lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
-          }
-          tempData.splice(lotIndex, 1, lotData[0]);
-          setItems(tempData)
-        }
-      }
-    }
+   
   }
 
   const handleAddItemColumns = (lotid, index) => {
+
     console.log('lotid', lotid);
     const tempData = [...items];
+
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
-    let processstepid = 10;
-    for (let i = 3; i <= 8; i++) {
+    
+    let processstepid = 6;
+    for (let i = 2; i <= 7; i++) {
       for (let j = 1; j <= 4; j++) {
-        if (processstepid === 17 && j === 4) {
+        if (processstepid === 13 && j === 4) {
           continue;
         }
-        if (processstepid === 29) {
+        if(processstepid ===6 && j===1){
+          ++processstepid;
+          continue;
+        }
+        if (processstepid === 25) {
           ++processstepid;//its used For CuttingProcessPureWeight
         }
         const obj = {
@@ -340,7 +293,7 @@ const ProcessTable = () => {
           process_step_id: processstepid,
           item_name: " ",
           items_id: null,
-          attribute_id: (processstepid === 16 ? 5 : j + 1),
+          attribute_id: (processstepid === 12 ? 5 : j + 1),
           value: null,
           touchValue: null,
           index: null,
@@ -348,16 +301,14 @@ const ProcessTable = () => {
         }
         lotData[0].data[i].ProcessSteps[j - 1].AttributeValues.push(obj)
         ++processstepid;
-
-
       }
 
     }
-    processstepid = 10
+    processstepid = 6
 
-    const obj = {
+    const obj = { 
       lot_id: lotid,
-      process_step_id: 29,
+      process_step_id: 25,
       item_name: " ",
       items_id: null,
       attribute_id: 6,
@@ -366,7 +317,7 @@ const ProcessTable = () => {
       index: null,
       master_jewel_id: null
     }
-    lotData[0].data[7].ProcessSteps[4].AttributeValues.push(obj)
+    lotData[0].data[6].ProcessSteps[4].AttributeValues.push(obj)
 
     tempData.splice(index, 1, lotData[0]);
     console.log('tempDate Data Push', tempData);
@@ -378,9 +329,12 @@ const ProcessTable = () => {
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
 
-    for (let i = 3; i <= 8; i++) {//this create childItem name Each Process and store jewelItem also
+    for (let i = 2; i <= 7; i++) {//this create childItem name Each Process and store jewelItem also
       for (let j = 0; j <= 3; j++) {
-        if (i === 4 && j === 3) {
+        if (i === 3 && j === 3) {
+          continue
+        }
+         if (i === 2 && j === 0) {
           continue
         }
         lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].item_name = String(itemName);
@@ -392,12 +346,15 @@ const ProcessTable = () => {
     lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].item_name = String(itemName);
     lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
     lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].touchValue = touchValue;
-    for (let i = 3; i <= 8; i++) {//this create Index  Each Process
-      if (i === 7) {
+    for (let i = 2; i <= 7; i++) {//this create Index  Each Process
+      if (i === 6) {
         lotData[0].data[i].ProcessSteps[4].AttributeValues[childIndex].index = childIndex
       }
       for (let j = 0; j <= 3; j++) {
-        if (i === 4 && j === 3) {
+        if (i === 3 && j === 3) {
+          continue
+        }
+         if (i === 2 && j === 0) {
           continue
         }
         lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].index = childIndex
@@ -704,7 +661,7 @@ const ProcessTable = () => {
       (acc, item) => acc + item.value,
       0
     );
-    const differValue = kambiWeight - totalValue;
+    const differValue = (kambiWeight - totalValue).toFixed(3)
 
     return differValue;
 
@@ -966,9 +923,14 @@ useEffect(() => {
                       (<StyledTableCell >
                         <b>Scarp</b>
                       </StyledTableCell>) : ("")}
-                    <StyledTableCell >
-                      <b>+</b>
-                    </StyledTableCell>
+                      {process!=="Soldrine" ?(
+                        <StyledTableCell >
+                        <b>Loss</b>
+                      </StyledTableCell>):(
+                        <StyledTableCell >
+                         <b>+</b>
+                    </StyledTableCell>)}
+                 
                     {
                       process === "Cutting" && (
                         <StyledTableCell >
@@ -1016,7 +978,7 @@ useEffect(() => {
                           <StyledInput
                             value={//RawGold Input Box
                               typeof lotItem.data[0].ProcessSteps[0].AttributeValues[0].value === "number"
-                                ? lotItem.data[0].ProcessSteps[0].AttributeValues[0].value.toFixed(3)
+                                ? lotItem.data[0].ProcessSteps[0].AttributeValues[0].value
                                 : ""
                             }
                             onChange={(e) =>
@@ -1024,6 +986,7 @@ useEffect(() => {
                             }
                             type="number"
                             style={{ width: "120px" }}
+                            autoComplete="off"
                           />
 
 
@@ -1036,6 +999,7 @@ useEffect(() => {
                             }}
                             type="number"
                             style={{ width: "120px" }}
+                            autoComplete="off"
                           />
                         </StyledTableCell>
 
@@ -1065,7 +1029,7 @@ useEffect(() => {
                                       lotItem.data[lotArrIndex + 1]?.ProcessSteps[1]?.AttributeInfo.attribute_id,
                                       e.target.value, lotIndex)}
                                     type="number"
-
+                                    autoComplete="off"
                                     style={{ width: "120px" }}
                                   />
                                 </StyledTableCell>
@@ -1081,7 +1045,7 @@ useEffect(() => {
                                         lotItem.data[lotArrIndex + 1]?.ProcessSteps[2]?.AttributeInfo.attribute_id,
                                         e.target.value, lotIndex)}
                                       type="number"
-
+                                      autoComplete="off"
                                       style={{ width: "120px" }}
                                     />
                                   </StyledTableCell>) : ("")}
@@ -1169,7 +1133,7 @@ useEffect(() => {
                                 value={lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].value}
                                 placeholder="Weight"
                                 onChange={(e) => { handleChildItemWeight(lotItem.lotid, key, e.target.value, lotIndex) }}
-                                type="number" style={{ width: "120px" }} />
+                                type="number" style={{ width: "120px" }} autoComplete="off"/>
                             </StyledTableCell>
                             <StyledTableCell>
 
@@ -1208,6 +1172,7 @@ useEffect(() => {
                                         }}
                                         type="number"
                                         style={{ width: "120px" }}
+                                        autoComplete="off"
                                       ></StyledInput>
                                     </StyledTableCell>
                                     {lotItem.data[lotArrIndex]?.process_name !== "mechine" ? (
@@ -1228,6 +1193,7 @@ useEffect(() => {
                                           }}
                                           type="number"
                                           style={{ width: "120px" }}
+                                          autoComplete="off"
                                         ></StyledInput>
                                       </StyledTableCell>) : null}
 
@@ -1305,7 +1271,7 @@ useEffect(() => {
                                     3,
                                     0
                                   );
-                                  return diff !== 0 ? "red" : "transparent"; // Red for both > 0 and < 0
+                                  return diff !== "0.000"? "red" : "transparent"; // Red for both > 0 and < 0
                                 })()
                                 : "transparent",
                             color:
@@ -1318,7 +1284,7 @@ useEffect(() => {
                                     3,
                                     0
                                   );
-                                  return diff !== 0 ? "white" : "black"; // White text if red background
+                                  return diff !== "0.000" ? "white" : "black"; // White text if red background
                                 })()
                                 : "black",
                           }}
@@ -1399,7 +1365,7 @@ useEffect(() => {
                               {/* Second row: two text fields */}
                               <Grid container item spacing={1}>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth size="small" value={lotItem.scarpValue?.scarp} label="Scarp" type="number" onChange={(e) => { handleScarp(e.target.value, lotItem.scarpValue.scarpDate) }} />
+                                  <TextField fullWidth size="small" value={lotItem.scarpValue?.scarp} label="Scarp" type="number" onChange={(e) => { handleScarp(e.target.value, lotItem.scarpValue.scarpDate) }} autoComplete="off" />
                                 </Grid>
                                 <Grid item xs={6}>
                                   <TextField fullWidth size="small" label="Loss" value={(lotItem.scarpValue?.totalScarp).toFixed(3)}/>
@@ -1493,7 +1459,13 @@ useEffect(() => {
             label="Initial Weight"
             value={initialWeight}
             onChange={(e) => setInitialWeight(e.target.value)}
+            autoComplete="off"
             sx={{ mt: 2 }}
+            onKeyDown={(e)=>{
+              if(e.key==="Enter"){
+                touchRef.current.focus()
+              }
+            }}
           />
           <Typography variant="h6" component="h2">
             Touch Weight
@@ -1504,6 +1476,8 @@ useEffect(() => {
             value={touchValue}
             onChange={(e) => setTouchValue(e.target.value)}
             sx={{ mt: 2 }}
+            autoComplete="off"
+            inputRef={touchRef}
           />
           <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
             <Button onClick={handleClose} sx={{ mr: 2 }}>

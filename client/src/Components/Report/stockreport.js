@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 function StockReport() {
     const [stock, setStock] = useState([])
-    const [tempstock,setTempStock]=useState([])
+    const [tempstock, setTempStock] = useState([])
 
     useEffect(() => {
         const fetchStock = async () => {
@@ -36,86 +36,87 @@ function StockReport() {
         }
         fetchStock()
     }, [])
-    const handleStatus=(status)=>{
-       if(status!=='all'){
-        const stockTemp=[...stock]
-        const filterStock=stockTemp.filter((item,index)=>item.product_status===status)
-         setTempStock(filterStock)
-       }else{
-        setTempStock(stock)
-       }
+    const handleStatus = (status) => {
+        if (status !== 'all') {
+            const stockTemp = [...stock]
+            const filterStock = stockTemp.filter((item, index) => item.product_status === status)
+            setTempStock(filterStock)
+        } else {
+            setTempStock(stock)
+        }
     }
     return (
         <>
-           
-            <Box  sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent:'flex-end',
-            flexWrap: "wrap",
-            gap: 2,
-            marginBottom: 3,
-            
-          }}>
-                <button onClick={()=>{handleStatus('all')}}>All</button>
-                <button onClick={()=>{handleStatus('active')}}>Active</button>
-                <button onClick={()=>{handleStatus('sold')}}>Sold</button>
+
+            <Box sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: 'flex-end',
+                flexWrap: "wrap",
+                gap: 2,
+                marginBottom: 3,
+
+            }}>
+                <button onClick={() => { handleStatus('all') }}>All</button>
+                <button onClick={() => { handleStatus('active') }}>Active</button>
+                <button onClick={() => { handleStatus('sold') }}>Sold</button>
             </Box>
             <TableContainer component={Paper} style={{ marginTop: "20px" }}>
                 <Table>
                     <TableHead style={{ backgroundColor: "aliceblue" }}>
                         <TableRow>
-                            <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                                S.NO
-                            </TableCell>
-                            <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                                Date
-                            </TableCell>
-                            <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                                ItemName
-                            </TableCell>
-                            <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                                Touch
-                            </TableCell>
-                            <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                                weight
-                            </TableCell>
-                            <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                                pure
-                            </TableCell>
-                            <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                                status
-                            </TableCell>
-
+                            {["S.NO", "Date", "Item Name", "Touch", "Weight", "Pure", "Status"].map((label, idx) => (
+                                <TableCell
+                                    key={idx}
+                                    align="center"
+                                    sx={{
+                                        color: "black",
+                                        fontWeight: "bold",
+                                        border: "1px solid rgba(224, 224, 224, 1)",
+                                    }}
+                                >
+                                    {label}
+                                </TableCell>
+                            ))}
                         </TableRow>
                     </TableHead>
+
                     <TableBody>
                         {tempstock.length > 0 ? (
                             tempstock.map((item, index) => (
                                 <TableRow key={item.id}>
-                                    <TableCell>{index + 1}</TableCell>
-
-                                    <TableCell>
+                                    <TableCell align="center" sx={{ border: "1px solid rgba(224, 224, 224, 1)" }}>
+                                        {index + 1}
+                                    </TableCell>
+                                    <TableCell align="center" sx={{ border: "1px solid rgba(224, 224, 224, 1)" }}>
                                         {(() => {
                                             const date = new Date(item.created_at);
                                             const day = date.getDate().toString().padStart(2, '0');
-                                            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-based
+                                            const month = (date.getMonth() + 1).toString().padStart(2, '0');
                                             const year = date.getFullYear();
                                             return `${day}/${month}/${year}`;
                                         })()}
                                     </TableCell>
-
-                                    <TableCell>{item.itemDetail.itemName}</TableCell>
-                                    <TableCell>{item.itemDetail.touch}</TableCell>
-                                    <TableCell>{item.itemDetail.weight}</TableCell>
-                                    <TableCell>{(item.itemDetail.pure).toFixed(3)}</TableCell>
-                                    <TableCell>{item.product_status}</TableCell>
-
+                                    <TableCell align="center" sx={{ border: "1px solid rgba(224, 224, 224, 1)" }}>
+                                        {item.itemDetail.itemName}
+                                    </TableCell>
+                                    <TableCell align="center" sx={{ border: "1px solid rgba(224, 224, 224, 1)" }}>
+                                        {item.itemDetail.touch}
+                                    </TableCell>
+                                    <TableCell align="center" sx={{ border: "1px solid rgba(224, 224, 224, 1)" }}>
+                                        {item.itemDetail.weight}
+                                    </TableCell>
+                                    <TableCell align="center" sx={{ border: "1px solid rgba(224, 224, 224, 1)" }}>
+                                        {item.itemDetail.pure.toFixed(3)}
+                                    </TableCell>
+                                    <TableCell align="center" sx={{ border: "1px solid rgba(224, 224, 224, 1)" }}>
+                                        {item.product_status}
+                                    </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} style={{ textAlign: "center" }}>
+                                <TableCell colSpan={7} align="center" sx={{ border: "1px solid rgba(224, 224, 224, 1)" }}>
                                     No data found
                                 </TableCell>
                             </TableRow>
@@ -123,6 +124,7 @@ function StockReport() {
                     </TableBody>
                 </Table>
             </TableContainer>
+
         </>
     )
 }

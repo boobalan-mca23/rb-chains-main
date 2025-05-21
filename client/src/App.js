@@ -76,7 +76,7 @@ function Layout() {
 
   // Show navbar on all pages except the Home page
   const showNavbar = location.pathname !== "/";
-  const isPrintPage = location.pathname.startsWith("/billing");
+  const isPrintPage = location.pathname.startsWith("/");
 
   return (
     <>

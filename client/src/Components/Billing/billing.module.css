@@ -3,16 +3,14 @@
   margin: 10mm; /* adjust margins as you like */
 }
 
-
-
 @media print {
    html, body {
     width: 190mm;
     height: 190mm;
     overflow: hidden;
   }
-
-    .noprint {
+    
+   .noprint {
       display: none !important;
     }
    

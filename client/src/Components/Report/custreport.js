@@ -372,6 +372,7 @@ const CustReport = () => {
           >
             Search
           </Button>
+          <Button onClick={()=>window.print()}>Print</Button>
 
         </Box>
         {/* Opening Balance at Top Right */}
@@ -386,70 +387,91 @@ const CustReport = () => {
           <Table>
             <TableHead style={{ backgroundColor: "aliceblue" }}>
               <TableRow>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  S.NO
-                </TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  Bill.NO
-                </TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  Date
-                </TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  Description
-                </TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  Weight
-                </TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  Recived Amount
-                </TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  Balance
-                </TableCell>
-                <TableCell style={{ color: "black", fontWeight: "bold" }}>
-                  Action
-                </TableCell>
+                {[
+                  "S.NO",
+                  "Bill.NO",
+                  "Date",
+                  "Description",
+                  "Weight",
+                  "Received Amount",
+                  "Balance",
+                  "Action",
+                ].map((label, idx) => (
+                  <TableCell
+                    key={idx}
+                    align="center"
+                    sx={{
+                      color: "black",
+                      fontWeight: "bold",
+                      border: "1px solid rgba(224, 224, 224, 1)",
+                    }}
+                  >
+                    {label}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHead>
+
             <TableBody>
               {billInfo.length > 0 ? (
                 billInfo.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{item.id}</TableCell>
-                    <TableCell>{item.date}</TableCell>
-                    <TableCell>
-
-                      <>
-                        {/* <TableCell>{orderItem.itemName}</TableCell>
-                         <TableCell>{`${orderItem.touchValue}*${orderItem.productWeight}=${orderItem.final_price}`}</TableCell> */}
-                        <Table size="small" sx={{ border: '1px solid #ccc' }}>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Item Name</TableCell>
-                              <TableCell>Touch Value</TableCell>
-                              <TableCell>Product Weight</TableCell>
-                              <TableCell>Final Price</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {item.orderItems.map((orderItem, idx) => (
-                              <TableRow key={idx}>
-                                <TableCell>{orderItem.itemName}</TableCell>
-                                <TableCell>{orderItem.touchValue}</TableCell>
-                                <TableCell>{orderItem.productWeight}</TableCell>
-                                <TableCell>{orderItem.final_price}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </>
+                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                      {index + 1}
                     </TableCell>
-                    <TableCell>{item.value}</TableCell>
-                    <TableCell>{item.recivedAmount}</TableCell>
-                    <TableCell>{(item.Balance).toFixed(3)}</TableCell>
-                    <TableCell>
+                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                      {item.id}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                      {item.date}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                      <Table size="small" sx={{ border: "1px solid #ccc", width: "100%" }}>
+                        <TableHead sx={{ backgroundColor: "#f9f9f9" }}>
+                          <TableRow>
+                            {["Item Name", "Touch Value", "Product Weight", "Final Price"].map(
+                              (col, i) => (
+                                <TableCell
+                                  key={i}
+                                  sx={{ border: "1px solid #ccc", fontWeight: "bold" }}
+                                  align="center"
+                                >
+                                  {col}
+                                </TableCell>
+                              )
+                            )}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {item.orderItems.map((orderItem, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                                {orderItem.itemName}
+                              </TableCell>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                                {orderItem.touchValue}
+                              </TableCell>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                                {orderItem.productWeight}
+                              </TableCell>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                                {orderItem.final_price}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                      {(item.value).toFixed(3)}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                      {(item.recivedAmount).toFixed(3)}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                      {item.Balance.toFixed(3)}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
                       <IconButton onClick={() => handleViewBill(item.id)}>
                         <Visibility style={{ color: "black" }} />
                       </IconButton>
@@ -458,7 +480,7 @@ const CustReport = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} style={{ textAlign: "center" }}>
+                  <TableCell colSpan={8} align="center" sx={{ border: "1px solid #ccc" }}>
                     No data found
                   </TableCell>
                 </TableRow>
@@ -466,6 +488,7 @@ const CustReport = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
         {/* TableContainer remains unchanged */}
 
         {/* Closing Balance at Bottom Right */}

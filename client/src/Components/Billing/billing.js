@@ -354,7 +354,7 @@ const Billing = () => {
   }, [selectedCustomer])
 
   return (
-    <Box sx={styles.wrapper} >
+    <Box sx={styles.wrapper} className="billingWrapper">
       <Box sx={styles.leftPanel} ref={billRef}>
         <h1 style={styles.heading}>Estimate Only</h1>
         <Box sx={styles.billHeader}>
@@ -747,7 +747,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "20px"
+    marginTop: "2px"
   },
   billNumber: {
     flex: 1
