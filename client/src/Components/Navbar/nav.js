@@ -4,6 +4,7 @@ import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import logo from "../../Assets/rb logo.jpg";
 import { useState } from "react";
+
 // import image from "../../Assets/bg.jpg";
 
 function Nav() {
@@ -14,14 +15,14 @@ function Nav() {
   const [toDate, setToDate] = useState(today);
 
   return (
-    <> 
+    <>
       <AppBar
-        position="fixed" 
+        position="fixed"
         sx={{
           backgroundImage:
             "linear-gradient(to right, #000000, #2C2C2C, #B8860B, #FFD700)",
-          height: navbarHeight, 
-          zIndex: 1000, 
+          height: navbarHeight,
+          zIndex: 1000,
         }}
       >
         <Toolbar>
@@ -53,7 +54,17 @@ function Nav() {
               Billing
             </Button>
             <Button
-              onClick={() => navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}`)}
+              onClick={() => navigate("/receiptvoucher")}
+              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
+            >
+              Receipt Voucher
+            </Button>
+            <Button
+              onClick={() =>
+                navigate(
+                  `/report?type=customer&fromDate=${fromDate}&toDate=${toDate}`
+                )
+              }
               sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
             >
               Report
@@ -68,26 +79,23 @@ function Nav() {
         </Toolbar>
       </AppBar>
 
-     
       <Box
         sx={{
           position: "absolute",
-          top: navbarHeight, 
+          top: navbarHeight,
           left: 0,
           width: "100%",
-          height: "100%", 
+          height: "100%",
           // backgroundImage: `url(${image})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          zIndex: -1, 
+          zIndex: -1,
         }}
       ></Box>
 
       <Box
         sx={{ marginTop: navbarHeight, padding: "20px", position: "relative" }}
-      >
-       
-      </Box>
+      ></Box>
     </>
   );
 }

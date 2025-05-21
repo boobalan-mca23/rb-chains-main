@@ -32,6 +32,7 @@ model CustomerInfo {
   MasterJewelTypeCustomerValue MasterJewelTypeCustomerValue[]
   ClosingBalance     ClosingBalance[]
   Balance            Balance[]
+  receipts           Receipt[]
  
   @@map("customerInfo")
 }
@@ -237,4 +238,18 @@ model ScarpInfo{
    totalScarp       Float
    LotInfo         LotInfo?      @relation(fields: [lot_id], references: [id]) 
   @@map("scarpInfo") 
+}
+model Receipt {
+  receipt_id     Int      @id @default(autoincrement())
+  date           DateTime
+  goldRate       Float
+  givenGold      Float
+  touch          Float
+  purityWeight   Float
+  amount         Float
+
+  customer       CustomerInfo @relation(fields: [customer_id], references: [customer_id])
+  customer_id    Int
+
+  @@map("receipt")
 }
