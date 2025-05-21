@@ -324,7 +324,7 @@
 
 // http://localhost:5000/api/jewelType/getJewelDetails/3
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect ,useRef} from "react";
 import {
   Button,
   TextField,
@@ -354,6 +354,7 @@ const Item = () => {
   const [jewelType, setJewelType] = useState({ name: "" });
   const [jewelTypes, setJewelTypes] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
+  const saveRef=useRef()
 
   const handleOpen = () => {
     setJewelType({ name: "" });
@@ -479,6 +480,8 @@ const Item = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{ width: 350, marginRight: 20 }}
+          autoComplete="off"
+          
         />
         <Button
           variant="contained"
@@ -503,6 +506,12 @@ const Item = () => {
             onChange={(e) => setJewelType({ ...jewelType, name: e.target.value })}
             fullWidth
             margin="normal"
+            autoComplete="off"
+            onKeyDown={(e)=>{
+              if(e.key==="Enter"){
+                saveRef.current.focus()
+              }
+            }}
           />
         </DialogContent>
         <DialogActions>
@@ -510,6 +519,7 @@ const Item = () => {
             Cancel
           </Button>
           <Button
+             ref={saveRef}
             onClick={handleSave}
             style={{
               backgroundColor: "#d4af37",

@@ -27,7 +27,7 @@ const getAllLot = async (req, res) => {
     // console.log('Start of today:', start);
     // console.log('End of today:', end);
 
-     const start = dayjs().tz('Asia/Kolkata').startOf('day').toDate();  // Start of today (12:00 AM IST)
+    const start = dayjs().tz('Asia/Kolkata').startOf('day').toDate();  // Start of today (12:00 AM IST)
     const end = dayjs().tz('Asia/Kolkata').endOf('day').toDate();    // End of today (11:59:59.999 PM IST)
 
     console.log('Start of today (IST):', start);
@@ -173,83 +173,110 @@ const saveProcess = async (req, res) => {
   try {
     //   const {lotdata} = req.body;
     console.log('req', req.body);
-    const lotData=req.body.lotdata
+    const lotData = req.body.lotdata
 
     if (!req.body.lotdata) {
-           return res.status(400).json({ status: 'noData', message: "No Lot Data" });
-      }
+      return res.status(400).json({ status: 'noData', message: "No Lot Data" });
+    }
 
     for (const lot of lotData) {
       lotId = lot.lotid;
-     if(lot.scarpValue){
-       console.log('objeect data',lot.scarpValue)
-     }
-      
-      if(lot.data){
-        
-          for (const process of lot.data) {
+      if (lot.scarpValue) {
+        console.log('objeect data', lot.scarpValue)
+      }
 
-            for (const step of process.ProcessSteps) {
+      if (lot.data) {
+
+        for (const process of lot.data) {
+
+          for (const step of process.ProcessSteps) {
 
 
-          if (step.process_id >= 4 && step.process_id <= 9) {//Individual Process object
+            if (step.process_id >= 3 && step.process_id <= 8) {//Individual Process object
 
-            if (!step.AttributeValues || step.AttributeValues.length === 0) {
-              continue;
-            }
+              if (!step.AttributeValues || step.AttributeValues.length === 0) {
+                continue;
+              }
 
-            let index = 0;
-            let existingChildItems = [];
+              let index = 0;
+              let existingChildItems = [];
 
-            for (const attrValue of step.AttributeValues) {
-              console.log('childItem', attrValue)
+              for (const attrValue of step.AttributeValues) {
+                console.log('childItem', attrValue)
 
-              if (attrValue.items_id === null && attrValue.attribute_id === 2) {
+                if (attrValue.items_id === null && attrValue.attribute_id === 2) {
 
-                if (step.process_id === 4) { // child items only created at wiring process 
-                  
+                  if (step.process_id === 3) { // child items only created at wiring process 
 
-                  if (!attrValue.master_jewel_id) {
-                    return res.status(400).json({
-                      statusMsg: "noMasterId",
-                      message: "JewelName is Required"
-                    });
-                  } else {
-                    let newItem = await prisma.item.create({ //item create
-                    data: {
-                      lot_id: attrValue.lot_id,
-                      item_type: "childItem",
-                      item_name: attrValue.item_name
 
+                    if (!attrValue.master_jewel_id) {
+                      return res.status(400).json({
+                        statusMsg: "noMasterId",
+                        message: "JewelName is Required"
+                      });
+                    } else {
+                      let newItem = await prisma.item.create({ //item create
+                        data: {
+                          lot_id: attrValue.lot_id,
+                          item_type: "childItem",
+                          item_name: attrValue.item_name
+
+                        }
+                      })
+                      await prisma.masterJewelItemMapper.create({
+                        data: {
+                          item_id: newItem.item_id,
+                          master_jewel_id: attrValue.master_jewel_id
+                        }
+                      });
+
+                      await prisma.attributeValue.create({ //item value
+                        data: {
+                          process_step_id: attrValue.process_step_id,
+                          lot_id: attrValue.lot_id,
+                          attribute_id: attrValue.attribute_id,
+                          items_id: newItem.item_id,
+                          value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                          touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null,
+                          item_name: attrValue.item_name
+                        },
+                      });
                     }
-                  })
-                    await prisma.masterJewelItemMapper.create({
-                      data: {
-                        item_id: newItem.item_id,
-                        master_jewel_id: attrValue.master_jewel_id
-                      }
+
+
+
+
+
+                  }
+                  else {
+                    let childItems = await prisma.item.findMany({  // its create other process child items
+                      where: {
+                        lot_id: attrValue.lot_id,
+                        item_type: "childItem",
+                      },
+                      select: { item_id: true }, // Only select the primary key (id)
                     });
 
-                    await prisma.attributeValue.create({ //item value
-                    data: {
-                      process_step_id: attrValue.process_step_id,
-                      lot_id: attrValue.lot_id,
-                      attribute_id: attrValue.attribute_id,
-                      items_id: newItem.item_id,
-                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                      touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null,
-                      item_name: attrValue.item_name
-                    },
-                  });
+                    existingChildItems = childItems.map(item => item.item_id);
+
+                    createdItems = await prisma.attributeValue.create({
+                      data: {
+                        process_step_id: attrValue.process_step_id,
+                        lot_id: attrValue.lot_id,
+                        attribute_id: attrValue.attribute_id,
+                        items_id: existingChildItems[attrValue.index],
+                        value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                        touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null,
+                        item_name: attrValue.item_name
+
+                      },
+                    });
+                    ++index;
+
                   }
-
-
-
-                  
-                  
                 }
                 else {
-                  let childItems = await prisma.item.findMany({  // its create other process child items
+                  let childItems = await prisma.item.findMany({  // its stored other weight of child items
                     where: {
                       lot_id: attrValue.lot_id,
                       item_type: "childItem",
@@ -257,105 +284,214 @@ const saveProcess = async (req, res) => {
                     select: { item_id: true }, // Only select the primary key (id)
                   });
 
+                  // ✅ Store only the primary keys in the array
                   existingChildItems = childItems.map(item => item.item_id);
 
-                  createdItems = await prisma.attributeValue.create({
-                    data: {
-                      process_step_id: attrValue.process_step_id,
-                      lot_id: attrValue.lot_id,
-                      attribute_id: attrValue.attribute_id,
-                      items_id: existingChildItems[attrValue.index],
-                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                      touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null,
-                      item_name: attrValue.item_name
+                  if (attrValue.items_id === null) {
 
-                    },
-                  });
-                  ++index;
-
-                }
-              }
-              else {
-                let childItems = await prisma.item.findMany({  // its stored other weight of child items
-                  where: {
-                    lot_id: attrValue.lot_id,
-                    item_type: "childItem",
-                  },
-                  select: { item_id: true }, // Only select the primary key (id)
-                });
-
-                // ✅ Store only the primary keys in the array
-                existingChildItems = childItems.map(item => item.item_id);
-
-                if (attrValue.items_id === null) {
-
-                  let createdItems = await prisma.attributeValue.create({
-                    data: {
-                      process_step_id: attrValue.process_step_id,
-                      lot_id: attrValue.lot_id,
-                      attribute_id: attrValue.attribute_id,
-                      items_id: existingChildItems[attrValue.index],
-                      item_name: attrValue.item_name,
-                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                      touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
-
-                    },
-                  });
-
-
-                  ++index;
-
-                  if (attrValue.process_step_id === 31) {
-                    const childItems = await prisma.item.findMany({
-                      where: {
+                    let createdItems = await prisma.attributeValue.create({
+                      data: {
+                        process_step_id: attrValue.process_step_id,
                         lot_id: attrValue.lot_id,
-                        item_type: "childItem",
+                        attribute_id: attrValue.attribute_id,
+                        items_id: existingChildItems[attrValue.index],
+                        item_name: attrValue.item_name,
+                        value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                        touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
+
                       },
-                      select: { item_id: true },
                     });
 
-                    const existingChildItems = childItems.map(item => item.item_id);
 
-                    for (const itemId of existingChildItems) {
-                      const validAttributes = await prisma.attributeValue.findMany({
+                    ++index;
+
+                    if (attrValue.process_step_id === 27) {
+                      const childItems = await prisma.item.findMany({
                         where: {
                           lot_id: attrValue.lot_id,
-                          items_id: itemId,
-                          process_step_id: attrValue.process_step_id,
+                          item_type: "childItem",
                         },
-                        select: {
-                          value: true,
-                        },
+                        select: { item_id: true },
                       });
 
-                      const hasValid = validAttributes.some(attr => attr.value !== null);
-                      console.log('console from created time', hasValid);
+                      const existingChildItems = childItems.map(item => item.item_id);
 
-                      if (hasValid) {
-                        // Check if the item_id already exists in ProductStocks
-                        const existingStock = await prisma.productStocks.findFirst({
+                      for (const itemId of existingChildItems) {
+                        const validAttributes = await prisma.attributeValue.findMany({
                           where: {
-                            item_id: itemId,
+                            lot_id: attrValue.lot_id,
+                            items_id: itemId,
+                            process_step_id: attrValue.process_step_id,
+                          },
+                          select: {
+                            value: true,
                           },
                         });
 
-                        if (!existingStock) {
-                          // If not exists, create the ProductStocks entry
-                          await prisma.productStocks.create({
-                            data: {
+                        const hasValid = validAttributes.some(attr => attr.value !== null);
+                        console.log('console from created time', hasValid);
+
+                        if (hasValid) {
+                          // Check if the item_id already exists in ProductStocks
+                          const existingStock = await prisma.productStocks.findFirst({
+                            where: {
                               item_id: itemId,
-                              product_status: "active", // or whatever default status you want
                             },
                           });
-                          console.log(`Item ID ${itemId} added to ProductStocks.`);
-                        } else {
-                          console.log(`Item ID ${itemId} already exists in ProductStocks.`);
+
+                          if (!existingStock) {
+                            // If not exists, create the ProductStocks entry
+                            await prisma.productStocks.create({
+                              data: {
+                                item_id: itemId,
+                                product_status: "active", // or whatever default status you want
+                              },
+                            });
+                            console.log(`Item ID ${itemId} added to ProductStocks.`);
+                          } else {
+                            console.log(`Item ID ${itemId} already exists in ProductStocks.`);
+                          }
                         }
                       }
                     }
-                  }
 
-                } else {
+                  } else {
+                    await prisma.attributeValue.updateMany({
+                      where: {
+                        process_step_id: attrValue.process_step_id,
+                        lot_id: attrValue.lot_id,
+                        attribute_id: attrValue.attribute_id,
+                        items_id: attrValue.items_id
+                      },
+                      data: {
+                        value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                        touchValue: attrValue.touchValue ?? null,
+                        item_name: attrValue.item_name
+
+                      },
+                    });
+                    //Item Name Update
+                    await prisma.item.update({
+                      where: {
+                        item_id: attrValue.items_id
+                      },
+                      data: {
+                        item_name: attrValue.item_name
+                      }
+                    })
+                    // MasterJewelItemMapper Update
+                    const existingItem = await prisma.masterJewelItemMapper.findFirst({
+                      where: { item_id: attrValue.items_id }
+                    });
+
+                    if (existingItem) {
+                      await prisma.masterJewelItemMapper.update({
+                        where: { id: existingItem.id },
+                        data: { master_jewel_id: attrValue.master_jewel_id }
+                      });
+                    }
+
+
+                    //Stock moved to Update time
+                    if (attrValue.process_step_id === 27) {
+                      const childItems = await prisma.item.findMany({
+                        where: {
+                          lot_id: attrValue.lot_id,
+                          item_type: "childItem",
+                        },
+                        select: { item_id: true },
+                      });
+
+                      const existingChildItems = childItems.map(item => item.item_id);
+
+                      for (const itemId of existingChildItems) {
+                        const validAttributes = await prisma.attributeValue.findMany({
+                          where: {
+                            lot_id: attrValue.lot_id,
+                            items_id: itemId,
+                            process_step_id: attrValue.process_step_id,
+                          },
+                          select: {
+                            value: true,
+                          },
+                        });
+
+                        const hasValid = validAttributes.some(attr => attr.value !== null);
+                        console.log('console from created time', hasValid);
+
+                        if (hasValid) {
+                          // Check if the item_id already exists in ProductStocks
+                          const existingStock = await prisma.productStocks.findFirst({
+                            where: {
+                              item_id: itemId,
+                            },
+                          });
+
+                          if (!existingStock) {
+                            // If not exists, create the ProductStocks entry
+                            await prisma.productStocks.create({
+                              data: {
+                                item_id: itemId,
+                                product_status: "active", // or whatever default status you want
+                              },
+                            });
+                            console.log(`Item ID ${itemId} added to ProductStocks.`);
+                          } else {
+                            console.log(`Item ID ${itemId} already exists in ProductStocks.`);
+                          }
+                        }
+                      }
+                    }
+
+
+                  }
+                }
+              }
+            }
+
+
+
+
+            // Melting and Kambi Process
+
+            else {
+              if (!step.AttributeValues || step.AttributeValues.length === 0) {
+                continue;
+              }
+
+              for (const attrValue of step.AttributeValues) {
+
+                // if (!attrValue.attribute_id) {
+                //   console.warn("Skipping attribute with missing attribute_id:", attrValue);
+                //   continue;
+                // }
+
+
+                const existingAttribute = await prisma.attributeValue.findFirst({
+                  where: {
+                    process_step_id: attrValue.process_step_id,
+                    lot_id: attrValue.lot_id,
+                    attribute_id: attrValue.attribute_id,
+                    items_id: attrValue.items_id
+
+                  },
+                });
+
+                if (!existingAttribute) { // Create new item 
+                  await prisma.attributeValue.create({
+                    data: {
+                      process_step_id: attrValue.process_step_id,
+                      lot_id: attrValue.lot_id,
+                      attribute_id: attrValue.attribute_id,
+                      items_id: attrValue.items_id,
+                      item_name: attrValue.item_name,
+                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                      touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
+                    },
+                  });
+                }
+                else { // updateItem
+                  console.log('step value',step)
                   await prisma.attributeValue.updateMany({
                     where: {
                       process_step_id: attrValue.process_step_id,
@@ -370,171 +506,34 @@ const saveProcess = async (req, res) => {
 
                     },
                   });
-                  //Item Name Update
-                  await prisma.item.update({
-                    where: {
-                      item_id: attrValue.items_id
-                    },
-                    data: {
-                      item_name: attrValue.item_name
-                    }
-                  })
-                  // MasterJewelItemMapper Update
-                  const existingItem = await prisma.masterJewelItemMapper.findFirst({
-                    where: { item_id: attrValue.items_id }
-                  });
-
-                  if (existingItem) {
-                    await prisma.masterJewelItemMapper.update({
-                      where: { id: existingItem.id },
-                      data: { master_jewel_id: attrValue.master_jewel_id }
-                    });
-                  }
-
-
-                  //Stock moved to Update time
-                  if (attrValue.process_step_id === 31) {
-                    const childItems = await prisma.item.findMany({
-                      where: {
-                        lot_id: attrValue.lot_id,
-                        item_type: "childItem",
-                      },
-                      select: { item_id: true },
-                    });
-
-                    const existingChildItems = childItems.map(item => item.item_id);
-
-                    for (const itemId of existingChildItems) {
-                      const validAttributes = await prisma.attributeValue.findMany({
-                        where: {
-                          lot_id: attrValue.lot_id,
-                          items_id: itemId,
-                          process_step_id: attrValue.process_step_id,
-                        },
-                        select: {
-                          value: true,
-                        },
-                      });
-
-                      const hasValid = validAttributes.some(attr => attr.value !== null);
-                      console.log('console from created time', hasValid);
-
-                      if (hasValid) {
-                        // Check if the item_id already exists in ProductStocks
-                        const existingStock = await prisma.productStocks.findFirst({
-                          where: {
-                            item_id: itemId,
-                          },
-                        });
-
-                        if (!existingStock) {
-                          // If not exists, create the ProductStocks entry
-                          await prisma.productStocks.create({
-                            data: {
-                              item_id: itemId,
-                              product_status: "active", // or whatever default status you want
-                            },
-                          });
-                          console.log(`Item ID ${itemId} added to ProductStocks.`);
-                        } else {
-                          console.log(`Item ID ${itemId} already exists in ProductStocks.`);
-                        }
-                      }
-                    }
-                  }
-
-
+                
                 }
+
+
+
               }
             }
+
           }
-
-
-
-
-          // Melting and Kambi Process
-
-          else {
-            if (!step.AttributeValues || step.AttributeValues.length === 0) {
-              continue;
-            }
-
-            for (const attrValue of step.AttributeValues) {
-
-              // if (!attrValue.attribute_id) {
-              //   console.warn("Skipping attribute with missing attribute_id:", attrValue);
-              //   continue;
-              // }
-
-
-              const existingAttribute = await prisma.attributeValue.findFirst({
-                where: {
-                  process_step_id: attrValue.process_step_id,
-                  lot_id: attrValue.lot_id,
-                  attribute_id: attrValue.attribute_id,
-                  items_id: attrValue.items_id
-
-                },
-              });
-
-              if (!existingAttribute) { // Create new item 
-                await prisma.attributeValue.create({
-                  data: {
-                    process_step_id: attrValue.process_step_id,
-                    lot_id: attrValue.lot_id,
-                    attribute_id: attrValue.attribute_id,
-                    items_id: attrValue.items_id,
-                    item_name: attrValue.item_name,
-                    value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                    touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
-                  },
-                });
-              }
-              else { // updateItem
-                await prisma.attributeValue.updateMany({
-                  where: {
-                    process_step_id: attrValue.process_step_id,
-                    lot_id: attrValue.lot_id,
-                    attribute_id: attrValue.attribute_id,
-                    items_id: attrValue.items_id
-                  },
-                  data: {
-                    value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                    touchValue: attrValue.touchValue ?? null,
-                    item_name: attrValue.item_name
-
-                  },
-                });
-
-
-
-              }
-
-
-
-            }
-          }
-
         }
-      }
-        
-        
-       
-       
-      }else{
-         // update scarpData
-         await prisma.scarpInfo.updateMany({
-          where:{
-            id:lot.scarpValue.id
+
+
+
+
+      } else {
+        // update scarpData
+        await prisma.scarpInfo.updateMany({
+          where: {
+            id: lot.scarpValue.id
           },
-          data:{
-              itemTotal: lot.scarpValue?.itemTotal ?? 0,
-              scarp: lot.scarpValue?.scarp ?? 0,
-              totalScarp: lot.scarpValue?.totalScarp ?? 0
+          data: {
+            itemTotal: lot.scarpValue?.itemTotal ?? 0,
+            scarp: lot.scarpValue?.scarp ?? 0,
+            totalScarp: lot.scarpValue?.totalScarp ?? 0
           }
         })
       }
-    
+
     }
 
     const today = new Date();
@@ -743,7 +742,9 @@ const getLotsByDateRange = async (req, res) => {
 
     const allLotData = [];
     console.log(lotIds)
-
+    if (lotIds.length === 0) {
+      return res
+    }
     for (const lot of lotIds) {
       // 2. Get all process step IDs
       const processStepIds = await prisma.processSteps.findMany({
@@ -775,30 +776,35 @@ const getLotsByDateRange = async (req, res) => {
     }
     const finalData = []
     console.log('filter lot', allLotData)
-    for (const [index, item] of allLotData.entries()) {
-      if (finalData.length === 0) {
-        finalData.push(item);
-      } else {
-        if (finalData[finalData.length - 1].lotDate === item.lotDate) {
+    if (allLotData.length >= 1) {
+      for (const [index, item] of allLotData.entries()) {
+        if (finalData.length === 0) {
           finalData.push(item);
         } else {
-          const scarp = await prisma.scarpInfo.findFirst({
-            where: {
-              scarpDate: finalData[finalData.length - 1].lotDate
-            }
-          });
-          finalData.push({ scarpValue: scarp });
-          finalData.push(item);
+          if (finalData[finalData.length - 1].lotDate === item.lotDate) {
+            finalData.push(item);
+          } else {
+            const scarp = await prisma.scarpInfo.findFirst({
+              where: {
+                scarpDate: finalData[finalData.length - 1].lotDate
+              }
+            });
+            finalData.push({ scarpValue: scarp });
+            finalData.push(item);
+          }
         }
       }
-    }
 
-    // After the loop, push scarpValue for last lot
-    const lastLotDate = finalData[finalData.length - 1].lotDate;
+      const lastLotDate = finalData[finalData.length - 1].lotDate;
     const lastScarp = await prisma.scarpInfo.findFirst({
       where: { scarpDate: lastLotDate }
     });
-    finalData.push({ scarpValue: lastScarp });
+      finalData.push({ scarpValue: lastScarp });
+    }
+
+
+    // After the loop, push scarpValue for last lot
+    
 
 
     console.log('finalLot', finalData)

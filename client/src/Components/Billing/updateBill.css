@@ -1,12 +1,23 @@
+@page {
+  /* adjust margins as you like */
+}
+
 @media print {
+
+   .updatebillprint {
+    width:100mm;
+    height:100mm;
+    overflow: hidden;
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
     .no-print {
+      display: none !important;
+    }
+     .print-hide {
       display: none !important;
     }
   }
   
-  @media print {
-    .print-hide {
-      display: none !important;
-    }
-  }
-
+  

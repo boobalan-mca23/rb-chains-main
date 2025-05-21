@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef} from "react";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   Button,
@@ -38,6 +38,9 @@ function Customer() {
   const [viewCustomer, setViewCustomer] = useState(null);
   const [itemList, setItemList] = useState([]);
   const [save, setSave] = useState([])
+  const shopRef=useRef()
+  const phonRef=useRef()
+  const addressRef=useRef()
 
   const handleView = async (customer) => {
     setViewCustomer(customer);
@@ -253,6 +256,7 @@ function Customer() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{ width: 350, marginRight: 20 }}
+          autoComplete="off"
         />
         <Button
           variant="contained"
@@ -271,7 +275,7 @@ function Customer() {
         <DialogTitle>
           {editIndex !== null ? "Edit Customer Details" : "Add Customer"}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent >
           <TextField
             label="Customer Name"
             name="name"
@@ -279,6 +283,10 @@ function Customer() {
             onChange={handleChange}
             fullWidth
             margin="normal"
+            autoComplete="off"
+            onKeyDown={(e)=>{
+                if (e.key === "Enter") shopRef.current.focus();
+            }}
           />
           <TextField
             label="Shop Name"
@@ -287,6 +295,11 @@ function Customer() {
             onChange={handleChange}
             fullWidth
             margin="normal"
+            autoComplete="off"
+            inputRef={shopRef}
+            onKeyDown={(e)=>{
+                if (e.key === "Enter") phonRef.current.focus();
+            }}
           />
           <TextField
             label="Phone Number"
@@ -295,6 +308,11 @@ function Customer() {
             onChange={handleChange}
             fullWidth
             margin="normal"
+            autoComplete="off"
+            inputRef={phonRef}
+            onKeyDown={(e)=>{
+                if (e.key === "Enter") addressRef.current.focus();
+            }}
           />
           <TextField
             label="Address"
@@ -305,6 +323,8 @@ function Customer() {
             multiline
             rows={3}
             margin="normal"
+            autoComplete="off"
+            inputRef={addressRef}
           />
         </DialogContent>
         <DialogActions>
