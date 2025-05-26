@@ -64,8 +64,8 @@ const createLotInfo = async (req, res) => {
     // Step 1: Create Lot Entry
     if(!initialWeight||!touchValue){
       return res.status(400).json({message:"Initial Weight is required"})
-    }
-    const newLot = await prisma.lotInfo.create({//create lot
+    }else{
+        const newLot = await prisma.lotInfo.create({//create lot
       data: {
         lot_initial_weight : parseFloat(initialWeight)  || null,
         scarpDate:String(today) || null
@@ -191,11 +191,12 @@ const createLotInfo = async (req, res) => {
       where: { scarpDate: lastLotDate }
     });
     finalData.push({ scarpValue: lastScarp });
+     console.log('finalLot in save contoller', finalData)
+     return res.status(200).json(finalData);
+    }
+    
 
-
-    console.log('finalLot in save contoller', finalData)
-
-    return res.status(200).json(finalData);
+    
   } catch (error) {
     console.error("Error creating lot:", error);
     res.status(400).json({ error: error.message });

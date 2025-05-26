@@ -172,7 +172,7 @@ const saveProcess = async (req, res) => {
 
   try {
     //   const {lotdata} = req.body;
-    console.log('req', req.body);
+    
     const lotData = req.body.lotdata
 
     if (!req.body.lotdata) {
@@ -182,7 +182,7 @@ const saveProcess = async (req, res) => {
     for (const lot of lotData) {
       lotId = lot.lotid;
       if (lot.scarpValue) {
-        console.log('objeect data', lot.scarpValue)
+       
       }
 
       if (lot.data) {
@@ -202,11 +202,56 @@ const saveProcess = async (req, res) => {
               let existingChildItems = [];
 
               for (const attrValue of step.AttributeValues) {
-                console.log('childItem', attrValue)
+              
+               
+                if(step.process_id ===3){
+                  
+                  if(attrValue.process_step_id===6 && attrValue.attribute_id === 2){ // wiring Process Before weight
 
-                if (attrValue.items_id === null && attrValue.attribute_id === 2) {
+                      const existingAttribute = await prisma.attributeValue.findFirst({
+                      where: {
+                       process_step_id: attrValue.process_step_id,
+                       lot_id: attrValue.lot_id,
+                       attribute_id: attrValue.attribute_id,
+                       items_id: attrValue.items_id
+                    },
 
-                  if (step.process_id === 3) { // child items only created at wiring process 
+                   });
+
+                    if (!existingAttribute) { // Create new item 
+                    
+                      await prisma.attributeValue.create({
+                    data: {
+                      process_step_id: attrValue.process_step_id,
+                      lot_id: attrValue.lot_id,
+                      attribute_id: attrValue.attribute_id,
+                      items_id: attrValue.items_id,
+                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                     
+                    },
+                   });
+
+                  }else{
+
+                    await prisma.attributeValue.updateMany({
+                    where: {
+                      process_step_id: attrValue.process_step_id,
+                      lot_id: attrValue.lot_id,
+                      attribute_id: attrValue.attribute_id,
+                      items_id: attrValue.items_id
+                    },
+                    data: {
+                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                    },
+                     });
+
+                  }
+
+                  }
+                }
+                if (attrValue.items_id === null && attrValue.attribute_id === 3) {
+
+                  if (step.process_id === 3) { // child items only created at wiring process
 
 
                     if (!attrValue.master_jewel_id) {
@@ -243,10 +288,6 @@ const saveProcess = async (req, res) => {
                       });
                     }
 
-
-
-
-
                   }
                   else {
                     let childItems = await prisma.item.findMany({  // its create other process child items
@@ -272,40 +313,10 @@ const saveProcess = async (req, res) => {
                       },
                     });
                     ++index;
-
-                  }
-                }
-                else {
-                  let childItems = await prisma.item.findMany({  // its stored other weight of child items
-                    where: {
-                      lot_id: attrValue.lot_id,
-                      item_type: "childItem",
-                    },
-                    select: { item_id: true }, // Only select the primary key (id)
-                  });
-
-                  // ✅ Store only the primary keys in the array
-                  existingChildItems = childItems.map(item => item.item_id);
-
-                  if (attrValue.items_id === null) {
-
-                    let createdItems = await prisma.attributeValue.create({
-                      data: {
-                        process_step_id: attrValue.process_step_id,
-                        lot_id: attrValue.lot_id,
-                        attribute_id: attrValue.attribute_id,
-                        items_id: existingChildItems[attrValue.index],
-                        item_name: attrValue.item_name,
-                        value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                        touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
-
-                      },
-                    });
-
-
-                    ++index;
+                        console.log('process_step_id',attrValue.process_step_id)
 
                     if (attrValue.process_step_id === 27) {
+                      console.log('stockkkkk')
                       const childItems = await prisma.item.findMany({
                         where: {
                           lot_id: attrValue.lot_id,
@@ -315,7 +326,7 @@ const saveProcess = async (req, res) => {
                       });
 
                       const existingChildItems = childItems.map(item => item.item_id);
-
+                    console.log('stock created time',existingChildItems)
                       for (const itemId of existingChildItems) {
                         const validAttributes = await prisma.attributeValue.findMany({
                           where: {
@@ -354,6 +365,43 @@ const saveProcess = async (req, res) => {
                         }
                       }
                     }
+                    
+
+                  }
+                }
+                else {
+                  let childItems = await prisma.item.findMany({  // its stored other weight of child items
+                    where: {
+                      lot_id: attrValue.lot_id,
+                      item_type: "childItem",
+                    },
+                    select: { item_id: true }, // Only select the primary key (id)
+                  });
+
+                  // ✅ Store only the primary keys in the array
+                  existingChildItems = childItems.map(item => item.item_id);
+
+                  if (attrValue.items_id === null) {
+
+                    let createdItems = await prisma.attributeValue.create({
+                      data: {
+                        process_step_id: attrValue.process_step_id,
+                        lot_id: attrValue.lot_id,
+                        attribute_id: attrValue.attribute_id,
+                        items_id: existingChildItems[attrValue.index],
+                        item_name: attrValue.item_name,
+                        value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                        touchValue: attrValue.touchValue ? parseFloat(attrValue.touchValue) : null
+
+                      },
+                    });
+
+
+                    ++index;
+                    
+                      
+
+                   
 
                   } else {
                     await prisma.attributeValue.updateMany({
@@ -417,7 +465,7 @@ const saveProcess = async (req, res) => {
                         });
 
                         const hasValid = validAttributes.some(attr => attr.value !== null);
-                        console.log('console from created time', hasValid);
+                        // console.log('console from created time', hasValid);
 
                         if (hasValid) {
                           // Check if the item_id already exists in ProductStocks
@@ -491,7 +539,7 @@ const saveProcess = async (req, res) => {
                   });
                 }
                 else { // updateItem
-                  console.log('step value',step)
+                  
                   await prisma.attributeValue.updateMany({
                     where: {
                       process_step_id: attrValue.process_step_id,
@@ -589,7 +637,7 @@ const saveProcess = async (req, res) => {
 
     }
     const finalData = []
-    console.log('lotInfo', allLotData)
+    
     if (allLotData.length >= 1) {
       for (const [index, item] of allLotData.entries()) {
         if (finalData.length === 0) {
@@ -618,7 +666,7 @@ const saveProcess = async (req, res) => {
     }
 
 
-    console.log('finalLot in save contoller', finalData)
+   
 
 
     res.status(200).json({ data: finalData });

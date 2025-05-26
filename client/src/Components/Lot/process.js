@@ -16,7 +16,8 @@ import "jspdf-autotable";
 import './process.css'
 
 
-const processes = ["Melting", "Kambi", "Wire", "Machine", "Soldrine", "Joint", "Cutting", "Finishing",];
+
+const processes = ["Melting", "Wire", "Machine", "Soldrine", "Joint", "Cutting", "Finishing"];
 const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "8px", });
 const StyledTableContainer = styled(TableContainer)({ margin: "20px auto", maxWidth: "100%", border: "1px solid #ccc" });
 const StyledInput = styled(TextField)({ "& .MuiOutlinedInput-notchedOutline": { border: "none" }, "& .MuiInputBase-input": { textAlign: "center", padding: "5px" }, width: "80px" });
@@ -49,8 +50,8 @@ const ProcessTable = () => {
     }
   ]);
   const [productName, setProductName] = useState([])
-  const touchRef=useRef()
-  
+  const touchRef = useRef()
+
 
   const docalculation = (arrayItems) => {
     // Calculation
@@ -85,19 +86,18 @@ const ProcessTable = () => {
     let finsihAfterValue = 0;
     let lotFinishValue = 0;
     tempData.forEach((lotData, lotIndex) => {// this calculation for lotDifferent Total
-      if(lotData.data){
-         if (lotData.data[7].ProcessSteps[1].AttributeValues.length === 0) {
-        finsihAfterValue = 0;
-      } else {
-        lotData.data[7].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
-          finsihAfterValue += arrItem.value
+      if (lotData.data) {
+        if (lotData.data[7].ProcessSteps[1].AttributeValues.length === 0) {
+          finsihAfterValue = 0;
+        } else {
+          lotData.data[7].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+            finsihAfterValue += arrItem.value
+          })
+          lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finsihAfterValue
+          finsihAfterValue = 0;
+        }
+      }
 
-        })
-        lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finsihAfterValue
-        finsihAfterValue = 0;
-      }
-      }
-     
     })
     tempCalculation[3].lotTotal = lotFinishValue
     //calculation for total scarp value and loss total
@@ -115,14 +115,12 @@ const ProcessTable = () => {
               const pureValue = processSteps?.[4]?.AttributeValues?.[attrIndex]?.value || 0;
               innerPure += Number(pureValue);
             }
-            if (i!==3) {
+            if (i !== 3) {
               const scrapValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
               const lossValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
               innerScarp += Number(scrapValue);
               innerLoss += Number(lossValue);
-            } 
-              
-            
+            }
           });
         }
       }
@@ -131,13 +129,13 @@ const ProcessTable = () => {
       lossTotal += innerLoss;
       pureTotal += innerPure;
 
-      if (i!== 3) {
-         tempCalculation[2].process[i - 1].Weight[2].sw = scarpTotal
-         tempCalculation[2].process[i - 1].Weight[3].lw = lossTotal
-       } 
-       
+      if (i !== 3) {
+        tempCalculation[2].process[i - 1].Weight[2].sw = scarpTotal
+        tempCalculation[2].process[i - 1].Weight[3].lw = lossTotal
+      }
+
       if (i === 6) {
-        tempCalculation[2].process[6].Weight[4].pw = pureTotal
+        tempCalculation[2].process[i-1].Weight[4].pw = pureTotal
       }
       console.log('tempCalculation for scw,losw', tempCalculation)
     }
@@ -265,7 +263,7 @@ const ProcessTable = () => {
         }
       }
     }//Melting ProcessEnd
-   
+
   }
 
   const handleAddItemColumns = (lotid, index) => {
@@ -274,14 +272,14 @@ const ProcessTable = () => {
     const tempData = [...items];
 
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
-    
+
     let processstepid = 6;
     for (let i = 2; i <= 7; i++) {
       for (let j = 1; j <= 4; j++) {
         if (processstepid === 13 && j === 4) {
           continue;
         }
-        if(processstepid ===6 && j===1){
+        if (processstepid === 6 && j === 1) {
           ++processstepid;
           continue;
         }
@@ -306,7 +304,7 @@ const ProcessTable = () => {
     }
     processstepid = 6
 
-    const obj = { 
+    const obj = {
       lot_id: lotid,
       process_step_id: 25,
       item_name: " ",
@@ -320,7 +318,7 @@ const ProcessTable = () => {
     lotData[0].data[6].ProcessSteps[4].AttributeValues.push(obj)
 
     tempData.splice(index, 1, lotData[0]);
-    console.log('tempDate Data Push', tempData);
+    console.log('Add Items', tempData);
     setItems(tempData);
     console.log('items', items);
   };
@@ -334,7 +332,7 @@ const ProcessTable = () => {
         if (i === 3 && j === 3) {
           continue
         }
-         if (i === 2 && j === 0) {
+        if (i === 2 && j === 0) {
           continue
         }
         lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].item_name = String(itemName);
@@ -343,9 +341,9 @@ const ProcessTable = () => {
       }
     }
     //Store Item name and Item id to PureWeight
-    lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].item_name = String(itemName);
-    lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
-    lotData[0].data[7].ProcessSteps[4].AttributeValues[childIndex].touchValue = touchValue;
+    lotData[0].data[6].ProcessSteps[4].AttributeValues[childIndex].item_name = String(itemName);
+    lotData[0].data[6].ProcessSteps[4].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
+    lotData[0].data[6].ProcessSteps[4].AttributeValues[childIndex].touchValue = touchValue;
     for (let i = 2; i <= 7; i++) {//this create Index  Each Process
       if (i === 6) {
         lotData[0].data[i].ProcessSteps[4].AttributeValues[childIndex].index = childIndex
@@ -354,7 +352,7 @@ const ProcessTable = () => {
         if (i === 3 && j === 3) {
           continue
         }
-         if (i === 2 && j === 0) {
+        if (i === 2 && j === 0) {
           continue
         }
         lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].index = childIndex
@@ -366,17 +364,46 @@ const ProcessTable = () => {
     console.log('items', items);
   }
 
-  const handleChildItemWeight = (lotid, childIndex, itemWeight, lotIndex) => {
+  const handleChildItemWeight = (lotid, childIndex, itemWeight, lotIndex,attribute_id) => {
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
+    if(attribute_id===3){
+    //After  
+    lotData[0].data[2].ProcessSteps[1].AttributeValues[childIndex].value = parseFloat(itemWeight);
+    lotData[0].data[2].ProcessSteps[1].AttributeValues[childIndex].index = childIndex
+   
+    let afterTotal=0
+       for(const loss of lotData[0].data[2].ProcessSteps[1].AttributeValues){
+         afterTotal+=loss.value
+        }
+    //Loss
+     
+    lotData[0].data[2].ProcessSteps[3].AttributeValues[0].value = lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value-afterTotal
+    lotData[0].data[2].ProcessSteps[3].AttributeValues[0].index = childIndex
+    // next process before 
     lotData[0].data[3].ProcessSteps[0].AttributeValues[childIndex].value = parseFloat(itemWeight);
     lotData[0].data[3].ProcessSteps[0].AttributeValues[childIndex].index = childIndex
+    }
+    if(attribute_id===4){
+      // scarp
+       lotData[0].data[2].ProcessSteps[2].AttributeValues[childIndex].value = parseFloat(itemWeight);
+       lotData[0].data[2].ProcessSteps[2].AttributeValues[childIndex].index = childIndex
+       let afterTotal=0
+       for(const loss of lotData[0].data[2].ProcessSteps[1].AttributeValues){
+         afterTotal+=loss.value
+        }
+       lotData[0].data[2].ProcessSteps[3].AttributeValues[childIndex].value =(lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value-parseFloat(afterTotal))-parseFloat(itemWeight)
+    }
+    
+   
+
+
 
     tempData.splice(lotIndex, 1, lotData[0]);
     setItems(tempData);
     console.log('items', items);
   }
-
+ 
   const handleCreateLot = () => {
     setOpen(true);
   };
@@ -420,18 +447,18 @@ const ProcessTable = () => {
       return item;
     });
     // get matched lots data
-    const lotData=updatedItems.filter((item,index)=>item.lotDate===String(date))
-    let total=0;
-    for(const lot of lotData){
-      lot.data[4].ProcessSteps[2].AttributeValues.forEach((item,index)=>{
-         total+=item.value
+    const lotData = updatedItems.filter((item, index) => item.lotDate === String(date))
+    let total = 0;
+    for (const lot of lotData) {
+      lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
+        total += item.value
       })
     }
-     //subtract totalScarp=scarp-totalScarp
-    for(const lotScarp of updatedItems){
-      if(lotScarp.scarpValue&&lotScarp.scarpValue.scarpDate===String(date)){
-       const scarp = Number(lotScarp.scarpValue.scarp);
-       lotScarp.scarpValue.totalScarp = total - (isNaN(scarp) ? 0 : scarp);
+    //subtract totalScarp=scarp-totalScarp
+    for (const lotScarp of updatedItems) {
+      if (lotScarp.scarpValue && lotScarp.scarpValue.scarpDate === String(date)) {
+        const scarp = Number(lotScarp.scarpValue.scarp);
+        lotScarp.scarpValue.totalScarp = total - (isNaN(scarp) ? 0 : scarp);
 
       }
     }
@@ -456,7 +483,9 @@ const ProcessTable = () => {
       setIsLotCreated(true);
       toast.success("Lot Created", { autoClose: 2000 });
     } catch (error) {
-      toast.warn('Enter Lot Details',{autoClose:1500})
+      setInitialWeight("");
+      setTouchValue("");
+      toast.warn('Enter Lot Details', { autoClose: 1500 })
     };
   }
 
@@ -471,31 +500,31 @@ const ProcessTable = () => {
   // console.log("Processes:", processes);
 
   const handleSaveData = async () => {
-      try{
-        console.log('handleSaveData', items);
-        const res = await saveLot(items);
-        console.log('res from save function', res.data.data)
-        setItems(res.data.data)
-        setCalculation(docalculation(res.data.data))
-        handleMachineCalculate(res.data.data,calculation)
-        toast.success("Lot Saved", { autoClose: 2000 });
-      }catch(err){
-          console.log("Enter Lot Information")
-      }
+    try {
+      console.log('handleSaveData', items);
+      const res = await saveLot(items);
+      console.log('res from save function', res.data.data)
+      setItems(res.data.data)
+      setCalculation(docalculation(res.data.data))
+      handleMachineCalculate(res.data.data, calculation)
+      toast.success("Lot Saved", { autoClose: 2000 });
+    } catch (err) {
+      console.log("Enter Lot Information")
+    }
 
   }
-  const handleMachineCalculate=(response,calculation)=>{
-       const tempData=response;
-       const tempCal=[...calculation]
-       let total=0;
-       for(const lot of tempData){
-         if(lot.scarpValue){
-            total+=lot.scarpValue.totalScarp
-         }
-       }
-        tempCal[2].process[3].Weight[2].lw=total
-        setCalculation(tempCal)
-      
+  const handleMachineCalculate = (response, calculation) => {
+    const tempData = response;
+    const tempCal = [...calculation]
+    let total = 0;
+    for (const lot of tempData) {
+      if (lot.scarpValue) {
+        total += lot.scarpValue.totalScarp
+      }
+    }
+    tempCal[2].process[2].Weight[2].lw = total
+    setCalculation(tempCal)
+
   }
   const allData = async () => {
     const res = await getAllLot();
@@ -510,20 +539,33 @@ const ProcessTable = () => {
     setProductName(res)
 
   }
-  const handleChildItems = (lotIndex, lotid,lotDate,attribute_id, value, key, process_id, lotArrIndex) => {
+  const handleChildItems = (lotIndex, lotid, lotDate, attribute_id, value, key, process_id, lotArrIndex) => {
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
-    console.log('child fun',  attribute_id)
+    console.log('child funtionnnnn', attribute_id)
     if (process_id <= 8) {
 
       // child Items Value Carry Forward here!!!
       if (attribute_id === 3) { //child item After weight Update
         lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value = parseFloat(value);
         lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].index = key
+        console.log('console value')
+        if(process_id===4){
+           lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value= lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value- lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value
+           lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key
+        }else{
+           lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value= lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value- lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value
+           lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].index = key
+           
+        }
+       
+
         //Before weight carryForward
-        lotData[0].data[lotArrIndex + 1].ProcessSteps[0].AttributeValues[key].value = parseFloat(value);
-        lotData[0].data[lotArrIndex + 1].ProcessSteps[0].AttributeValues[key].index = key
-        if (process_id === 5) {
+        if(process_id<8){
+                  lotData[0].data[lotArrIndex+1].ProcessSteps[0].AttributeValues[key].value = parseFloat(value);
+                  lotData[0].data[lotArrIndex+1].ProcessSteps[0].AttributeValues[key].index = key
+        }
+        if (process_id === 4) {
           lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value = lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value
           lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key;
           handleScarpTotal(lotDate)// calculate totalScarp
@@ -538,7 +580,7 @@ const ProcessTable = () => {
         lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key;
         lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value = (lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value) - value
         lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].index = key;
-        if (process_id === 8) {//Pure Weight Calculation
+        if (process_id === 7) {//Pure Weight Calculation
           if (lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value) {
             lotData[0].data[lotArrIndex].ProcessSteps[4].AttributeValues[key].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value / 100
             lotData[0].data[lotArrIndex].ProcessSteps[4].AttributeValues[key].index = key
@@ -550,12 +592,13 @@ const ProcessTable = () => {
       }
 
     } else { //last process after weight
-      if (process_id === 9) {
+      if (process_id === 8) {
 
         if (attribute_id === 3) {
           lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value = parseFloat(value);
           lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].index = key
-
+          lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value = lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value
+          lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].index = key;
           tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData);
           console.log('items', items);
@@ -571,19 +614,19 @@ const ProcessTable = () => {
     }
 
   }
-  const handleScarpTotal=(lotDate)=>{
-    const tempData=[...items]
-    const lotData=tempData.filter((item,index)=>item.lotDate===String(lotDate))
-    let total=0;
-    for(const lot of lotData){
-      lot.data[4].ProcessSteps[2].AttributeValues.forEach((item,index)=>{
-         total+=item.value
+  const handleScarpTotal = (lotDate) => {
+    const tempData = [...items]
+    const lotData = tempData.filter((item, index) => item.lotDate === String(lotDate))
+    let total = 0;
+    for (const lot of lotData) {
+      lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
+        total += item.value
       })
     }
     //assign totalScarp value
-    for(const lotScarp of tempData){
-      if(lotScarp.scarpValue&&lotScarp.scarpValue.scarpDate===String(lotDate)){
-        lotScarp.scarpValue.totalScarp=total
+    for (const lotScarp of tempData) {
+      if (lotScarp.scarpValue && lotScarp.scarpValue.scarpDate === String(lotDate)) {
+        lotScarp.scarpValue.totalScarp = total
       }
     }
     setItems(tempData)
@@ -710,27 +753,27 @@ const ProcessTable = () => {
   //   setToDate(currentDate);
   // }, []);
 
-useEffect(() => {
-  // Get current date in UTC
-  const today = new Date();
+  useEffect(() => {
+    // Get current date in UTC
+    const today = new Date();
 
-  // Convert to Indian Standard Time (IST)
-  const offset = 5.5 * 60; // IST is UTC +5:30
-  const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
+    // Convert to Indian Standard Time (IST)
+    const offset = 5.5 * 60; // IST is UTC +5:30
+    const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
 
-  // Extract date parts (year, month, day)
-  const year = indiaTime.getFullYear();
-  const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-  const day = String(indiaTime.getDate()).padStart(2, '0');
+    // Extract date parts (year, month, day)
+    const year = indiaTime.getFullYear();
+    const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const day = String(indiaTime.getDate()).padStart(2, '0');
 
-  // Format the date as YYYY-MM-DD
-  const currentDate = `${year}-${month}-${day}`;
+    // Format the date as YYYY-MM-DD
+    const currentDate = `${year}-${month}-${day}`;
 
-  console.log('currentDate in IST:', currentDate);
+    console.log('currentDate in IST:', currentDate);
 
-  setFromDate(currentDate);
-  setToDate(currentDate);
-}, []);
+    setFromDate(currentDate);
+    setToDate(currentDate);
+  }, []);
 
 
 
@@ -744,7 +787,7 @@ useEffect(() => {
     console.log('childItemTotal', response)
     setItems(response)
     setCalculation(docalculation(items))
-    handleMachineCalculate(items,calculation)
+    handleMachineCalculate(items, calculation)
 
   }, [items])
 
@@ -798,27 +841,6 @@ useEffect(() => {
     input.style.overflow = originalOverflow;
   };
 
-  const exportToExcel = () => {
-    const tableElement = tableRef.current;
-
-    if (!tableElement) {
-      console.error("Table element not found");
-      return;
-    }
-
-    const workbook = XLSX.utils.table_to_book(tableElement, {
-      sheet: "Sheet1"
-    });
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array"
-    });
-
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-
-    saveAs(data, "ProcessDetails.xlsx");
-  };
   const tableRef = useRef(null);
 
   return (
@@ -883,10 +905,11 @@ useEffect(() => {
                 {processes.map((process) => {
                   let colSpanValue = 4;
 
-                  if (process === "Kambi") {
-                    colSpanValue = 8;
-                  } else if (process === "Cutting") {
+                  if (process === "Cutting") {
                     colSpanValue = 5;
+                  }
+                  if(process ==="Wire"){
+                    colSpanValue=6
                   }
                   else if (process === "Machine") {
                     colSpanValue = 3;
@@ -912,25 +935,41 @@ useEffect(() => {
               <TableRow>
                 <StyledTableCell colSpan={2} />
                 {processes.map((process) => (
+
                   <React.Fragment key={process}>
                     <StyledTableCell >
                       <b>Before</b>
                     </StyledTableCell>
-                    <StyledTableCell >
+
+                    {process === "Wire" && (
+                      <>
+                        <StyledTableCell >
+                          <b>Action</b>
+                        </StyledTableCell>
+
+                      </>
+                    )}
+                    {process==="Wire" ? ( 
+                      <StyledTableCell colSpan={2} >
                       <b>After</b>
-                    </StyledTableCell>
+                    </StyledTableCell>):
+                    ( <StyledTableCell >
+                      <b>After</b>
+                    </StyledTableCell>)}
+                   
+                    
                     {process !== "Machine" ?
                       (<StyledTableCell >
                         <b>Scarp</b>
                       </StyledTableCell>) : ("")}
-                      {process!=="Soldrine" ?(
-                        <StyledTableCell >
+                    {process !== "Soldrine" ? (
+                      <StyledTableCell >
                         <b>Loss</b>
-                      </StyledTableCell>):(
-                        <StyledTableCell >
-                         <b>+</b>
-                    </StyledTableCell>)}
-                 
+                      </StyledTableCell>) : (
+                      <StyledTableCell >
+                        <b>+</b>
+                      </StyledTableCell>)}
+
                     {
                       process === "Cutting" && (
                         <StyledTableCell >
@@ -939,15 +978,8 @@ useEffect(() => {
                       )
                     }
 
-                    {process === "Kambi" && (
-                      <>
-                        <StyledTableCell >
-                          <b>Action</b>
-                        </StyledTableCell>
 
-                      </>
-                    )}
-                    {process === "Kambi" && (
+                    {/* {process === "Kambi" && (
                       <>
 
                         <StyledTableCell >
@@ -960,7 +992,7 @@ useEffect(() => {
                           <b>Diffrent</b>
                         </StyledTableCell>
                       </>
-                    )}
+                    )} */}
                   </React.Fragment>
                 ))}
                 <StyledTableCell />
@@ -1005,10 +1037,10 @@ useEffect(() => {
 
                         {lotItem.data.map((lotArr, lotArrIndex) =>
                           lotItem.data[lotArrIndex + 1] && lotItem.data[lotArrIndex + 1].ProcessSteps ? (
-                            lotArrIndex >= 0 && lotArrIndex <= 1 ? (
+                            lotArrIndex===0 ? (
                               <React.Fragment key={lotArrIndex}>
                                 <StyledTableCell>
-                                  <StyledInput //Before Weight
+                                  <StyledInput // Melting Before Weight
                                     value={
                                       typeof lotItem.data[lotArrIndex + 1]?.ProcessSteps[0]?.AttributeValues[0]?.value === "number"
                                         ? lotItem.data[lotArrIndex + 1].ProcessSteps[0].AttributeValues[0].value.toFixed(3)
@@ -1020,9 +1052,9 @@ useEffect(() => {
                                 </StyledTableCell>
 
                                 <StyledTableCell >
-                                  <StyledInput // After weight
+                                  <StyledInput // Melting After weight
                                     value={
-                                      lotItem.data[lotArrIndex + 1]?.ProcessSteps[1]?.AttributeValues[0]?.value 
+                                      lotItem.data[lotArrIndex + 1]?.ProcessSteps[1]?.AttributeValues[0]?.value
                                     }
                                     onChange={(e) => handleSingleItem(lotArrIndex, lotItem.lotid,
                                       lotItem.data[lotArrIndex + 1]?.ProcessSteps[1]?.process_id,
@@ -1061,27 +1093,45 @@ useEffect(() => {
                                     style={{ width: "120px" }}
                                   />
                                 </StyledTableCell>
+                                
+                                </React.Fragment>) : (" ")
+                          ) : null
 
-                                {lotItem.data[lotArrIndex + 1].process_name === "kambi" && <StyledTableCell> <Button
+                        )}
+                        {
+                             <React.Fragment>
+                              
+                               <StyledTableCell>
+                                  <StyledInput // Wire Before Weight
+                                    value={
+                                      typeof lotItem.data[2]?.ProcessSteps[0]?.AttributeValues[0]?.value === "number"
+                                        ? lotItem.data[2].ProcessSteps[0].AttributeValues[0].value.toFixed(3)
+                                        : ""
+                                    }
+                                    style={{ width: "120px" }}
+                                  />
+                             </StyledTableCell>
+                             <StyledTableCell> 
+                              <Button
                                   variant="contained"
                                   color="secondary"
                                   size="small"  // Makes the button smaller
                                   onClick={() => handleAddItemColumns(lotItem.lotid, lotIndex)}
                                   style={{ minWidth: "32px", padding: "4px" }} // Small button
                                 >
-                                  <AddIcon fontSize="small" /> {/* Small-sized icon */}
-                                </Button></StyledTableCell>}
-                                {lotItem.data[lotArrIndex + 1].process_name === "kambi" && <StyledTableCell colSpan={28} />}
+                                  <AddIcon fontSize="small" /> 
+                                </Button>
+                            </StyledTableCell>
 
-                              </React.Fragment>) : (" ")
-                          ) : null
-
-                        )}
+                            <StyledTableCell colSpan={25}/>
+                             
+                             </React.Fragment>
+                        }
 
                         {
-                          lotItem.data[8]?.ProcessSteps[1]?.AttributeValues.length >= 1 ? (
+                          lotItem.data[7]?.ProcessSteps[1]?.AttributeValues.length >= 1 ? (
                             <StyledTableCell>
-                              <b>{lotItem.data[0].ProcessSteps[0].AttributeValues[0].value - handleTotal(lotItem.lotid, 8, 1)}</b>
+                              <b>{lotItem.data[0].ProcessSteps[0].AttributeValues[0].value - handleTotal(lotItem.lotid, 7, 1)}</b>
                             </StyledTableCell>
                           ) : (<StyledTableCell></StyledTableCell>)
                         }
@@ -1091,17 +1141,17 @@ useEffect(() => {
 
 
                       {
-                        lotItem.data[3].ProcessSteps[0].AttributeValues.map((item, key) => (
+                        lotItem.data[2].ProcessSteps[1].AttributeValues.map((item, key) => ( //wire process Item Name
                           //
                           <TableRow key={key} >
-                            <StyledTableCell colSpan={11}></StyledTableCell>
+                            <StyledTableCell colSpan={8}></StyledTableCell>
                             <Autocomplete
                               style={{ margin: "10px" }}
                               options={productName}
                               getOptionLabel={(option) => option.jewel_name || ""}
                               value={{
-                                jewel_name: lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].item_name || "",
-                                master_jewel_id: lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].master_jewel_id || "",
+                                jewel_name: lotItem.data[3]?.ProcessSteps[1]?.AttributeValues[key].item_name || "",
+                                master_jewel_id: lotItem.data[3]?.ProcessSteps[1]?.AttributeValues[key].master_jewel_id || "",
                               }}
                               onChange={(event, newValue) => {
                                 if (newValue) {
@@ -1130,27 +1180,54 @@ useEffect(() => {
 
                             <StyledTableCell>
                               <StyledInput
-                                value={lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].value}
+                                value={lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].value}
                                 placeholder="Weight"
-                                onChange={(e) => { handleChildItemWeight(lotItem.lotid, key, e.target.value, lotIndex) }}
-                                type="number" style={{ width: "120px" }} autoComplete="off"/>
+                                onChange={(e) => { handleChildItemWeight(lotItem.lotid, key, e.target.value, lotIndex, lotItem.data[2]?.ProcessSteps[1]?.AttributeInfo.attribute_id) }}
+                                type="number" style={{ width: "120px" }} autoComplete="off" />
                             </StyledTableCell>
-                            <StyledTableCell>
 
+                          {key === 0 && (
+                           <>
+                           <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length}>
+         
+                                     <StyledInput 
+                                     value={
+                                      lotItem.data[2]?.ProcessSteps[2]?.AttributeValues[0]?.value 
+                                    }
+                                     type="number" style={{ width: "120px" }} autoComplete="off"
+                                     onChange={(e) => { handleChildItemWeight(lotItem.lotid, key, e.target.value, lotIndex, lotItem.data[2]?.ProcessSteps[2]?.AttributeInfo.attribute_id) }}
+                                     ></StyledInput>
                             </StyledTableCell>
-                            {
+                            <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length}>
+                                      <StyledInput
+                                    value={
+                                      typeof lotItem.data[2]?.ProcessSteps[3]?.AttributeValues[0]?.value === "number"
+                                        ? lotItem.data[2].ProcessSteps[3].AttributeValues[0].value.toFixed(3)
+                                        : ""
+                                    }
+                                   
+                                      
+                                      type="number" style={{ width: "120px" }} autoComplete="off"
+                                      ></StyledInput>
+                             </StyledTableCell>
+                      </>
+                     )}
+                       {
                               lotItem.data.map((lotArr, lotArrIndex) => (
                                 lotArrIndex >= 3 ? (
-                                  <React.Fragment key={lotArrIndex}>
+                                  <React.Fragment key={key}>
 
-                                    <StyledTableCell>
+                                    <StyledTableCell> 
                                       <StyledInput
-                                        value={
-                                          lotItem.data[lotArrIndex]?.ProcessSteps[0]?.AttributeValues[key]?.value 
-                                        }
+                                      value={
+                                           typeof lotItem.data[lotArrIndex]?.ProcessSteps[0]?.AttributeValues[key]?.value === "number"
+                                              ? lotItem.data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value
+                                              : "" 
+                                          }
+                                        
 
                                         style={{ width: "120px" }}
-
+                                         
                                       ></StyledInput>
                                     </StyledTableCell>
 
@@ -1217,7 +1294,7 @@ useEffect(() => {
 
                                     </StyledTableCell>
 
-                                    {lotArrIndex === 7 ? (
+                                    {lotArrIndex === 6 ? (
                                       <StyledTableCell>
                                         <StyledInput
                                           value={
@@ -1235,95 +1312,55 @@ useEffect(() => {
                               ))
                             }
 
+
                             {
                               //Item Different
-                              lotItem.data[8]?.ProcessSteps[1]?.AttributeValues[key]?.value ?
+                              lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key]?.value ?
                                 (<StyledTableCell>
-                                  <p style={{ fontSize: "15px" }}>{(lotItem.data[3]?.ProcessSteps[0]?.AttributeValues[key].value - lotItem.data[8]?.ProcessSteps[1]?.AttributeValues[key].value).toFixed(3)}</p>
+                                  <p style={{ fontSize: "15px" }}>{lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key]?.value- (lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key].value).toFixed(3)}</p>
                                 </StyledTableCell>)
                                 : (<StyledTableCell></StyledTableCell>)
                             }
                             <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
 
-
                           </TableRow>
 
                         ))
-                      }
-                      <TableRow >
-                        <StyledTableCell colSpan={11}></StyledTableCell>
+                      } 
+                     
+                    <TableRow >
+                        <StyledTableCell colSpan={8}></StyledTableCell>
 
                         <StyledTableCell>-</StyledTableCell>
                         {
-                          lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 ? ( //weight total
-                            <StyledTableCell>{"Total:" + handleTotal(lotItem.lotid, 3, 0)}</StyledTableCell>
+                          lotItem.data[2].ProcessSteps[1].AttributeValues.length !== 0 ? ( //weight total
+                            <StyledTableCell>{"Total:" + handleTotal(lotItem.lotid, 2, 1)}</StyledTableCell>
                           ) : (<StyledTableCell>Total:0</StyledTableCell>)
                         }
-                        <StyledTableCell
-                          style={{
-                            backgroundColor:
-                              lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 &&
-                                lotItem.data[2].ProcessSteps[1].AttributeValues.length !== 0
-                                ? (() => {
-                                  const diff = handleDifference(
-                                    lotItem.data[2].ProcessSteps[1].AttributeValues[0].value,
-                                    lotItem.lotid,
-                                    3,
-                                    0
-                                  );
-                                  return diff !== "0.000"? "red" : "transparent"; // Red for both > 0 and < 0
-                                })()
-                                : "transparent",
-                            color:
-                              lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 &&
-                                lotItem.data[2].ProcessSteps[1].AttributeValues.length !== 0
-                                ? (() => {
-                                  const diff = handleDifference(
-                                    lotItem.data[2].ProcessSteps[1].AttributeValues[0].value,
-                                    lotItem.lotid,
-                                    3,
-                                    0
-                                  );
-                                  return diff !== "0.000" ? "white" : "black"; // White text if red background
-                                })()
-                                : "black",
-                          }}
-                        >
-                          {lotItem.data[3].ProcessSteps[0].AttributeValues.length !== 0 ? (
-                            lotItem.data[2].ProcessSteps[1].AttributeValues.length !== 0 ? (
-                              handleDifference(
-                                lotItem.data[2].ProcessSteps[1].AttributeValues[0].value,
-                                lotItem.lotid,
-                                3,
-                                0
-                              )
-                            ) : (
-                              ""
-                            )
-                          ) : (
-                            "Diff:0"
-                          )}
-                        </StyledTableCell>
+                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell></StyledTableCell>
+                  
 
                         {
                           lotItem.data.map((item, index) => (
-                            index >= 3 && index <= 8 ? (
+                            index >= 3 && index <= 7 ? (
                               <React.Fragment>
-                                <StyledTableCell></StyledTableCell>
+                                <StyledTableCell></StyledTableCell> 
+                                
                                 <StyledTableCell>
                                   {
-                                    index === 8 ? (lotItem.data[8].ProcessSteps[1].AttributeValues.length !== 0 ? (
-                                      "Total:" + handleTotal(lotItem.lotid, 8, 1)
+                                    index === 7 ? (lotItem.data[7].ProcessSteps[1].AttributeValues.length !== 0 ? (
+                                      "Total:" + handleTotal(lotItem.lotid, 7, 1)
                                     ) : ("")) : ("")
 
                                   }
                                 </StyledTableCell>
                                 {
-                                  index !== 4 ? (<StyledTableCell></StyledTableCell>) : ("")
+                                  index !== 3 ? (<StyledTableCell></StyledTableCell>) : ("")
                                 }
                                 <StyledTableCell></StyledTableCell>
                                 {
-                                  index === 7 ? (<StyledTableCell></StyledTableCell>) : ("")
+                                  index === 6 ? (<StyledTableCell></StyledTableCell>) : ("")
                                 }
 
                               </React.Fragment>
@@ -1331,21 +1368,17 @@ useEffect(() => {
 
                           ))
                         }
-
-                        <StyledTableCell >
-                        </StyledTableCell>
-                        <StyledTableCell >
-                        </StyledTableCell>
-
-                      </TableRow>
+                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell></StyledTableCell>
+                       </TableRow>  
                     </React.Fragment>) :
                     (
                       <React.Fragment>
-                        <TableRow>
-                          <StyledTableCell colSpan={18}></StyledTableCell>
+                         <TableRow>
+                          <StyledTableCell colSpan={12}></StyledTableCell>
                           <StyledTableCell colSpan={3} >
                             <Grid container spacing={1}>
-                              {/* First row: date + text field */}
+                              
                               <Grid container item spacing={1}>
                                 <Grid item xs={6} display="flex" alignItems="center">
                                   <TextField
@@ -1362,19 +1395,19 @@ useEffect(() => {
                                 </Grid>
                               </Grid>
 
-                              {/* Second row: two text fields */}
+                            
                               <Grid container item spacing={1}>
                                 <Grid item xs={6}>
                                   <TextField fullWidth size="small" value={lotItem.scarpValue?.scarp} label="Scarp" type="number" onChange={(e) => { handleScarp(e.target.value, lotItem.scarpValue.scarpDate) }} autoComplete="off" />
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth size="small" label="Loss" value={(lotItem.scarpValue?.totalScarp).toFixed(3)}/>
+                                  <TextField fullWidth size="small" label="Loss" value={(lotItem.scarpValue?.totalScarp).toFixed(3)} />
                                 </Grid>
                               </Grid>
                             </Grid>
                           </StyledTableCell>
                           <StyledTableCell colSpan={19}></StyledTableCell>
-                        </TableRow>
+                        </TableRow> 
                       </React.Fragment>
 
 
@@ -1384,13 +1417,11 @@ useEffect(() => {
               }
 
 
-              {/* <TableRow>
-               <StyledTableCell colSpan={11}></StyledTableCell>
-              </TableRow> */}
+            
 
 
             </TableBody>
-            <TableFooter>
+             <TableFooter>
               <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>Total RawGold:{calculation[0].rawGold}</p></StyledTableCell>
               <StyledTableCell><p ></p></StyledTableCell>
               {
@@ -1398,12 +1429,17 @@ useEffect(() => {
                   <>
 
                     <StyledTableCell><StyledInput ></StyledInput></StyledTableCell>
+                   
                     <StyledTableCell>
                       <p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>
                         {item.processName === 'Finishing' ? `FinishTotal ${(item.Weight[1].aw).toFixed(3)}` : ""}
                       </p>
                     </StyledTableCell>
-
+                      {item.processName === 'Wire' ? (
+                      <>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    </>):("")}
                     {
                       item.processName !== "Machine" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}ScarpTotal:{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>) : ("")
                     }
@@ -1412,23 +1448,14 @@ useEffect(() => {
                       item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}PureTotal:{(item.Weight[4].pw).toFixed(3)}</p></StyledTableCell>) : ("")
                     }
 
-                    {
-                      item.processName === "Kambi" ? (
-                        <>
-                          <StyledTableCell></StyledTableCell>
-                          <StyledTableCell></StyledTableCell>
-                          <StyledTableCell></StyledTableCell>
-                          <StyledTableCell></StyledTableCell>
-                        </>
-                      ) : ("")
-                    }
+                   
 
                   </>
                 ))
               }
               <StyledTableCell></StyledTableCell>
               <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>LotTotal:{(calculation[3].lotTotal).toFixed(3)}</p></StyledTableCell>
-            </TableFooter>
+            </TableFooter> 
           </Table>
           <ToastContainer />
         </div>
@@ -1461,8 +1488,8 @@ useEffect(() => {
             onChange={(e) => setInitialWeight(e.target.value)}
             autoComplete="off"
             sx={{ mt: 2 }}
-            onKeyDown={(e)=>{
-              if(e.key==="Enter"){
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
                 touchRef.current.focus()
               }
             }}
