@@ -1,52 +1,82 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Autocomplete, TextField, Box, Button, Table, TableHead, TableCell, TableRow, TableBody } from "@mui/material";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import {
+  Autocomplete,
+  TextField,
+  Box,
+  Button,
+  Table,
+  TableHead,
+  TableCell,
+  TableRow,
+  TableBody,
+  IconButton,
+} from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import jsPDF from "jspdf"; 
+import html2canvas from "html2canvas"; 
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaTrash } from "react-icons/fa";
+import { MdDeleteForever } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { Height } from "@mui/icons-material";
-import style from "./billing.module.css";
-
+import "./billing.css";
 
 const Billing = () => {
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [billItems, setBillItems] = useState([]);
-  const [billId, setBillId] = useState("")
+  const [billId, setBillId] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [isPrinting, setIsPrinting] = useState(false);
-  const billRef = useRef();
+  const billRef = useRef(); 
   const [products, setProducts] = useState([]);
-  const [productWeight, setProductWeight] = useState([])
-  const [totalPrice, setTotalPrice] = useState(0)
-  const [totalBillAmount, setTotalBillAmount] = useState(0)
-  const [customerClosing, setCustomerClosing] = useState(0)
-  const [balanceRow, setBalanceRow] = useState([])
-  const [closing, setClosing] = useState(0)
-  const [pure, setPure] = useState(0)
-  const navigate = useNavigate()
+  const [productWeight, setProductWeight] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [totalBillAmount, setTotalBillAmount] = useState(0);
+  const [customerClosing, setCustomerClosing] = useState(0);
+  const [balanceRow, setBalanceRow] = useState([]);
+  const [closing, setClosing] = useState(0);
+  const [pure, setPure] = useState(0);
 
+  const [rows, setRows] = useState([]); 
+  const [viewMode, setViewMode] = useState(false); 
+  const [selectedBill, setSelectedBill] = useState(null); 
+
+  const navigate = useNavigate(); 
 
   const handleProductSelect = (itemIndex, stockId) => {
-    const tempProducts = [...productWeight]
-    let customerData
-    const tempSelectProduct = tempProducts.filter((item, index) => itemIndex === index)
-    console.log('masterjewelid', selectedProduct.master_jewel_id)
-    if (selectedCustomer) {
-      customerData = customers.filter((item, index) => item.customer_id === selectedCustomer.customer_id)
-    } else {
-      alert('Select Customer Name')
-      return
+    const tempProducts = [...productWeight];
+    let customerData;
+    const tempSelectProduct = tempProducts.filter(
+      (item, index) => itemIndex === index
+    );
+    console.log("masterjewelid", selectedProduct.master_jewel_id);
+
+    if (!selectedCustomer) {
+      toast.error("Please select a customer first!", { autoClose: 2000 });
+      return;
     }
-    const filterMasterItem = customerData[0].MasterJewelTypeCustomerValue.filter((item, index) => item.masterJewel_id === selectedProduct.master_jewel_id)
+
+    customerData = customers.filter(
+      (item) => item.customer_id === selectedCustomer.customer_id
+    );
+
+    if (customerData.length === 0) {
+      toast.error("Customer data not found for selected customer.", { autoClose: 2000 });
+      return;
+    }
+
+    const filterMasterItem =
+      customerData[0].MasterJewelTypeCustomerValue.filter(
+        (item) => item.masterJewel_id === selectedProduct.master_jewel_id
+      );
+
     if (filterMasterItem.length === 0) {
-      alert('Percentage is Required')
+      toast.warning("Percentage is Required for this jewel type!", { autoClose: 2000 });
     } else {
       const billObj = {
         productName: tempSelectProduct[0].item_name,
@@ -54,124 +84,130 @@ const Billing = () => {
         productWeight: tempSelectProduct[0].value,
         productPure: 0,
         productPercentage: 0,
-        stockId: stockId
-      }
-      console.log('testing', billObj)
-      billObj.productPure = ((billObj.productTouch + filterMasterItem[0].value) * billObj.productWeight) / 100
-      billObj.productPercentage = filterMasterItem[0].value
-      console.log('pure', billObj.productPure)
-      const tempBill = [...billItems]
-      tempBill.push(billObj)
-      setBillItems(tempBill)
-      tempProducts.splice(itemIndex, 1)
-      setProductWeight(tempProducts)
+        stockId: stockId,
+      };
 
+      billObj.productPercentage = filterMasterItem[0].value;
+      billObj.productPure =
+        ((billObj.productTouch + billObj.productPercentage) *
+          billObj.productWeight) /
+        100;
+
+      const tempBill = [...billItems];
+      tempBill.push(billObj);
+      setBillItems(tempBill);
+
+    
+      tempProducts.splice(itemIndex, 1);
+      setProductWeight(tempProducts);
     }
-
-
   };
+
   const handleSaveBill = async () => {
-    // validation for bill
     if (!selectedCustomer) {
-      alert('Customer Name is Required')
+      toast.error("Customer Name is Required!", { autoClose: 2000 });
+      return;
     }
     if (!selectedProduct) {
-      alert('Jewel Name is Required')
+      toast.error("Jewel Name is Required!", { autoClose: 2000 });
+      return;
+    }
+    if (billItems.length === 0) {
+      toast.error("Order Items are Required!", { autoClose: 2000 });
+      return;
     }
 
-    else {
-      if (billItems.length === 0) {
-        alert('Order Items is Required ')
-        return;
+    const payLoad = {
+      customer_id: selectedCustomer.customer_id,
+      order_status: "completed",
+      totalPrice: totalPrice,
+      orderItems: billItems,
+      oldBalance: customerClosing,
+      balance: balanceRow,
+      closingbalance: balanceRow.length === 0 ? totalBillAmount : closing,
+      receivedDetails: rows,
+    };
+    console.log("payload", payLoad);
+
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,
+        payLoad
+      );
+      if (response.status === 201) {
+        setBillId(response.data.data.id);
+        toast.success("Bill Created Successfully!", { autoClose: 1000 });
+        const cells = document.querySelectorAll(".merge-cell");
+        window.onbeforeprint = () => {
+          cells.forEach((td) => td.setAttribute("colspan", "3"));
+        };
+        window.onafterprint = () => {
+          cells.forEach((td) => td.setAttribute("colspan", "4"));
+        };
+
+        window.print(); 
       }
-      if (selectedCustomer) {
-
-        const payLoad = {
-          "customer_id": selectedCustomer.customer_id,
-          "order_status": "completed",
-          "totalPrice": totalPrice,
-          "orderItems": billItems,
-          "oldBalance": customerClosing,
-          "balance": balanceRow,
-          "closingbalance": balanceRow.length === 0 ? totalBillAmount : closing
-
-        }
-        console.log('payload', payLoad)
-
-        try {
-          const response = await axios.post(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`, payLoad);
-          if (response.status === 201) {
-            console.log(response.data.data.id)
-            toast.success("Bill Created SucessFully", { autoClose: 1000 });
-
-            setBillId(response.data.data.id)
-            const cells = document.querySelectorAll('.merge-cell');
-
-            window.onbeforeprint = () => {
-              cells.forEach(td => td.setAttribute('colspan', '3'));
-            };
-            window.onafterprint = () => {
-              cells.forEach(td => td.setAttribute('colspan', '4'));
-            };
-
-            window.print();
-
-          }
-        } catch (err) {
-          alert(err.message)
-        }
-      } else {
-        alert('Products is Required')
-      }
+    } catch (err) {
+      toast.error(`Error saving bill: ${err.message}`, { autoClose: 3000 });
+      console.error("Error saving bill:", err);
     }
-  }
-  const calculateTotal = (billItems) => {
-    return billItems.reduce((acc, currValue) => {
-      return acc + currValue.productPure
-    }, 0)
   };
 
-  const calculateLess = (total) => {
-    const lessValue = (total * 0.9992).toFixed(3);
-    return lessValue;
+  const calculateTotal = (items) => {
+    return items.reduce((acc, currValue) => acc + currValue.productPure, 0);
   };
 
-  const calculateClosing = (balanceRow) => {
-    return balanceRow.reduce((acc, currValue) => {
 
-      return acc + currValue.pure
-    }, 0)
+  const calculateClosing = (balRows) => {
+    return balRows.reduce((acc, currValue) => acc + currValue.pure, 0);
   };
 
   const handleBalanceRow = () => {
-    if (selectedCustomer) {
-      if (selectedProduct) {
-        if (billItems.length >= 1) {
-          const tempRow = [...balanceRow, { 'customer_id': selectedCustomer.customer_id, 'givenGold': 0, 'touch': 0, 'pure': 0 }]
-          setBalanceRow(tempRow)
-        } else {
-          toast.warning('Select Product Weight', { autoClose: 2000 })
-        }
-      } else {
-        toast.warning('Select Product Name', { autoClose: 2000 })
-      }
-    } else {
-      toast.warning('Select Customer Name', { autoClose: 2000 })
+    if (!selectedCustomer) {
+      toast.warning("Select Customer Name", { autoClose: 2000 });
+      return;
     }
-  }
+    if (!selectedProduct) {
+      toast.warning("Select Jewel Name", { autoClose: 2000 });
+      return;
+    }
+    if (billItems.length === 0) {
+      toast.warning("Add Order Items first!", { autoClose: 2000 });
+      return;
+    }
+
+    const tempRow = [
+      ...balanceRow,
+      {
+        customer_id: selectedCustomer.customer_id,
+        givenGold: "", 
+        touch: "", 
+        pure: 0,
+      },
+    ];
+    setBalanceRow(tempRow);
+  };
 
   const handleBalanceInputChange = (index, field, value) => {
     const updatedRows = [...balanceRow];
     updatedRows[index][field] = value;
 
-    if (field === "touch" || field === "givenGold") {
-      updatedRows[index]['pure'] = updatedRows[index]['givenGold'] * updatedRows[index]['touch'] / 100;
+    const givenGold = parseFloat(updatedRows[index]["givenGold"]);
+    const touch = parseFloat(updatedRows[index]["touch"]);
+
+    if (!isNaN(givenGold) && !isNaN(touch)) {
+      updatedRows[index]["pure"] = (givenGold * touch) / 100;
+    } else {
+      updatedRows[index]["pure"] = 0; 
     }
 
     setBalanceRow(updatedRows);
   };
+
   const handleRemoveBalanceRow = (index) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this balance row?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this balance row?"
+    );
 
     if (confirmDelete) {
       const tempBalRow = [...balanceRow];
@@ -179,42 +215,90 @@ const Billing = () => {
       setBalanceRow(tempBalRow);
     }
   };
+
   const handleChangePercentage = (itemIndex, value) => {
-    const tempBill = [...billItems]
-    const filteredbill = tempBill.filter((item, index) => index === itemIndex)
-    filteredbill[0].productPercentage = parseInt(value)
-    filteredbill[0].productPure = ((filteredbill[0].productTouch + parseInt(value)) * filteredbill[0].productWeight) / 100
-    tempBill.splice(itemIndex, 1, filteredbill[0])
-    setBillItems(tempBill)
-  }
+    const tempBill = [...billItems];
+    const itemToUpdate = tempBill[itemIndex];
+
+    const newPercentage = parseInt(value);
+    if (isNaN(newPercentage)) {
+    
+      itemToUpdate.productPercentage = ""; 
+      itemToUpdate.productPure = (itemToUpdate.productTouch * itemToUpdate.productWeight) / 100; 
+    } else {
+      itemToUpdate.productPercentage = newPercentage;
+      itemToUpdate.productPure =
+        ((itemToUpdate.productTouch + newPercentage) * itemToUpdate.productWeight) / 100;
+    }
+
+    setBillItems([...tempBill]);
+  };
+
   const handleRemoveOrder = (index, item_name, touchValue, value, stock_id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this order item?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this order item?"
+    );
 
     if (confirmDelete) {
-      console.log(item_name, touchValue, value, stock_id);
-
       const tempBill = [...billItems];
       tempBill.splice(index, 1);
       setBillItems(tempBill);
 
       const tempProduct = [...productWeight];
       tempProduct.push({ item_name, stock_id, touchValue, value });
-      setProductWeight(tempProduct);
+      setProductWeight(tempProduct); 
     }
   };
+
+  const handleAddRow = () => {
+    setRows([
+      ...rows,
+      {
+        date: "",
+        goldRate: "",
+        givenGold: "",
+        touch: "",
+        purityWeight: "",
+        amount: "",
+        hallmark: "",
+      },
+    ]);
+  };
+
+  const handleDeleteRow = (index) => {
+    const updatedRows = [...rows];
+    updatedRows.splice(index, 1);
+    setRows(updatedRows);
+  };
+
+  const handleRowChange = (index, field, value) => {
+    const updatedRows = [...rows];
+    updatedRows[index][field] = value;
+
+    if (field === "givenGold" || field === "touch") {
+      const givenGold = parseFloat(updatedRows[index]["givenGold"]);
+      const touch = parseFloat(updatedRows[index]["touch"]);
+      if (!isNaN(givenGold) && !isNaN(touch)) {
+        updatedRows[index]["purityWeight"] = (
+          (givenGold * touch) /
+          100
+        ).toFixed(3);
+      } else {
+        updatedRows[index]["purityWeight"] = "";
+      }
+    }
+    setRows(updatedRows);
+  };
+
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
         const response = await axios.get(
           `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/getCustomerValueWithPercentage`
         );
-        console.log("Fetched Customers:", response.data);
-
         setCustomers(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
-        toast.error("Error fetching customers!", {
-          containerId: "custom-toast",
-        });
+        toast.error("Error fetching customers!", { containerId: "custom-toast" });
         console.error("Error:", error);
       }
     };
@@ -224,13 +308,11 @@ const Billing = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getJewelType`
         );
-        console.log("Fetched JewelItems:", response.data.allJewel);
-
-        setProducts(Array.isArray(response.data.allJewel) ? response.data.allJewel : []);
+        setProducts(
+          Array.isArray(response.data.allJewel) ? response.data.allJewel : []
+        );
       } catch (error) {
-        toast.error("Error fetching customers!", {
-          containerId: "custom-toast",
-        });
+        toast.error("Error fetching jewel types!", { containerId: "custom-toast" });
         console.error("Error:", error);
       }
     };
@@ -253,136 +335,127 @@ const Billing = () => {
     };
 
     updateTime();
-    const timer = setInterval(updateTime, 60000);
+    const timer = setInterval(updateTime, 60000); 
     return () => clearInterval(timer);
   }, []);
-  useEffect(
-    () => {
-
-      if (balanceRow.length === 0) {
-        setClosing(totalBillAmount)
-      } else {
-        setClosing(totalBillAmount - calculateClosing(balanceRow))
-        setPure(calculateClosing(balanceRow))
-      }
-
-    }, [balanceRow]
-
-  )
-  // calculate total billAmount with old balance
 
   useEffect(() => {
-
-    setTotalPrice(calculateTotal(billItems))
-
-    if (billItems.length >= 1) {
-      setTotalBillAmount(Number(calculateTotal(billItems)) + Number(customerClosing))
+    if (balanceRow.length === 0) {
+      setClosing(totalBillAmount);
+      setPure(0); 
     } else {
-      setTotalBillAmount(0)
+      const calculatedPure = calculateClosing(balanceRow);
+      setPure(calculatedPure);
+      setClosing(totalBillAmount - calculatedPure);
     }
+  }, [balanceRow, totalBillAmount]);
 
-  }, [billItems])
+  useEffect(() => {
+    setTotalPrice(calculateTotal(billItems));
+    setTotalBillAmount(Number(calculateTotal(billItems)) + Number(customerClosing));
+  }, [billItems, customerClosing]);
 
   useEffect(() => {
     if (selectedProduct) {
-      console.log('selectedProductId', selectedProduct.master_jewel_id)
       const fetchWeight = async () => {
         try {
-          const productsWeight = await axios.get(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`)
-
-          setProductWeight(productsWeight.data.productsWeight)
-          console.log('productFinish', productsWeight.data.productsWeight)
-
+          const productsWeight = await axios.get(
+            `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`
+          );
+          setProductWeight(productsWeight.data.productsWeight);
         } catch (err) {
-          if (err.status === 400) {
-            setProductWeight([])
-          }
-          if (err.status === 500) {
-            alert("server Error")
+          if (err.response && err.response.status === 400) {
+            setProductWeight([]);
+            toast.info("No products found for this jewel type.", { autoClose: 2000 });
+          } else if (err.response && err.response.status === 500) {
+            toast.error("Server error while fetching product weights.", { autoClose: 3000 });
           } else {
-            toast.error('No Products')
+            toast.error("Error fetching product weights.", { autoClose: 3000 });
           }
+          console.error("Error fetching product weights:", err);
         }
-      }
-      fetchWeight()
+      };
+      fetchWeight();
+    } else {
+      setProductWeight([]); 
     }
-
   }, [selectedProduct]);
 
   useEffect(() => {
     const fetchClosingBalance = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/closing/${selectedCustomer.customer_id}`)
-        console.log(response.data.closingBalance)
-        setCustomerClosing(response.data.closingBalance)
-
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/closing/${selectedCustomer.customer_id}`
+        );
+        setCustomerClosing(response.data.closingBalance);
       } catch (err) {
-        alert(err.message)
+        toast.error(`Error fetching customer closing balance: ${err.message}`, { autoClose: 3000 });
+        console.error("Error fetching closing balance:", err);
+        setCustomerClosing(0); 
       }
-    }
+    };
     if (selectedCustomer) {
-      fetchClosingBalance()
+      fetchClosingBalance();
+    } else {
+      setCustomerClosing(0); 
     }
-  }, [selectedCustomer])
-
+  }, [selectedCustomer]);
 
   useEffect(() => {
+    setBillItems([]);
+    setRows([]);
+    setBalanceRow([]);
 
-    setBillItems([])
-
-    const fetchWeight = async () => {
-      try {
-        const productsWeight = await axios.get(`${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`)
-
-        setProductWeight(productsWeight.data.productsWeight)
-        console.log('productFinish', productsWeight.data.productsWeight)
-
-      } catch (err) {
-        if (err.status === 400) {
-          setProductWeight([])
+    if (selectedProduct && selectedCustomer) {
+      const fetchWeightOnCustomerProductChange = async () => {
+        try {
+          const productsWeight = await axios.get(
+            `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`
+          );
+          setProductWeight(productsWeight.data.productsWeight);
+        } catch (err) {
+          if (err.response && err.response.status === 400) {
+            setProductWeight([]);
+          } else if (err.response && err.response.status === 500) {
+            toast.error("Server Error: Could not fetch product weights on change.", { autoClose: 3000 });
+          } else {
+            toast.error("Error fetching products on customer/product change.", { autoClose: 3000 });
+          }
+          console.error("Error fetching product weights on change:", err);
         }
-        if (err.status === 500) {
-          alert("server Error")
-        } else {
-          toast.error('No Products')
-        }
-      }
+      };
+      fetchWeightOnCustomerProductChange();
+    } else {
+      setProductWeight([]); 
     }
-    if (selectedProduct) {
-      fetchWeight()
-    }
-  }, [selectedCustomer])
+  }, [selectedCustomer, selectedProduct]);
 
   return (
-    <Box sx={styles.wrapper} className="billingWrapper">
-      <Box sx={styles.leftPanel} ref={billRef}>
-        <h1 style={styles.heading}>Estimate Only</h1>
-        <Box sx={styles.billHeader}>
-          <Box sx={styles.billNumber}>
-            <p><strong>Bill No:{billId}</strong></p>
+    <Box className="billing-wrapper" ref={billRef}>
+      <Box className="left-panel">
+        <h1 className="heading">Estimate Only</h1>
+        <Box className="bill-header">
+          <Box className="bill-number">
+            <p >
+              <strong>Bill No:</strong> {billId}
+            </p>
           </Box>
-          <Box sx={styles.billInfo}>
-
+          <Box className="bill-info">
             <p>
-              <strong>Date:</strong> {date} <br />
-              <br></br>
+              <strong>Date:</strong> {date}
+          <br></br>
+          <br></br>
               <strong>Time:</strong> {time}
             </p>
           </Box>
-
         </Box>
 
-        {!isPrinting && (<Box
-          sx={styles.searchSection}
-          style={{ display: isPrinting ? "none" : "flex" }}
-          className={style.noprint}
-
-        >
+        <Box className="search-section no-print">
           <Autocomplete
             options={customers}
             getOptionLabel={(option) => option.customer_name || ""}
-
             onChange={(event, newValue) => setSelectedCustomer(newValue)}
+            value={selectedCustomer}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -391,13 +464,14 @@ const Billing = () => {
                 size="small"
               />
             )}
-            sx={styles.smallAutocomplete}
+            className="small-autocomplete"
           />
 
           <Autocomplete
             options={products}
             getOptionLabel={(option) => option.jewel_name || ""}
             onChange={(event, newValue) => setSelectedProduct(newValue)}
+            value={selectedProduct}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -406,379 +480,300 @@ const Billing = () => {
                 size="small"
               />
             )}
-            sx={styles.smallAutocomplete}
+            className="small-autocomplete"
           />
-        </Box>)}
-
+        </Box>
         {selectedCustomer && (
-          <Box sx={styles.customerDetails}>
-            {!isPrinting && (<h3 className={style.noprint}>Customer Details:</h3>)}
+          <Box className="customer-details">
+            <h3 className="no-print">Customer Details:</h3>
             <p>
               <strong>Name:</strong> {selectedCustomer.customer_name}
             </p>
-            {/* {selectedCustomer.address && (
-              <p>
-                <strong>Address:</strong> {selectedCustomer.address}
-              </p>
-            )}
-            {selectedCustomer.phone_number && (
-              <p>
-                <strong>Phone:</strong> {selectedCustomer.phone_number}
-              </p>
-            )}
-            {selectedCustomer.customer_shop_name && (
-              <p>
-                <strong>Shop Name:</strong> {selectedCustomer.customer_shop_name}
-              </p>
-            )} */}
           </Box>
         )}
-
-        <Box sx={styles.itemsSection} className="table">
-          {!isPrinting && (<h3 className={style.noprint}>Bill Details:</h3>)}
-          <table style={styles.table}>
+        <Box className="items-section">
+          <h3 className="no-print">Bill Details:</h3>
+          <table className="table">
             <thead>
               <tr>
-                <th style={styles.th}>Description</th>
-                <th style={styles.th}>Touch</th>
-                {!isPrinting && (<th style={styles.th} className={style.noprint}>%</th>)}
-                <th style={styles.th}>Weight</th>
-                <th style={styles.th}>Pure</th>
-                {!isPrinting && (<th style={styles.th} className={style.noprint}>Action</th>)}
+                <th className="th">Description</th>
+                <th className="th">Touch</th>
+                <th className="th no-print">%</th>
+                <th className="th">Weight</th>
+                <th className="th">Pure</th>
+                <th className="th no-print">Action</th>
               </tr>
             </thead>
-            <tbody >
+            <tbody>
               {billItems.length > 0 ? (
                 billItems.map((item, index) => (
                   <tr key={index}>
-                    <td style={styles.td}>{item.productName}</td>
-                    <td style={styles.td}>{item.productTouch}</td>
-                    {!isPrinting && (<td style={styles.td} className={style.noprint}><input value={item.productPercentage} type="number" onChange={(e) => { handleChangePercentage(index, e.target.value) }} ></input></td>)}
-                    <td style={styles.td}>{item.productWeight}</td>
-                    <td style={styles.td} className="table">{(item.productPure).toFixed(3)}</td>
-                    {!isPrinting && (<td style={styles.td} className={style.noprint}><Button onClick={() => { handleRemoveOrder(index, item.productName, item.productTouch, item.productWeight, item.stockId) }}><FaTrash></FaTrash></Button></td>)}
+                    <td className="td">{item.productName}</td>
+                    <td className="td">{item.productTouch}</td>
+                    <td className="td no-print">
+                      <input
+                        value={item.productPercentage}
+                        type="number"
+                        onChange={(e) => handleChangePercentage(index, e.target.value)}
+                      />
+                    </td>
+                    <td className="td">{item.productWeight}</td>
+                    <td className="td">{item.productPure.toFixed(3)}</td>
+                    <td className="td no-print">
+                      <Button
+                        onClick={() =>
+                          handleRemoveOrder(
+                            index,
+                            item.productName,
+                            item.productTouch,
+                            item.productWeight,
+                            item.stockId
+                          )
+                        }
+                      >
+                        <FaTrash />
+                      </Button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="4"
-                    style={{ textAlign: "center", padding: "10px" }}
-                  >
+                  <td colSpan={6} className="no-products-message">
                     No products selected
                   </td>
                 </tr>
               )}
               <tr>
-                <td colSpan="4" style={styles.td} className="merge-cell">
+                <td colSpan={4} className="td merge-cell">
                   <strong>Bill Total</strong>
                 </td>
-                <td style={styles.td}>{(totalPrice).toFixed(3)}</td>
-
+                <td className="td">{totalPrice.toFixed(3)}</td>
+                <td className="no-print"></td>
               </tr>
               {selectedCustomer && (
                 <tr>
-                  <td colSpan="4" style={styles.td} className="merge-cell">
+                  <td colSpan={4} className="td merge-cell">
                     <strong>Old Balance</strong>
                   </td>
-                  <td style={styles.td}>{customerClosing}</td>
-
-                </tr>)}
+                  <td className="td">{customerClosing.toFixed(3)}</td>
+                  <td className="no-print"></td>
+                </tr>
+              )}
               <tr>
-                <td colSpan="4" style={styles.td} className="merge-cell">
+                <td colSpan={4} className="td merge-cell">
                   <strong>Total Amount</strong>
                 </td>
-                <td style={styles.td}>{(totalBillAmount).toFixed(3)}</td>
-
+                <td className="td">{totalBillAmount.toFixed(3)}</td>
+                <td className="no-print"></td>
               </tr>
+              {balanceRow.map((row, index) => (
+                <tr key={`balance-${index}`}>
+                  <td className="td">Given Gold</td>
+                  <td className="td">
+                    <input
+                      type="number"
+                      value={row.givenGold}
+                      onChange={(e) => handleBalanceInputChange(index, "givenGold", e.target.value)}
+                    />
+                  </td>
+                  <td className="td">
+                    <input
+                      type="number"
+                      value={row.touch}
+                      onChange={(e) => handleBalanceInputChange(index, "touch", e.target.value)}
+                    />
+                  </td>
+                  <td className="td"></td> 
+                  <td className="td">{row.pure.toFixed(3)}</td>
+                  <td className="td no-print">
+                    <Button onClick={() => handleRemoveBalanceRow(index)}>
+                      <FaTrash />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
               <tr>
-
-                {!isPrinting && (<td>
+                <td colSpan={6} className="no-print" style={{ textAlign: 'right' }}>
                   <Button
                     variant="contained"
                     color="primary"
                     onClick={handleBalanceRow}
-                    sx={styles.balanceButton}
-                    style={{ display: isPrinting ? "none" : "block" }}
-                    className={style.noprint}
-
+                    className="balance-button"
                   >
-                    +
-                  </Button></td>
-                )}
-
+                    + Add Given Gold
+                  </Button>
+                </td>
               </tr>
             </tbody>
           </table>
-          {!isPrinting && (<h3 className={style.noprint}>Recevied Details:</h3>)}
-          {!isPrinting && (
-          
-             <Box className={style.noprint}>
-              <Table className={style.receivedtable}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Given Gold</TableCell>
-                <TableCell>Touch</TableCell>
-                <TableCell>Weight</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {balanceRow.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell >
-                    <input
-                      type="number"
-                      value={row.givenGold}
-                      onChange={(e) =>
-                        handleBalanceInputChange(index, "givenGold", e.target.value)
-                      }
-                      style={styles.input}
-                    />
-                  </TableCell>
+          <Box className="items-section no-print">
+            <div className="add">
+              <h3>Received Details:</h3>
+              <p className="add-icon-wrapper">
+                <IconButton size="small" onClick={handleAddRow} className="add-circle-icon">
+                  <AddCircleOutlineIcon />
+                </IconButton>
+              </p>
+            </div>
 
-                  <TableCell>
-                    <input
-                      type="number"
-                      placeholder="Touch"
-                      value={row.touch}
-                      onChange={(e) =>
-                        handleBalanceInputChange(index, "touch", e.target.value)
-                      }
-                      style={styles.input}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <input
-                      type="number"
-                      placeholder="Weight"
-                      value={(row.pure).toFixed(3)}
-                      style={styles.input}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {
-                      !isPrinting && (<Button style={styles.delButton} className={style.noprint} onClick={(e) => { handleRemoveBalanceRow(index) }}><FaTrash></FaTrash></Button>)
-                    }
-                  </TableCell>
-
-                </TableRow>
-              ))}
-             
-            </TableBody>
-          </Table>
-             </Box>
-            )}
-          
-        </Box>
-
-        <Box style={styles.closingBox}>
-
-          <p style={styles.closingLine} >
-            <span>Recevied</span> 
-            <span >{(pure).toFixed(3)}</span>
-            
-          </p>
-
-          <p style={styles.closingLine}>
-            <span>closing</span> 
-            <span >{(balanceRow.length === 0 ? totalBillAmount : closing).toFixed(2)}</span>
-            
-          </p>
-        </Box>
-
-
-        {
-          !isPrinting && (
-
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSaveBill}
-              sx={styles.saveButton}
-              style={{ display: isPrinting ? "none" : "block" }}
-              className={style.noprint}
-            >
-              Save
-            </Button>)
-        }
-      </Box>
-
-      {
-        !isPrinting && (
-          <Box sx={styles.rightPanel} className={style.noprint}>
-            <Table sx={styles.table} >
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={styles.th}>S.No</TableCell>
-                  <TableCell sx={styles.th}>Product Finish Weight</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {productWeight.length > 0 ? (
-                  productWeight.map((product, index) => (
-                    <TableRow key={index} onClick={() => { handleProductSelect(index, product.stock_id) }} style={{ cursor: 'pointer' }}>
-                      <TableCell sx={styles.td}>{index + 1}</TableCell>
-                      <TableCell sx={styles.td}>{product.value}</TableCell>
-                    </TableRow>
+            <table className="table received-details-table"> 
+              <thead>
+                <tr>
+                  <th className="th">S.No</th>
+                  <th className="th">Date</th>
+                  <th className="th">Gold Rate</th>
+                  <th className="th">Gold</th>
+                  <th className="th">Touch</th>
+                  <th className="th">Purity WT</th>
+                  <th className="th">Amount</th>
+                  <th className="th">Hallmark</th>
+                  <th className="th">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length > 0 ? (
+                  rows.map((row, index) => (
+                    <tr key={index}>
+                      <td className="td">{index + 1}</td>
+                      <td className="td">
+                        <TextField
+                          className="date-field"
+                          size="small"
+                          type="date"
+                          value={row.date}
+                          onChange={(e) => handleRowChange(index, "date", e.target.value)}                       
+                          InputProps={{ disableUnderline: true }} 
+                        />
+                      </td>
+                      <td className="td">
+                        <TextField
+                          size="small"
+                          value={row.goldRate}
+                          onChange={(e) => handleRowChange(index, "goldRate", e.target.value)}
+                          type="number"
+                          InputProps={{ disableUnderline: true }}
+                        />
+                      </td>
+                      <td className="td">
+                        <TextField
+                          size="small"
+                          value={row.givenGold}
+                          onChange={(e) => handleRowChange(index, "givenGold", e.target.value)}
+                          type="number"
+                          InputProps={{ disableUnderline: true }}
+                        />
+                      </td>
+                      <td className="td">
+                        <TextField
+                          size="small"
+                          value={row.touch}
+                          onChange={(e) => handleRowChange(index, "touch", e.target.value)}
+                          type="number"
+                          InputProps={{ disableUnderline: true }}
+                        />
+                      </td>
+                      <td className="td">
+                        <TextField
+                          size="small"
+                          value={row.purityWeight}
+                          InputProps={{ readOnly: true, disableUnderline: true }}
+                        />
+                      </td>
+                      <td className="td">
+                        <TextField
+                          size="small"
+                          value={row.amount}
+                          onChange={(e) => handleRowChange(index, "amount", e.target.value)}
+                          type="number"
+                          InputProps={{ disableUnderline: true }}
+                        />
+                      </td>
+                      <td className="td">
+                        <TextField
+                          size="small"
+                          value={row.hallmark}
+                          onChange={(e) => handleRowChange(index, "hallmark", e.target.value)}
+                          type="number"
+                          InputProps={{ disableUnderline: true }}
+                        />
+                      </td>
+                      <td className="td">
+                        {(!viewMode || index >= (selectedBill?.receivedDetails?.length || 0)) && (
+                          <IconButton onClick={() => handleDeleteRow(index)}>
+                            <MdDeleteForever />
+                          </IconButton>
+                        )}
+                      </td>
+                    </tr>
                   ))
                 ) : (
-                  <TableRow>
-                    <TableCell sx={styles.td} colSpan={2}>
-                      No product weight data
-                    </TableCell>
-                  </TableRow>
+                  <tr>
+                    <td colSpan={9} className="no-products-message">
+                      No received details added
+                    </td>
+                  </tr>
                 )}
-              </TableBody>
-            </Table>
-            <ToastContainer />
+              </tbody>
+            </table>
           </Box>
-        )
-      }
-    </Box>
+        </Box>
+        <Box className="closing-box">
+          <p className="closing-line">
+            <span>Received</span>
+            <span>{pure.toFixed(3)}</span>
+          </p>
+          <p className="closing-line">
+            <span>Closing</span>
+            <span>{(balanceRow.length === 0 ? totalBillAmount : closing).toFixed(3)}</span>
+          </p>
+        </Box>
+        <br></br>
 
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSaveBill}
+          className="save-button no-print"
+        >
+          Save
+        </Button>
+      </Box>
+
+     
+      <Box className="right-panel no-print">
+        <h3 className="heading" style={{fontSize: '20px', marginBottom: '15px'}}>Available Product Weights</h3>
+        <Table className="table">
+          <TableHead>
+            <TableRow>
+              <TableCell className="th">S.No</TableCell>
+              <TableCell className="th">Product Finish Weight</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {productWeight.length > 0 ? (
+              productWeight.map((product, index) => (
+                <TableRow
+                  key={index}
+                  onClick={() => handleProductSelect(index, product.stock_id)}
+                  className="product-weight-row"
+                >
+                  <TableCell className="td">{index + 1}</TableCell>
+                  <TableCell className="td">{product.value}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell className="td no-product-weight-message" colSpan={2}>
+                  No product weight data
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        <ToastContainer />
+      </Box>
+    </Box>
   );
 };
 
-const styles = {
-  wrapper: {
-    display: "flex",
-    gap: "20px",
-    alignItems: "flex-start",
-    padding: "20px",
-  },
-  leftPanel: {
-    width: "60%",
-    padding: "20px",
-    border: "1px solid #ccc",
-    borderRadius: "10px",
-    backgroundColor: "#f9f9f9",
-    fontFamily: "Arial, sans-serif",
-  },
-  rightPanel: {
-    width: "40%",
-    padding: "20px",
-    border: "1px solid #ccc",
-    borderRadius: "10px",
-    backgroundColor: "#fff",
-    fontFamily: "Arial, sans-serif",
-  },
-  heading: { textAlign: "center", color: "black", fontSize: "20px" },
-  billInfo: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "20px",
-  },
-  searchSection: { display: "flex", gap: "10px", marginBottom: "20px" },
-  smallAutocomplete: {
-    width: "48%",
-    backgroundColor: "#fff",
-    borderRadius: "5px",
-  },
-  customerDetails: {
-    marginBottom: "20px",
-    padding: "10px",
-    border: "1px solid #ddd",
-    borderRadius: "5px",
-    backgroundColor: "#fff",
-  },
-  itemsSection: { marginTop: "20px" },
-
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    tableLayout: "fixed", // Forces all cells to respect width
-  },
-  th: {
-    border: "1px solid #ddd",
-    padding: "5px",
-    backgroundColor: "#f2f2f2",
-    textAlign: "left",
-    fontWeight: "bold",
-    width: "16.66%", // For 6 columns (100 / 6)
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  td: {
-    border: "1px solid #ddd",
-    padding: "10px",
-    textAlign: "left",
-    width: "16.66%",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-
-  saveButton: {
-    marginTop: "20px",
-    display: "block",
-    marginLeft: "auto",
-    marginRight: "auto",
-  },
-  balanceButton: {
-    // margin: "10px",
-    // display: "block",
-    // marginLeft: "auto",
-    marginRight: "0",
-    fontSize: "18 px",
-    marginLeft: "60rem",
-    marginTop: "1rem"
-  },
-
-  input: {
-    padding: "6px 8px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    fontSize: "14px",
-    fontFamily: "inherit",
-    backgroundColor: "#fff",
-    boxSizing: "border-box",
-    outline: "none",
-  },
-
-  delButton: {
-    margin: "10px",
-    display: "block",
-    marginLeft: "auto",
-    marginRight: "auto",
-    fontSize: "20px"
-  },
-  billHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: "2px"
-  },
-  billNumber: {
-    flex: 1
-  },
-  billInfo: {
-    flex: 1,
-    textAlign: "right",
-    marginBottom: "20px",
-
-  },
-  closingBox:{
-    width: "60%",
-    padding: "20px",
-    marginLeft:"130px",
-    
-  },
-  closingLine: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    margin: "0 0 14px 0",       // reset default <p> margins
-    padding: "4px 0",
-     // optional vertical padding
-  }
-  
-  
-};
-
-
 export default Billing;
-
-
-
-

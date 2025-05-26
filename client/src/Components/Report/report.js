@@ -5,6 +5,7 @@ import StockReport from "./stockreport";
 import SalesReport from "./SalesReport";
 import { useNavigate ,useLocation} from "react-router-dom";
 import CustReport from "./custreport";
+import ReceiptReport from "./receiptreport"
 
 
 function Report() {
@@ -37,10 +38,9 @@ function Report() {
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
         <button
           // onClick={() => setSelectedReport("customer")}
-          onClick={() => {setSelectedReport("customer")
-          
-        }}
-          
+          onClick={() => {
+            setSelectedReport("customer");
+          }}
           disabled={selectedReport === "customer"}
           style={{
             padding: "10px",
@@ -70,9 +70,9 @@ function Report() {
           Stock Report
         </button>
 
-        <button 
-         onClick={() => setSelectedReport("sales")}
-         disabled={selectedReport === "sales"}
+        <button
+          onClick={() => setSelectedReport("sales")}
+          disabled={selectedReport === "sales"}
           style={{
             padding: "10px",
             backgroundColor: selectedReport === "sales" ? "darkblue" : "blue",
@@ -81,19 +81,34 @@ function Report() {
             cursor: selectedReport === "sales" ? "not-allowed" : "pointer",
             opacity: selectedReport === "sales" ? 0.5 : 1,
           }}
-        > Sales Report </button> 
-
+        >
+          {" "}
+          Sales Report{" "}
+        </button>
+        <button
+          onClick={() => setSelectedReport("receipt")}
+          disabled={selectedReport === "receipt"}
+          style={{
+            padding: "10px",
+            backgroundColor: selectedReport === "receipt" ? "darkblue" : "blue",
+            color: "white",
+            border: "none",
+            cursor: selectedReport === "receipt" ? "not-allowed" : "pointer",
+            opacity: selectedReport === "receipt" ? 0.5 : 1,
+          }}
+        >
+          
+           Receipt Report
+        </button>
       </div>
 
       <div>
-
         {selectedReport === "customer" && <CustomerReport />}
         {selectedReport === "stock" && <StockReport />}
-        {selectedReport ==="sales" && <SalesReport/> }
+        {selectedReport === "sales" && <SalesReport />}
+        {selectedReport === "receipt" && <ReceiptReport/>}
       </div>
-      
     </div>
-    
   );
 }
 
