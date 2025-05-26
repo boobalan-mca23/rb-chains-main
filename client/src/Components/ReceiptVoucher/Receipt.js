@@ -24,7 +24,7 @@ import {
   DialogActions,
   TableHead,
   Paper,
-  TableContainer
+  TableContainer,
 } from "@mui/material";
 import { REACT_APP_BACKEND_SERVER_URL } from "../../config/config";
 
@@ -99,7 +99,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
 
   const createNewRow = () => {
     return {
-      id: Date.now(), 
+      id: Date.now(),
       date: new Date().toISOString().slice(0, 10),
       goldRate: initialGoldRate.toString(),
       givenGold: "",
@@ -118,32 +118,57 @@ const Receipt = ({ initialGoldRate = 0 }) => {
     setRows([...rows, createNewRow()]);
   };
 
-  const calculateValues = (row) => {
-    const givenGold = parseFloat(row.givenGold) || 0;
-    const touch = parseFloat(row.touch) || 0;
-    const goldRate = parseFloat(row.goldRate) || 0;
-
-    const purityWeight = ((givenGold * touch) / 100).toFixed(3);
-    const amount = (purityWeight * goldRate).toFixed(2);
-
-    return { purityWeight, amount };
-  };
 
   const handleInputChange = (id, field, value) => {
     const updatedRows = rows.map((row) => {
       if (row.id === id) {
-        let updatedRow = { ...row, [field]: value };
+        let updatedRow = { ...row, [field]: value }; 
 
-        if (
-          field === "givenGold" ||
-          field === "touch" ||
-          field === "goldRate"
-        ) {
-          const { purityWeight, amount } = calculateValues(updatedRow);
-          updatedRow.purityWeight = purityWeight;
-          updatedRow.amount = amount;
+        if (field === "givenGold" || field === "touch") {
+       
+          const givenGold = parseFloat(updatedRow.givenGold) || 0;
+          const touch = parseFloat(updatedRow.touch) || 0;
+          const purityWeight = givenGold * (touch / 100);
+          updatedRow.purityWeight = purityWeight.toFixed(3);
+
+          const goldRate = parseFloat(updatedRow.goldRate) || 0;
+          if (goldRate > 0) {
+            const amount = purityWeight * goldRate;
+            updatedRow.amount = amount.toFixed(2);
+          } else {
+            updatedRow.amount = ""; 
+          }
+        } else if (field === "amount") {
+        
+          const amount = parseFloat(value) || 0;
+          const goldRate = parseFloat(updatedRow.goldRate) || 0; 
+
+          if (goldRate > 0) {
+            const purityWeight = amount / goldRate;
+            updatedRow.purityWeight = purityWeight.toFixed(3);
+         
+            updatedRow.givenGold = "";
+            updatedRow.touch = "";
+          } else {
+            updatedRow.purityWeight = ""; 
+          }
+        } else if (field === "goldRate") {
+        
+          const goldRate = parseFloat(value) || 0;
+          const purityWeight = parseFloat(updatedRow.purityWeight) || 0;
+          const amount = parseFloat(updatedRow.amount) || 0;
+
+          if (purityWeight > 0) {
+           
+            updatedRow.amount = (purityWeight * goldRate).toFixed(2);
+          } else if (amount > 0 && goldRate > 0) {
+         
+            updatedRow.purityWeight = (amount / goldRate).toFixed(3);
+          } else {
+            updatedRow.amount = ""; 
+            updatedRow.purityWeight = ""; 
+          }
         }
-
         return updatedRow;
       }
       return row;
@@ -382,7 +407,6 @@ const Receipt = ({ initialGoldRate = 0 }) => {
                           label="Amount"
                           variant="outlined"
                           size="small"
-                          disabled
                         />
                       </TableCell>
                     </TableRow>
