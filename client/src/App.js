@@ -12,7 +12,7 @@ import Nav from "./Components/Navbar/nav";
 import Customer from "./Components/Customer/customer";
 import Billing from "./Components/Billing/billing";
 import Report from "./Components/Report/report";
-// import Process from "./Components/Lot/process";
+import Process from "./Components/Lot/process";
 import Dailyreport from "./Components/Report/dailyreport";
 import Customerreport from "./Components/Report/custreport";
 import Master from './Components/MasterFile/Master'
@@ -40,7 +40,7 @@ function Layout() {
       )}
       <Routes>
         <Route path="/" element={<Home />} />
-        {/* <Route path="/process" element={<Process />} /> */}
+         <Route path="/process" element={<Process />} /> 
         <Route path="/customer" element={<Customer />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/receiptvoucher" element={<Receipt />}></Route>
