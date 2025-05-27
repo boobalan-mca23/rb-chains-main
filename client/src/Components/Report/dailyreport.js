@@ -3,7 +3,7 @@ import { REACT_APP_BACKEND_SERVER_URL } from '../../config/config'
 import axios from 'axios'
 import { styled } from "@mui/material/styles";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Button, Box, Modal, Typography, colors, TableFooter, Autocomplete, Hidden, Grid } from "@mui/material";
-
+import {getLotDatewise} from "../../Api/processTableApi";
 function DailyReport() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -134,6 +134,31 @@ function DailyReport() {
     return tempCalculation
   }
 
+
+
+  const handleDateWiseFilter = async () => {
+      try {
+        console.log('fromDate', fromDate);
+        console.log('toDate', toDate);
+
+        if (fromDate > toDate) {
+          alert('Your Date Order was Wrong');
+          return;
+        }
+        setItems([])
+        const res = await getLotDatewise(fromDate, toDate);
+        console.log('DateWiseFilter', res.data.data);
+        setItems(res.data.data)
+        setCalculation(docalculation(res.data.data))
+        handleMachineCalculate(items, calculation)
+        console.log('itemsAfterDateWiseFilter', items);
+      } catch (error) {
+        console.error('Error fetching data by date:', error.message);
+        alert('Select Date First.');
+      }
+    };
+    
+
   const handleMachineCalculate = (response, calculation) => {
     const tempData = response;
     const tempCal = [...calculation]
@@ -147,18 +172,47 @@ function DailyReport() {
     setCalculation(tempCal)
 
   }
-
-  useEffect(() => {
-
-    const fectchLotDetails = async () => {
-      const res = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/process/processes`)
-      console.log(res.data.data)
-      setItems(res.data.data)
-      setCalculation(docalculation(res.data.data))
-      handleMachineCalculate(res.data.data, calculation)
+useEffect(() => {
+  const fectchLotDetails = async () => {
+    try {
+      const res = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/process/processes`);
+      console.log(res.data.data);
+      setItems(res.data.data);
+      const calculated = docalculation(res.data.data);
+      setCalculation(calculated);
+      handleMachineCalculate(res.data.data, calculated);
+    } catch (error) {
+      console.error("Error fetching lot details:", error);
+     
     }
-    fectchLotDetails();
-  }, [])
+  };
+
+  fectchLotDetails();
+}, []);
+
+
+  //set today Data
+   useEffect(() => {
+      // Get current date in UTC
+      const today = new Date();
+  
+      // Convert to Indian Standard Time (IST)
+      const offset = 5.5 * 60; // IST is UTC +5:30
+      const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
+  
+      // Extract date parts (year, month, day)
+      const year = indiaTime.getFullYear();
+      const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+      const day = String(indiaTime.getDate()).padStart(2, '0');
+  
+      // Format the date as YYYY-MM-DD
+      const currentDate = `${year}-${month}-${day}`;
+  
+      console.log('currentDate in IST:', currentDate);
+  
+      setFromDate(currentDate);
+      setToDate(currentDate);
+    }, []);
   return (
     <>
       <Typography
@@ -189,13 +243,13 @@ function DailyReport() {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
-          <Button variant="contained">Filter</Button>
+          <Button variant="contained" onClick={()=>{handleDateWiseFilter()}}>Filter</Button>
         </div>
       </div>
       <StyledTableContainer component={Paper} >
         <div style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh' }}>
           {/* <Table> */}
-          <Table style={{ maxWidth: "70%" }}>
+          <Table >
             <TableHead style={{ position: 'sticky', top: "0px", zIndex: 10, backgroundColor: '#d8e3e6' }}  >
 
               <TableRow>
@@ -237,33 +291,33 @@ function DailyReport() {
 
                   <React.Fragment key={process}>
                     <StyledTableCell  >
-                      <b>BF</b>
+                      <b style={{fontSize:"11px"}}>Before</b>
                     </StyledTableCell>
                     {process === "Wire" ? (
                       <StyledTableCell colSpan={2}   >
-                        <b>AF</b>
+                        <b style={{fontSize:"11px"}}>After</b>
                       </StyledTableCell>) :
                       (<StyledTableCell  >
-                        <b>AF</b>
+                        <b style={{fontSize:"11px"}}>After</b>
                       </StyledTableCell>)}
 
 
                     {process !== "Machine" ?
                       (<StyledTableCell   >
-                        <b>S</b>
+                        <b style={{fontSize:"11px"}}>Scarp</b>
                       </StyledTableCell>) : ("")}
                     {process !== "Soldrine" ? (
                       <StyledTableCell  >
-                        <b>L</b>
+                        <b style={{fontSize:"11px"}}>Loss</b>
                       </StyledTableCell>) : (
                       <StyledTableCell>
-                        <b>+</b>
+                        <b style={{fontSize:"11px"}}>+</b>
                       </StyledTableCell>)}
 
                     {
                       process === "Cutting" && (
                         <StyledTableCell   >
-                          <b>SP</b>
+                          <b style={{fontSize:"11px"}}>ScarpTotal</b>
                         </StyledTableCell>
                       )
                     }
@@ -515,7 +569,7 @@ function DailyReport() {
                       <React.Fragment>
                         <TableRow>
                           <StyledTableCell colSpan={11}></StyledTableCell>
-                          <StyledTableCell colSpan={3} >
+                          <StyledTableCell colSpan={5} >
                             <Grid container spacing={1}>
 
                               <Grid container item spacing={1}>
@@ -524,24 +578,24 @@ function DailyReport() {
                                     label="Date"
                                     value={lotItem.scarpValue.scarpDate}
                                     InputProps={{
-                                      style: { fontSize: "10px" }, // this controls the input value font
+                                      style: { fontSize: "12px" }, // this controls the input value font
                                     }}
                                     InputLabelProps={{
                                       style: { fontSize: "15px" }, // this controls the label font
                                     }}
-
+                                    
                                   >
 
                                   </TextField>
                                 </Grid>
-                                <Grid item xs={5}>
+                                <Grid item xs={6}>
                                   <TextField fullWidth label="ItemTotal"
                                     value={lotItem.scarpValue.itemTotal}
                                     InputProps={{
-                                      style: { fontSize: "10px" }, // this controls the input value font
+                                      style: { fontSize: "12px" }, // this controls the input value font
                                     }}
                                     InputLabelProps={{
-                                      style: { fontSize: "13px" }, // this controls the label font
+                                      style: { fontSize: "15px" }, // this controls the label font
                                     }}
 
                                   />
@@ -552,7 +606,7 @@ function DailyReport() {
                               <Grid container item spacing={1}>
                                 <Grid item xs={6}>
                                   <TextField fullWidth value={lotItem.scarpValue?.scarp} label="Scarp" InputProps={{
-                                    style: { fontSize: "10px" },
+                                    style: { fontSize: "12px" },
                                     // this controls the input value font
                                   }}
                                     InputLabelProps={{
@@ -561,7 +615,7 @@ function DailyReport() {
                                 </Grid>
                                 <Grid item xs={6}>
                                   <TextField fullWidth label="Loss" value={(lotItem.scarpValue?.totalScarp).toFixed(3)} InputProps={{
-                                    style: { fontSize: "10px" }, // this controls the input value font
+                                    style: { fontSize: "12px" }, // this controls the input value font
                                   }}
                                     InputLabelProps={{
                                       style: { fontSize: "15px" }, // this controls the label font

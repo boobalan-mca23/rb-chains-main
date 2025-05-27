@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -35,10 +34,8 @@ const Receipt = ({ initialGoldRate = 0 }) => {
   const [loadingReceipts, setLoadingReceipts] = useState(false);
   const [error, setError] = useState(null);
   const [rows, setRows] = useState([]);
-  const [viewMode, setViewMode] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [allReceipts, setAllReceipts] = useState([]);
-
   const inputRefs = useRef({});
 
   useEffect(() => {
@@ -59,18 +56,32 @@ const Receipt = ({ initialGoldRate = 0 }) => {
         setLoading(false);
       }
     };
-
     fetchCustomers();
   }, []);
 
   useEffect(() => {
     if (selectedCustomer) {
       setRows([createNewRow()]);
-      setViewMode(false);
     } else {
       setRows([]);
     }
   }, [selectedCustomer]);
+
+  const createNewRow = () => ({
+    id: Date.now(),
+    date: new Date().toISOString().slice(0, 10),
+    goldRate: initialGoldRate.toString(),
+    givenGold: "",
+    touch: "",
+    purityWeight: "",
+    amount: "",
+  });
+
+  const handleCustomerChange = (event) => {
+    const customerId = event.target.value;
+    setSelectedCustomer(customerId);
+    fetchCustomerReceipts(customerId);
+  };
 
   const fetchCustomerReceipts = async (customerId) => {
     setLoadingReceipts(true);
@@ -78,419 +89,197 @@ const Receipt = ({ initialGoldRate = 0 }) => {
       const response = await axios.get(
         `${REACT_APP_BACKEND_SERVER_URL}/api/receipt/customer/${customerId}`
       );
-      setAllReceipts(
-        response.data.map((r) => ({
-          id: r.id,
-          date: new Date(r.date).toISOString().slice(0, 10),
-          goldRate: r.goldRate.toString(),
-          givenGold: r.givenGold.toString(),
-          touch: r.touch.toString(),
-          purityWeight: r.purityWeight.toString(),
-          amount: r.amount.toString(),
-        }))
-      );
+      setAllReceipts(response.data);
     } catch (err) {
       console.error("Error fetching receipts:", err);
-      setAllReceipts([]);
     } finally {
       setLoadingReceipts(false);
     }
   };
 
-  const createNewRow = () => {
-    return {
-      id: Date.now(),
-      date: new Date().toISOString().slice(0, 10),
-      goldRate: initialGoldRate.toString(),
-      givenGold: "",
-      touch: "",
-      purityWeight: "",
-      amount: "",
-    };
-  };
-
-  const handleCustomerChange = (event) => {
-    setSelectedCustomer(event.target.value);
-    fetchCustomerReceipts(event.target.value);
-  };
-
-  const handleAddRow = () => {
-    setRows([...rows, createNewRow()]);
-  };
-
-
   const handleInputChange = (id, field, value) => {
     const updatedRows = rows.map((row) => {
       if (row.id === id) {
-        let updatedRow = { ...row, [field]: value }; 
+        const updatedRow = { ...row, [field]: value };
+        const goldRate = parseFloat(updatedRow.goldRate) || 0;
+        const givenGold = parseFloat(updatedRow.givenGold) || 0;
+        const touch = parseFloat(updatedRow.touch) || 0;
+        const amount = parseFloat(updatedRow.amount) || 0;
 
         if (field === "givenGold" || field === "touch") {
-       
-          const givenGold = parseFloat(updatedRow.givenGold) || 0;
-          const touch = parseFloat(updatedRow.touch) || 0;
           const purityWeight = givenGold * (touch / 100);
           updatedRow.purityWeight = purityWeight.toFixed(3);
-
-          const goldRate = parseFloat(updatedRow.goldRate) || 0;
-          if (goldRate > 0) {
-            const amount = purityWeight * goldRate;
-            updatedRow.amount = amount.toFixed(2);
-          } else {
-            updatedRow.amount = ""; 
-          }
-        } else if (field === "amount") {
-        
-          const amount = parseFloat(value) || 0;
-          const goldRate = parseFloat(updatedRow.goldRate) || 0; 
-
-          if (goldRate > 0) {
-            const purityWeight = amount / goldRate;
-            updatedRow.purityWeight = purityWeight.toFixed(3);
-         
-            updatedRow.givenGold = "";
-            updatedRow.touch = "";
-          } else {
-            updatedRow.purityWeight = ""; 
-          }
-        } else if (field === "goldRate") {
-        
-          const goldRate = parseFloat(value) || 0;
-          const purityWeight = parseFloat(updatedRow.purityWeight) || 0;
-          const amount = parseFloat(updatedRow.amount) || 0;
-
-          if (purityWeight > 0) {
-           
-            updatedRow.amount = (purityWeight * goldRate).toFixed(2);
-          } else if (amount > 0 && goldRate > 0) {
-         
-            updatedRow.purityWeight = (amount / goldRate).toFixed(3);
-          } else {
-            updatedRow.amount = ""; 
-            updatedRow.purityWeight = ""; 
-          }
+          updatedRow.amount = (purityWeight * goldRate).toFixed(2);
+        } else if (field === "amount" && goldRate > 0) {
+          const purityWeight = amount / goldRate;
+          updatedRow.purityWeight = purityWeight.toFixed(3);
+        } else if (field === "goldRate" && updatedRow.purityWeight > 0) {
+          updatedRow.amount = (updatedRow.purityWeight * goldRate).toFixed(2);
         }
+
         return updatedRow;
       }
       return row;
     });
-
     setRows(updatedRows);
   };
 
   const registerRef = (rowId, field) => (el) => {
-    if (!inputRefs.current[rowId]) {
-      inputRefs.current[rowId] = {};
-    }
+    if (!inputRefs.current[rowId]) inputRefs.current[rowId] = {};
     inputRefs.current[rowId][field] = el;
   };
 
   const handleKeyDown = (e, rowId, field) => {
     if (e.key === "Enter") {
-      e.preventDefault();
-      const fields = [
-        "date",
-        "goldRate",
-        "givenGold",
-        "touch",
-        "purityWeight",
-        "amount",
-      ];
-      const currentIndex = fields.indexOf(field);
-      const nextField = fields[currentIndex + 1];
-
+      const fields = ["date", "goldRate", "givenGold", "touch", "purityWeight", "amount"];
+      const index = fields.indexOf(field);
+      const nextField = fields[index + 1];
       if (nextField && inputRefs.current[rowId]?.[nextField]) {
         inputRefs.current[rowId][nextField].focus();
       }
     }
   };
 
+  const handleAddRow = () => setRows([...rows, createNewRow()]);
+
   const handleSave = async () => {
     try {
       const payload = {
         customer_id: selectedCustomer,
-        receipts: rows.map((row) => ({
-          date: row.date,
-          goldRate: parseFloat(row.goldRate) || 0,
-          givenGold: parseFloat(row.givenGold) || 0,
-          touch: parseFloat(row.touch) || 0,
-          purityWeight: parseFloat(row.purityWeight) || 0,
-          amount: parseFloat(row.amount) || 0,
+        receipts: rows.map(({ date, goldRate, givenGold, touch, purityWeight, amount }) => ({
+          date,
+          goldRate: parseFloat(goldRate),
+          givenGold: parseFloat(givenGold),
+          touch: parseFloat(touch),
+          purityWeight: parseFloat(purityWeight),
+          amount: parseFloat(amount),
         })),
       };
-
-      await axios.post(
-        `${REACT_APP_BACKEND_SERVER_URL}/api/receipt/save`,
-        payload
-      );
-
-      alert("Receipt data saved successfully!");
+      await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/receipt/save`, payload);
+      alert("Saved successfully");
       fetchCustomerReceipts(selectedCustomer);
       setRows([createNewRow()]);
     } catch (err) {
-      console.error("Error saving receipt data:", err);
-      alert("Failed to save receipt data.");
+      console.error("Save error:", err);
+      alert("Error saving data");
     }
   };
 
-  const handleViewReceipts = () => {
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" mt={4}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Typography color="error" align="center" mt={4}>
-        Error loading customers: {error}
-      </Typography>
-    );
-  }
+  if (loading) return <Box textAlign="center" mt={4}><CircularProgress /></Box>;
+  if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-    <div>
-      <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel id="customer-select-label">Select Customer</InputLabel>
-          <Select
-            labelId="customer-select-label"
-            value={selectedCustomer}
-            onChange={handleCustomerChange}
-            label="Select Customer"
-          >
-            {customers.map((customer) => (
-              <MenuItem key={customer._id} value={customer._id}>
-                {customer.name} ({customer.phone})
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+    <Box p={2}>
+      <FormControl size="small" margin="none" sx={{ width: '50%', mb: 1 }}>
+        <InputLabel id="customer-label" size="small">Select Customer</InputLabel>
+        <Select
+          labelId="customer-label"
+          label="Select Customer"
+          value={selectedCustomer}
+          onChange={handleCustomerChange}
+          size="small"
+          sx={{ fontSize: 13, py: 0.8 }}
+        >
+          {customers.map((c) => (
+            <MenuItem key={c._id} value={c._id} sx={{ fontSize: 13 }}>
+              {`${c.name} (${c.phone})`}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
-      {selectedCustomer ? (
+
+
+      {selectedCustomer && (
         <>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={2}
-          >
-            <Typography variant="h6">
-              Receipt Voucher for:{" "}
-              {customers.find((c) => c._id === selectedCustomer)?.name}
-            </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<VisibilityIcon />}
-              onClick={handleViewReceipts}
-            >
-              View Receipts
-            </Button>
+          <Box display="flex" justifyContent="space-between" alignItems="center" my={2}>
+            <Typography variant="h6">Receipt Voucher</Typography>
+            <Box>
+              <Button startIcon={<AddCircleOutlineIcon />} onClick={handleAddRow} size="small" variant="contained" sx={{ mr: 1 }}>
+                Add Row
+              </Button>
+              <Button startIcon={<VisibilityIcon />} onClick={() => setOpenDialog(true)} size="small" variant="outlined">
+                View Receipts
+              </Button>
+            </Box>
           </Box>
 
-          {loadingReceipts ? (
-            <Box display="flex" justifyContent="center" mt={4}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <>
-              <Table>
-                <TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <TextField
-                          type="date"
-                          value={row.date}
-                          onChange={(e) =>
-                            handleInputChange(row.id, "date", e.target.value)
-                          }
-                          onKeyDown={(e) => handleKeyDown(e, row.id, "date")}
-                          inputRef={registerRef(row.id, "date")}
-                          variant="outlined"
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={row.goldRate}
-                          onChange={(e) =>
-                            handleInputChange(
-                              row.id,
-                              "goldRate",
-                              e.target.value
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, row.id, "goldRate")
-                          }
-                          inputRef={registerRef(row.id, "goldRate")}
-                          label="Gold Rate"
-                          variant="outlined"
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={row.givenGold}
-                          onChange={(e) =>
-                            handleInputChange(
-                              row.id,
-                              "givenGold",
-                              e.target.value
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, row.id, "givenGold")
-                          }
-                          inputRef={registerRef(row.id, "givenGold")}
-                          label="Given Gold"
-                          variant="outlined"
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={row.touch}
-                          onChange={(e) =>
-                            handleInputChange(row.id, "touch", e.target.value)
-                          }
-                          onKeyDown={(e) => handleKeyDown(e, row.id, "touch")}
-                          inputRef={registerRef(row.id, "touch")}
-                          label="Touch"
-                          variant="outlined"
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={row.purityWeight}
-                          onChange={(e) =>
-                            handleInputChange(
-                              row.id,
-                              "purityWeight",
-                              e.target.value
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, row.id, "purityWeight")
-                          }
-                          inputRef={registerRef(row.id, "purityWeight")}
-                          label="Purity Weight"
-                          variant="outlined"
-                          size="small"
-                          disabled
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={row.amount}
-                          onChange={(e) =>
-                            handleInputChange(row.id, "amount", e.target.value)
-                          }
-                          onKeyDown={(e) => handleKeyDown(e, row.id, "amount")}
-                          inputRef={registerRef(row.id, "amount")}
-                          label="Amount"
-                          variant="outlined"
-                          size="small"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-                <IconButton size="small" onClick={handleAddRow} color="primary">
-                  <AddCircleOutlineIcon /> Add Row
-                </IconButton>
-
-                <Button
-                  variant="contained"
-                  onClick={handleSave}
-                  color="success"
-                >
-                  Save
-                </Button>
-              </Box>
-            </>
-          )}
-        </>
-      ) : (
-        <Typography variant="body1" color="text.secondary">
-          Please select a customer to create a receipt voucher
-        </Typography>
-      )}
-
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          All Receipts for{" "}
-          {customers.find((c) => c._id === selectedCustomer)?.name}
-        </DialogTitle>
-        <DialogContent>
           <TableContainer component={Paper}>
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    <strong>Date</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Gold Rate</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Given Gold</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Touch</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Purity</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Amount</strong>
-                  </TableCell>
+                  {["Date", "Gold Rate", "Given Gold", "Touch", "Purity Weight", "Amount"].map((header) => (
+                    <TableCell key={header} sx={{ border: "1px solid #ccc" }}>{header}</TableCell>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {allReceipts.map((receipt) => (
-                  <TableRow key={receipt.id}>
-                    <TableCell>{receipt.date}</TableCell>
-                    <TableCell>{receipt.goldRate}</TableCell>
-                    <TableCell>{receipt.givenGold}</TableCell>
-                    <TableCell>{receipt.touch}</TableCell>
-                    <TableCell>{receipt.purityWeight}</TableCell>
-                    <TableCell>{receipt.amount}</TableCell>
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {["date", "goldRate", "givenGold", "touch", "purityWeight", "amount"].map((field) => (
+                      <TableCell key={field} sx={{ border: "1px solid #eee" }}>
+                        <TextField
+                          type={field === "date" ? "date" : "number"}
+                          value={row[field]}
+                          onChange={(e) => handleInputChange(row.id, field, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, row.id, field)}
+                          inputRef={registerRef(row.id, field)}
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                          label=""
+                          disabled={field === "purityWeight"}
+                        />
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
+
+          <Box mt={2} display="flex" justifyContent="flex-end">
+            <Button variant="contained" color="primary" onClick={handleSave} size="small">
+              Save
+            </Button>
+          </Box>
+        </>
+      )}
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>All Receipts</DialogTitle>
+        <DialogContent>
+          {loadingReceipts ? (
+            <Box textAlign="center" mt={2}><CircularProgress /></Box>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  {["Date", "Gold Rate", "Given Gold", "Touch", "Purity Weight", "Amount"].map((header) => (
+                    <TableCell key={header} sx={{ border: "1px solid #ccc" }}>{header}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {allReceipts.map((r, i) => (
+                  <TableRow key={i}>
+                    <TableCell sx={{ border: "1px solid #eee" }}>{r.date?.slice(0, 10)}</TableCell>
+                    <TableCell sx={{ border: "1px solid #eee" }}>{r.goldRate}</TableCell>
+                    <TableCell sx={{ border: "1px solid #eee" }}>{r.givenGold}</TableCell>
+                    <TableCell sx={{ border: "1px solid #eee" }}>{r.touch}</TableCell>
+                    <TableCell sx={{ border: "1px solid #eee" }}>{r.purityWeight}</TableCell>
+                    <TableCell sx={{ border: "1px solid #eee" }}>{r.amount}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Close</Button>
+          <Button onClick={() => setOpenDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

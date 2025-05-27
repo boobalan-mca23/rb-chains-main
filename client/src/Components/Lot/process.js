@@ -750,6 +750,7 @@ const ProcessTable = () => {
 
       setItems(res.data.data)
       setCalculation(docalculation(res.data.data))
+      handleMachineCalculate(items, calculation)
       getProduct()
       console.log('itemsAfterDateWiseFilter', items);
     } catch (error) {
@@ -1432,11 +1433,6 @@ const ProcessTable = () => {
 
                 ))
               }
-
-
-            
-
-
             </TableBody>
              <TableFooter>
               <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>Total RawGold:{calculation[0].rawGold}</p></StyledTableCell>
@@ -1449,7 +1445,7 @@ const ProcessTable = () => {
                    
                     <StyledTableCell>
                       <p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>
-                        {item.processName === 'Finishing' ? `FinishTotal ${(item.Weight[1].aw).toFixed(3)}` : ""}
+                        {item.processName === 'Finishing' ? `FinishTotal  ${(item.Weight[1].aw).toFixed(3)}` : ""}
                       </p>
                     </StyledTableCell>
                       {item.processName === 'Wire' ? (
@@ -1458,11 +1454,11 @@ const ProcessTable = () => {
                     <StyledTableCell></StyledTableCell>
                     </>):("")}
                     {
-                      item.processName !== "Machine" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}ScarpTotal:{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>) : ("")
+                      item.processName !== "Machine" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br/>ScarpTotal:{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>) : ("")
                     }
-                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}LossTotal:{item.processName === "Machine" ? (item.Weight[2].lw).toFixed(3) : (item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
+                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br/>LossTotal:{item.processName === "Machine" ? (item.Weight[2].lw).toFixed(3) : (item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
                     {
-                      item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}PureTotal:{(item.Weight[4].pw).toFixed(3)}</p></StyledTableCell>) : ("")
+                      item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br/>PureTotal:{(item.Weight[4].pw).toFixed(3)}</p></StyledTableCell>) : ("")
                     }
 
                    
