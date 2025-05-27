@@ -219,12 +219,24 @@ const ProcessTable = () => {
             value: parseFloat(value)
           }
           lotData[0].data[2].ProcessSteps[0].AttributeValues.push(nextProcessObj);
+          const lossObj = {
+            lot_id: lotid,
+            process_step_id: 5,
+            items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
+            attribute_id: 5,
+            value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1 ? (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) : 0
+          }
+          lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
 
           tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
         } else { //Melting Process After Weight Update
           lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value = parseFloat(value);
           lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value = parseFloat(value);
+
+           if (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1) {
+            lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) 
+          }
           tempData.splice(lotIndex, 1, lotData[0]);
           setItems(tempData)
         }
@@ -372,12 +384,12 @@ const ProcessTable = () => {
     lotData[0].data[2].ProcessSteps[1].AttributeValues[childIndex].value = parseFloat(itemWeight);
     lotData[0].data[2].ProcessSteps[1].AttributeValues[childIndex].index = childIndex
    
-    let afterTotal=0
+      let afterTotal=0
        for(const loss of lotData[0].data[2].ProcessSteps[1].AttributeValues){
          afterTotal+=loss.value
         }
     //Loss
-     
+    
     lotData[0].data[2].ProcessSteps[3].AttributeValues[0].value = lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value-afterTotal
     lotData[0].data[2].ProcessSteps[3].AttributeValues[0].index = childIndex
     // next process before 
@@ -470,6 +482,7 @@ const ProcessTable = () => {
     try {
 
       const today = new Date().toISOString().split('T')[0];
+      if(initialWeight && touchValue){
       const response = await createLot(initialWeight, touchValue, today); // Response is an object
       console.log("API Response:", response); // Check structure
       setItems([])
@@ -482,10 +495,14 @@ const ProcessTable = () => {
       setOpen(false);
       setIsLotCreated(true);
       toast.success("Lot Created", { autoClose: 2000 });
+      }else{
+      toast.warn("Enter Lot Details", { autoClose: 2000 });
+      }
+      
     } catch (error) {
       setInitialWeight("");
       setTouchValue("");
-      toast.warn('Enter Lot Details', { autoClose: 1500 })
+      toast.warn('Error On Create Lot', { autoClose: 1500 })
     };
   }
 

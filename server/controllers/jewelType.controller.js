@@ -273,7 +273,7 @@ const billingProductWeight = async (req, res) => {
       const weight = await prisma.attributeValue.findMany({
         where: {
           items_id: activeProducts.item_id,
-          process_step_id: 31
+          process_step_id: 27
         },
         select: {
           item_name:true,

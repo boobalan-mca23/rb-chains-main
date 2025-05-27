@@ -6,6 +6,7 @@ import SalesReport from "./SalesReport";
 import { useNavigate ,useLocation} from "react-router-dom";
 import CustReport from "./custreport";
 import ReceiptReport from "./receiptreport"
+import DailyReport from "./dailyreport"
 
 
 function Report() {
@@ -100,6 +101,19 @@ function Report() {
           
            Receipt Report
         </button>
+        <button
+        onClick={() => setSelectedReport("DailyReport")}
+          disabled={selectedReport === "DailyReport"}
+          style={{
+            padding: "10px",
+            backgroundColor: selectedReport === "DailyReport" ? "darkblue" : "blue",
+            color: "white",
+            border: "none",
+            cursor: selectedReport === "DailyReport" ? "not-allowed" : "pointer",
+            opacity: selectedReport === "DailyReport" ? 0.5 : 1,
+          }}>
+           DailyReport
+        </button>
       </div>
 
       <div>
@@ -107,6 +121,7 @@ function Report() {
         {selectedReport === "stock" && <StockReport />}
         {selectedReport === "sales" && <SalesReport />}
         {selectedReport === "receipt" && <ReceiptReport/>}
+        {selectedReport === "DailyReport" && <DailyReport/>}
       </div>
     </div>
   );
