@@ -33,6 +33,7 @@ model CustomerInfo {
   ClosingBalance     ClosingBalance[]
   Balance            Balance[]
   receipts           Receipt[]
+  customerBalance    CustomerBalance[]
  
   @@map("customerInfo")
 }
@@ -241,6 +242,7 @@ model ScarpInfo{
 }
 model Receipt {
   receipt_id     Int      @id @default(autoincrement())
+  customer_id    Int
   date           DateTime
   goldRate       Float
   givenGold      Float
@@ -249,7 +251,13 @@ model Receipt {
   amount         Float
 
   customer       CustomerInfo @relation(fields: [customer_id], references: [customer_id])
-  customer_id    Int
-
   @@map("receipt")
+}
+model CustomerBalance{
+  id                Int @id @default(autoincrement())
+  customer_id       Int @unique
+  expure            Float?
+  balance           Float?
+  customer          CustomerInfo @relation(fields: [customer_id], references: [customer_id])
+  @@map("customerBalance")
 }

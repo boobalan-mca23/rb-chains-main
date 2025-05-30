@@ -1,4 +1,4 @@
-/* 
+
 body {
     margin: 0;
     font-family: 'Roboto', sans-serif; 
@@ -541,16 +541,16 @@ body {
       border-bottom: none;
       color: #000;
     }
-  } */
+  } 
 
 
 
 
 
-  .container {
+  /* .container {
     width: 60%;
     max-width: 1200px;
-    /* margin: 2rem auto; */
+    
     padding: 2.5rem;
     border: 1px solid #e0e0e0;
     border-radius: 12px;
@@ -976,4 +976,4 @@ body {
   justify-content: space-between;
   margin-bottom: 5rem;
 }
-
+ */
