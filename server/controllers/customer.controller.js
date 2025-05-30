@@ -17,6 +17,13 @@ const createCustomer = async (req, res) => {
         address: address || null,
       },
     });
+     await prisma.customerBalance.create({
+      data:{
+        customer_id:newCustomer.customer_id,
+        expure:0.0,
+        balance:0.0
+      }
+     })
     res.status(201).json(newCustomer);
   } catch (error) {
     console.error("Error creating customer:", error);
@@ -97,6 +104,7 @@ const getCustomerValueWithPercentage = async (req, res) => {
   try {
     const customers = await prisma.customerInfo.findMany({
       include: {
+        customerBalance:true,
         MasterJewelTypeCustomerValue: true, // include related percentage data
       },
     });
