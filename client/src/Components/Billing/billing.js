@@ -137,7 +137,12 @@ const Billing = () => {
         let total=calculateTotal(tempBill)-balObj.exPure
         setBillPure(total)
         balObj.exBalAmount=balObj.exPure*goldRate
-        setBillAmount(balObj.exBalAmount-cash)
+        setBillAmount(cash-balObj.exBalAmount)
+       }
+
+       if(balObj.balance===0 && balObj.exPure===0){
+          setBillPure(calculateTotal(tempBill))  
+          setBillAmount(cash)
        }
        
       tempProducts.splice(itemIndex, 1);
@@ -271,14 +276,29 @@ const Billing = () => {
       itemToUpdate.productPercentage = newPercentage;
       itemToUpdate.productPure =
         ((itemToUpdate.productTouch + newPercentage) * itemToUpdate.productWeight) / 100;
-      itemToUpdate.productAmount=itemToUpdate.productPure*goldRate
+          itemToUpdate.productAmount=itemToUpdate.productPure*goldRate
 
       //TotalCash
-       let cash=0
+       let cash=0,purity=0;
       for(const amt of tempBill){
         cash+=amt.productAmount
+        purity+=amt.productPure
       }
       setCashTotal(cash)
+      if(customerBalance.balance>0){ // old balance update
+        setBillPure(purity+customerBalance.balance)
+        setBillAmount(cash+customerBalance.balance*goldRate)
+      }
+
+       if(customerBalance.exPure>0){ // Excess balance update
+        setBillPure(purity-customerBalance.exPure)
+        setBillAmount(cash-customerBalance.exPure*goldRate)
+      }
+
+      if(customerBalance.balance===0 && customerBalance.exPure===0){
+        setBillPure(purity)
+        setBillAmount(cash)
+      }
 
     }
 
@@ -291,7 +311,7 @@ const Billing = () => {
     );
 
     if (confirmDelete) {
-      const tempBill = [...billItems];
+      const tempBill = [...billItems];// remove order items
       tempBill.splice(index, 1);
       setBillItems(tempBill);
       
@@ -300,10 +320,21 @@ const Billing = () => {
         cash+=amt.productAmount
         purity+=amt.productPure
       }
-      if(customerBalance.balance>0){
+      if(customerBalance.balance>0){ // old balance update
         setBillPure(purity+customerBalance.balance)
         setBillAmount(cash+customerBalance.balance*goldRate)
       }
+
+       if(customerBalance.exPure>0){ // Excess balance update
+        setBillPure(purity-customerBalance.exPure)
+        setBillAmount(cash-customerBalance.exPure*goldRate)
+      }
+
+      if(customerBalance.balance===0 && customerBalance.exPure===0){
+        setBillPure(purity)
+        setBillAmount(cash)
+      }
+
      
       setCashTotal(cash)
       setTotalPure(purity)
@@ -369,7 +400,9 @@ const Billing = () => {
         setCustomerBalance(obj)
         setBillAmount(cash-obj.exBalAmount)
       }
-      
+      if(customerBalance.balance===0&customerBalance.exPure===0){
+        setBillAmount(cash)
+      }
 
     setGoldRate(goldValue)
     
@@ -707,10 +740,10 @@ const Billing = () => {
                   <tr>
                   <td className="td merge-cell"></td>
                   <td className="td merge-cell"></td>
-                  <td className="td merge-cell"></td>
-                  <td  className="td merge-cell">
+                     <td  className="td merge-cell">
                     <strong>Old balance </strong>
                   </td>
+                  <td className="td merge-cell"></td>
                   <td className="td merge-cell"><strong>+{customerBalance.balance}</strong></td>
                   <td className="td merge-cell"><strong>+{customerBalance.balAmount}</strong></td>
                   <td className="td merge-cell"></td>
@@ -727,10 +760,10 @@ const Billing = () => {
                    <tr>
                    <td className="td merge-cell"></td>
                   <td className="td merge-cell"></td>
-                  <td className="td merge-cell"></td>
-                  <td  className="td merge-cell">
+                   <td  className="td merge-cell">
                     <strong>Excees balance </strong>
                   </td>
+                  <td className="td merge-cell"></td>
                   <td className="td merge-cell"><strong>-{customerBalance.exPure}</strong></td>
                   <td className="td merge-cell">-{customerBalance.exBalAmount}</td>
                   <td className="td merge-cell"></td>
@@ -742,10 +775,10 @@ const Billing = () => {
                <tr>
                   <td className="td merge-cell"></td>
                   <td className="td merge-cell"></td>
-                  <td className="td merge-cell"></td>
-                  <td  className="td merge-cell">
-                    <strong>Total</strong>
+                   <td  className="td merge-cell">
+                    <strong>{customerBalance.balance===0 && customerBalance.exPure===0?"Total":billPure>=0?"old Balance Total":"Excees Total"}</strong>
                   </td>
+                  <td className="td merge-cell"></td>
                   <td className="td merge-cell"><strong>{(billPure).toFixed(3)}</strong></td>
                   <td className="td merge-cell"><strong>{(billAmount).toFixed(2)}</strong></td>
                   <td className="td merge-cell"></td>
