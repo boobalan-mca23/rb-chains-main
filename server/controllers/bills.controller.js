@@ -7,16 +7,16 @@ const convertToIST = (date) => {
 
 const saveBill = async (req, res) => {
   const {
-    customer_id,
-    totalPrice,
-    order_status,
-    oldBalance,
-    orderItems,
-    balance,
-    closingbalance
+      customer_id,
+      order_status,
+      totalPrice,
+      orderItems,
+      receivedDetails,
+      oldBalance,
+      excessBalance,
   } = req.body;
-
-  console.log('closingBlance', closingbalance)
+  console.log('saveBill',req.body)
+  
   try {
     // Save master order
     const newOrder = await prisma.masterOrder.create({
@@ -24,7 +24,6 @@ const saveBill = async (req, res) => {
         customer_id: customer_id,
         order_status: order_status,
         total_price: parseFloat(totalPrice),
-        oldBalance :parseFloat(oldBalance),
         created_at: convertToIST(new Date()) 
       }
     });
@@ -52,102 +51,32 @@ const saveBill = async (req, res) => {
       });
     }
 
-    // Validate and save balances
-    if (balance.length >= 1) {
-      // return res.status(400).json({ error: 'Balance is required' });
-
-      for (const balanceData of balance) {
-        await prisma.balance.create({
-          data: {
-            order_id: newOrder.id,
-            customer_id: customer_id,
-            gold_weight: parseFloat(balanceData.givenGold),
-            gold_touch: parseFloat(balanceData.touch),
-            gold_pure: parseFloat(balanceData.pure),
-            remaining_gold_balance: parseFloat(closingbalance)
-          }
-        });
-      }
-
-      const existingCustomer = await prisma.closingBalance.findFirst({
-        where: { customer_id: customer_id }
-      });
-      if (!existingCustomer) {
-
-        await prisma.closingBalance.create({
-          data: {
-            customer_id: customer_id,
-            closing_balance: parseFloat(closingbalance)
+     if (receivedDetails.length>=1) {
+        for(const recive of receivedDetails){
+          await prisma.receipt.create({
+              data: {
+                date: new Date(recive.date),
+                goldRate: parseFloat(recive.goldRate),
+                customer_id:customer_id,
+                touch: parseFloat(recive.touch),
+                purityWeight:parseFloat(recive.purityWeight),
+                amount:parseFloat(recive.amount) ,
+                givenGold:parseFloat(recive.givenGold) 
+              }
+           });
+        }
+    }
+        await prisma.customerBalance.updateMany({
+          where:{
+            customer_id:customer_id
+          },
+          data:{
+              expure:parseFloat(Math.abs(excessBalance).toFixed(2)),
+              balance:parseFloat(Math.abs(oldBalance).toFixed(2)),
           }
         })
 
-      }
-      else {
-        
-        await prisma.closingBalance.update({
-          where: { customer_id: customer_id },
-          data: { closing_balance:parseFloat(closingbalance) }
-        });
-      }
-
-
-      // await prisma.closingBalance.create({
-      //   data: {
-      //     customer_id: customer_id,
-      //     closing_balance: parseFloat(closingbalance)
-      //   }
-      // })
-    }
-    else {
-      const existingCustomer = await prisma.closingBalance.findFirst({
-        where: { customer_id: customer_id }
-      });
-      if (!existingCustomer) {
-
-        await prisma.closingBalance.create({
-          data: {
-            customer_id: customer_id,
-            closing_balance: parseFloat(closingbalance)
-          }
-        })
-
-      } else {
-        console.log('update')
-        
-        await prisma.closingBalance.update({
-          where: { customer_id: customer_id },
-          data: { closing_balance:parseFloat(closingbalance) }
-        });
-      }
-
-
-
-
-    }
-
-
-
-
-
-    // Handle closing balance
-    // const existingCustomer = await prisma.closingBalance.findFirst({
-    //   where: { customer_id: customer_id }
-    // });
-
-    // if (!existingCustomer) {
-    // Create new closing balance
-
-    // } 
-    // else {
-    //   // Update closing balance by adding new value
-    //   const updatedValue = parseFloat(existingCustomer.closing_balance) + parseFloat(closingbalance);
-    //   await prisma.closingBalance.update({
-    //     where: { customer_id: customer_id },
-    //     data: { closing_balance : updatedValue }
-    //   });
-    // }
-
-    res.status(201).json({ message: "Bill, items, balances, and closing balance saved!", data: newOrder });
+    res.status(201).json({ message: "Bill items saved!", data: newOrder });
   } catch (error) {
     console.error("Error saving bill:", error);
     res.status(500).json({ error: "Error saving bill" });
@@ -174,92 +103,78 @@ const getBill = async (req, res) => {
   })
   res.send(getBillData)
 }
-
 const getCustomerBillWithDate = async (req, res) => {
   try {
     let { fromDate, toDate, customer_id } = req.query;
-    console.log(req.query)
-    let previousBill = ""
-    let openingBalance = 0, closingBalance = 0;
-    const now = new Date();
 
+    const billWhere = {};
+    const receiptWhere = {};
 
-    if (!fromDate || !toDate) {
-      const startOfToday = new Date(now.setHours(0, 0, 0, 0));
-      const endOfToday = new Date(now.setHours(23, 59, 59, 999));
-      fromDate = startOfToday;
-      toDate = endOfToday;
-    } else {
-      fromDate = new Date(fromDate);
-      toDate = new Date(toDate);
-      toDate.setHours(23, 59, 59, 999); // Ensure full-day inclusion
+    // If date range is provided
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999); // Include full day
+
+      billWhere.created_at = {
+        gte: from,
+        lte: to,
+      };
+
+      receiptWhere.date = {
+        gte: from,
+        lte: to,
+      };
     }
 
-    const filters = {
-      created_at: {
-        gte: fromDate,
-        lte: toDate,
-      }
-    };
+    // If customer_id is provided
+    if (!isNaN(parseInt(customer_id))) {
+       billWhere.customer_id = parseInt(customer_id);
+       receiptWhere.customer_id = parseInt(customer_id);
+}
 
 
-
-
-
-    if (customer_id && customer_id !== 'null') {
-      filters.customer_id = Number(customer_id);
-      //closing balance for customer
-      closingBalance = await prisma.closingBalance.findFirst({
-        where: {
-          customer_id: Number(customer_id)
-        },
-        select: {
-          closing_balance: true
-        }
-      })
-      //opening balance for customer
-      previousBill = await prisma.masterOrder.findMany({
-        where: {
-          created_at: {
-            lt: new Date(fromDate)
-          },
-          customer_id: Number(customer_id)
-        },
+    // Check if at least date or customer_id is provided
+    if (fromDate && toDate || customer_id) {
+      const allBill = await prisma.masterOrder.findMany({
+        where: billWhere,
         include: {
-          Balance: true,
+          OrderItems: true,
         },
       });
-      for (const openBal of previousBill) {
-        if (openBal.Balance.length >= 1) {
-          openingBalance += openBal.Balance[openBal.Balance.length - 1].remaining_gold_balance
-        } else {
-          openingBalance += openBal.total_price
-        }
-      }
 
+      const allReceipt = await prisma.receipt.findMany({
+        where: receiptWhere,
+      });
 
+      const combinedData = [
+        ...allBill.map((bill) => ({
+          type: "bill",
+          date: new Date(bill.created_at),
+          info: bill,
+        })),
+        ...allReceipt.map((receipt) => ({
+          type: "receipt",
+          date: new Date(receipt.date),
+          info: receipt,
+        })),
+      ];
+
+      combinedData.sort((a, b) => a.date - b.date);
+      console.log('partdata',combinedData);
+      
+      res.status(200).json(combinedData);
+    } else {
+      res.status(400).json({
+        error: "Provide at least fromDate and toDate, or customer_id",
+      });
     }
-
-    const billInfo = await prisma.masterOrder.findMany({
-      where: filters,
-      include: {
-        Balance: true,
-        OrderItems:true
-      },
-    });
-    console.log(closingBalance)
-    const data = {
-      billInfo,
-      openingBalance,
-      closingAmount: closingBalance? closingBalance.closing_balance : 0
-    }
-    res.send({ data: data });
-
   } catch (error) {
     console.error(error);
-    res.status(500).send({ error: "Something went wrong" });
+    res.status(500).json({ error: "Something went wrong" });
   }
 };
+
 
 
 // getCustomerBillDetails based on today date

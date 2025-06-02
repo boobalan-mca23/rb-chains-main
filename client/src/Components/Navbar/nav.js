@@ -3,16 +3,37 @@ import React from "react";
 import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import logo from "../../Assets/rb logo.jpg";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 
 // import image from "../../Assets/bg.jpg";
 
 function Nav() {
   const navigate = useNavigate();
   const navbarHeight = "70px"; 
-  const today = new Date().toISOString().split('T')[0];
-  const [fromDate, setFromDate] = useState(today);
-  const [toDate, setToDate] = useState(today);
+  
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  useEffect(() => {
+    // Get current date in UTC
+    const today = new Date();
+
+    // Convert to Indian Standard Time (IST)
+    const offset = 5.5 * 60; // IST is UTC +5:30
+    const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
+
+    // Extract date parts (year, month, day)
+    const year = indiaTime.getFullYear();
+    const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const day = String(indiaTime.getDate()).padStart(2, '0');
+
+    // Format the date as YYYY-MM-DD
+    const currentDate = `${year}-${month}-${day}`;
+
+    console.log('currentDate in IST:', currentDate);
+
+    setFromDate(currentDate);
+    setToDate(currentDate);
+  }, []);
 
   return (
     <>

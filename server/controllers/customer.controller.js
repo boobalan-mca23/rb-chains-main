@@ -72,7 +72,11 @@ const updateCustomer = async (req, res) => {
 const getAllCustomers = async (req, res) => {
 
   try {
-    const customers = await prisma.customerInfo.findMany(); 
+    const customers = await prisma.customerInfo.findMany({
+      include:{
+        customerBalance:true
+      }
+    }); 
     res.status(200).json(customers);
   } catch (error) {
     console.error("Error fetching customers:", error);
