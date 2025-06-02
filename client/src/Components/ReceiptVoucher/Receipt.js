@@ -37,6 +37,22 @@ const Receipt = ({ initialGoldRate = 0 }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [allReceipts, setAllReceipts] = useState([]);
   const inputRefs = useRef({});
+  const [total, setTotal] = useState(0)
+  const [balance, setBalance] = useState(0)
+  const [excess, setExcess] = useState(0)
+  const [goldRate, setGoldRate] = useState(0)
+  const [customerPure, setCustomerPure] = useState(0)
+  const [customerExcees, setCustomerExcees] = useState(0)
+  const [customerCashBalance, setCustomerCashBalance] = useState(0)
+  const handleGoldRate = (goldValue) => {
+    const tempRows=[...rows];
+     for (const r of tempRows){
+        r.goldRate=goldValue
+     }
+    setRows(tempRows)
+    setGoldRate(goldValue)
+
+  }
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -44,12 +60,16 @@ const Receipt = ({ initialGoldRate = 0 }) => {
         const response = await axios.get(
           `${REACT_APP_BACKEND_SERVER_URL}/api/customer/customerinfo`
         );
+        console.log('customer info', response)
         const normalized = response.data.map((c) => ({
           _id: c.customer_id,
           name: c.customer_name,
           phone: c.phone_number,
+          balance: c.customerBalance[0].balance,
+          expure: c.customerBalance[0].expure
         }));
         setCustomers(normalized);
+        console.log('normalized', normalized)
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -61,7 +81,29 @@ const Receipt = ({ initialGoldRate = 0 }) => {
 
   useEffect(() => {
     if (selectedCustomer) {
+      let tempCustomer = [...customers]
+      let filterCustomer = tempCustomer.filter((item, index) => item._id === selectedCustomer)
+
+      if (filterCustomer[0].balance > 0) {
+        setBalance(filterCustomer[0].balance)
+        setCustomerPure(filterCustomer[0].balance)
+        setCustomerExcees(0)
+        setCustomerCashBalance(filterCustomer[0].balance*goldRate)
+      }
+      if (filterCustomer[0].expure > 0) {
+        setExcess(filterCustomer[0].expure)
+        setCustomerPure(0)
+        setCustomerExcees(-filterCustomer[0].expure)
+        setCustomerCashBalance(-filterCustomer[0].expure*goldRate)
+
+      }
+      if (filterCustomer[0].balance === 0 && filterCustomer[0].expure === 0) {
+        setTotal(0)
+        setBalance(0)
+        setExcess(0)
+      }
       setRows([createNewRow()]);
+
     } else {
       setRows([]);
     }
@@ -70,7 +112,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
   const createNewRow = () => ({
     id: Date.now(),
     date: new Date().toISOString().slice(0, 10),
-    goldRate: initialGoldRate.toString(),
+    goldRate: goldRate,
     givenGold: "",
     touch: "",
     purityWeight: "",
@@ -100,7 +142,9 @@ const Receipt = ({ initialGoldRate = 0 }) => {
   const handleInputChange = (id, field, value) => {
     const updatedRows = rows.map((row) => {
       if (row.id === id) {
+
         const updatedRow = { ...row, [field]: value };
+
         const goldRate = parseFloat(updatedRow.goldRate) || 0;
         const givenGold = parseFloat(updatedRow.givenGold) || 0;
         const touch = parseFloat(updatedRow.touch) || 0;
@@ -110,6 +154,10 @@ const Receipt = ({ initialGoldRate = 0 }) => {
           const purityWeight = givenGold * (touch / 100);
           updatedRow.purityWeight = purityWeight.toFixed(3);
           updatedRow.amount = (purityWeight * goldRate).toFixed(2);
+          
+         
+
+
         } else if (field === "amount" && goldRate > 0) {
           const purityWeight = amount / goldRate;
           updatedRow.purityWeight = purityWeight.toFixed(3);
@@ -122,6 +170,49 @@ const Receipt = ({ initialGoldRate = 0 }) => {
       return row;
     });
     setRows(updatedRows);
+      if(balance){ // if customer have oldBalance
+
+          if(customerPure>=0){
+              let totalPurity=updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+              let value=balance-totalPurity
+              console.log('value',value)
+             if(value>=0){
+              setCustomerPure(value)
+              setCustomerExcees(0)
+              setCustomerCashBalance(value*goldRate)
+             }else{
+              setCustomerPure(0)
+              setCustomerExcees(value)
+              setCustomerCashBalance(value*goldRate)
+             }
+        }
+        if(customerExcees<0){
+           let totalPurity=updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+           let value=balance-totalPurity
+              setCustomerPure(0)
+              setCustomerExcees(value)
+              setCustomerCashBalance(value*goldRate)
+        }
+      }
+
+      if(excess){
+        
+           let totalPurity=updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+           let value=excess+totalPurity
+              setCustomerPure(0)
+              setCustomerExcees(value)
+              setCustomerCashBalance(-value*goldRate)
+        
+      }
+
+      if(total===0 && (excess===0 && balance===0)){
+        console.log("hello")
+             let totalPurity=updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+             let value=excess+totalPurity
+              setCustomerPure(0)
+              setCustomerExcees(-value)
+              setCustomerCashBalance(-value*goldRate)
+      }
   };
 
   const registerRef = (rowId, field) => (el) => {
@@ -154,6 +245,8 @@ const Receipt = ({ initialGoldRate = 0 }) => {
           purityWeight: parseFloat(purityWeight),
           amount: parseFloat(amount),
         })),
+        oldBalance:parseFloat(customerPure),
+        excessBalance:parseFloat(customerExcees)
       };
       await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/receipt/save`, payload);
       alert("Saved successfully");
@@ -187,6 +280,41 @@ const Receipt = ({ initialGoldRate = 0 }) => {
           ))}
         </Select>
       </FormControl>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        padding={2}
+        bgcolor="#f9f9f9"
+        border="1px solid #ccc"
+        borderRadius="8px"
+        boxShadow="0 2px 6px rgba(0,0,0,0.1)"
+        marginBottom={2}
+        width={500}
+      >
+        <Box display="flex" alignItems="center" gap={1}>
+          <b>Gold Rate:</b>
+          <TextField
+            size="small"
+            sx={{ width: 120 }}
+            value={goldRate}
+            onChange={(e) => handleGoldRate(e.target.value)}
+            type="number"
+            required
+            inputProps={{ style: { padding: "8px" } }}
+          />
+        </Box>
+
+        <Box>
+          <b>
+            {balance !== 0
+              ? `Old Balance: ₹${balance}`
+              : excess !== 0
+                ? `Excess Balance: ₹${excess}`
+                : `Total: ₹${total}`}
+          </b>
+        </Box>
+      </Box>
 
 
 
@@ -229,6 +357,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
                           variant="outlined"
                           label=""
                           disabled={field === "purityWeight"}
+                          autoComplete="off"
                         />
                       </TableCell>
                     ))}
@@ -237,6 +366,26 @@ const Receipt = ({ initialGoldRate = 0 }) => {
               </TableBody>
             </Table>
           </TableContainer>
+          <Box
+            display="flex"
+            justifyContent="space-around"
+            alignItems="center"
+            padding={2}
+            bgcolor="#f0f4f8"
+            borderRadius="10px"
+            boxShadow="0 2px 5px rgba(0,0,0,0.1)"
+            marginBottom={2}
+          >
+            <Box textAlign="center">
+              <b>{customerCashBalance>=0 ?'Customer Cash Balance:':'Excess Cash Balance :'} {(customerCashBalance).toFixed(2)}</b>
+            </Box>
+            <Box textAlign="center">
+              <b>Excess Balance: {customerExcees>0 ?'-':""}{(customerExcees).toFixed(3)}</b>
+            </Box>
+            <Box textAlign="center">
+              <b>Purity Balance: {(customerPure).toFixed(3)}</b>
+            </Box>
+          </Box>
 
           <Box mt={2} display="flex" justifyContent="flex-end">
             <Button variant="contained" color="primary" onClick={handleSave} size="small">

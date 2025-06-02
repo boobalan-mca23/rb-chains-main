@@ -13,8 +13,8 @@ import {
   IconButton,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import jsPDF from "jspdf"; 
-import html2canvas from "html2canvas"; 
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -32,7 +32,7 @@ const Billing = () => {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [isPrinting, setIsPrinting] = useState(false);
-  const billRef = useRef(); 
+  const billRef = useRef();
   const [products, setProducts] = useState([]);
   const [productWeight, setProductWeight] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
@@ -41,20 +41,23 @@ const Billing = () => {
   const [balanceRow, setBalanceRow] = useState([]);
   const [closing, setClosing] = useState(0);
   const [pure, setPure] = useState(0);
-  const [customerBalance,setCustomerBalance]=useState({'exPure':0,'balance':0,'exBalAmount':0,'balAmount':0,})
-  const [cashTotal,setCashTotal]=useState(0)
-  
+  const [customerBalance, setCustomerBalance] = useState({ exPure: 0, balance: 0, exBalAmount: 0, balAmount: 0 })
+  const [cashTotal, setCashTotal] = useState(0)
+  const [customerPure, setCustomerPure] = useState(0)
+  const [customerExpure, setCustomerExPure] = useState(0)
+  const [customerCashBalance, setCustomerCashBalance] = useState(0)
 
-  const [rows, setRows] = useState([]); 
-  const [viewMode, setViewMode] = useState(false); 
+  const [rows, setRows] = useState([]);
+  const [viewMode, setViewMode] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
-  const [goldRate,setGoldRate]=useState(0) 
-  const [billPure,setBillPure]=useState(0)
-  const [billAmount,setBillAmount]=useState(0)
+  const [goldRate, setGoldRate] = useState(0)
+  const [billPure, setBillPure] = useState(0)
+  const [billAmount, setBillAmount] = useState(0)
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const handleProductSelect = (itemIndex, stockId) => {
+    setRows([])
     const tempProducts = [...productWeight];
     let customerData;
     const tempSelectProduct = tempProducts.filter(
@@ -75,7 +78,7 @@ const Billing = () => {
       toast.error("Customer data not found for selected customer.", { autoClose: 2000 });
       return;
     }
-    
+
     const filterMasterItem =
       customerData[0].MasterJewelTypeCustomerValue.filter(
         (item) => item.masterJewel_id === selectedProduct.master_jewel_id
@@ -90,7 +93,7 @@ const Billing = () => {
         productWeight: tempSelectProduct[0].value,
         productPure: 0,
         productPercentage: 0,
-        productAmount:0,
+        productAmount: 0,
         stockId: stockId,
       };
 
@@ -99,52 +102,68 @@ const Billing = () => {
         ((billObj.productTouch + billObj.productPercentage) *
           billObj.productWeight) /
         100;
-      goldRate===0 ? billObj.productAmount=0:billObj.productAmount=parseFloat(billObj.productPure)*parseFloat(goldRate)
+      goldRate === 0 ? billObj.productAmount = 0 : billObj.productAmount = parseFloat(billObj.productPure) * parseFloat(goldRate)
 
       const tempBill = [...billItems];
       tempBill.push(billObj);
       //bill cashTotal
-      let cash=0
-      for(const amt of tempBill){
-        cash+=amt.productAmount
+      let cash = 0
+      for (const amt of tempBill) {
+        cash += amt.productAmount
       }
       setCashTotal(cash)
       setBillItems(tempBill);
       // its filter expure and balance
       let customerData = customers.filter(
-      (item) => item.customer_id === selectedCustomer.customer_id
-    );
+        (item) => item.customer_id === selectedCustomer.customer_id
+      );
 
-    if (customerData.length === 0) {
-      toast.error("Customer data not found for selected customer.", { autoClose: 2000 });
-      return;
-    }
-       let balObj={// set customer excess and balance
-          exPure: customerData[0].customerBalance[0].expure,
-          balance:customerData[0].customerBalance[0].balance,
-          exBalAmount:0,
-          balAmount:0
-       }
-       setCustomerBalance(balObj)
-       if(balObj.balance>0){
-         let total=balObj.balance+calculateTotal(tempBill)
-         setBillPure(total)
-         balObj.balAmount=balObj.balance*goldRate
-         setBillAmount(balObj.balAmount+cash)
-         
-       }
-       if(balObj.exPure>0){
-        let total=calculateTotal(tempBill)-balObj.exPure
+      if (customerData.length === 0) {
+        toast.error("Customer data not found for selected customer.", { autoClose: 2000 });
+        return;
+      }
+      let balObj = {// set customer excess and balance
+        exPure: customerData[0].customerBalance[0].expure,
+        balance: customerData[0].customerBalance[0].balance,
+        exBalAmount: 0,
+        balAmount: 0
+      }
+      setCustomerBalance(balObj)
+      if (balObj.balance > 0) {
+        let total = balObj.balance + calculateTotal(tempBill)
         setBillPure(total)
-        balObj.exBalAmount=balObj.exPure*goldRate
-        setBillAmount(cash-balObj.exBalAmount)
-       }
+        balObj.balAmount = balObj.balance * goldRate
+        setBillAmount(balObj.balAmount + cash)
+        setCustomerPure(total)
+        setCustomerExPure(0)
+        setCustomerCashBalance(balObj.balAmount + cash)
 
-       if(balObj.balance===0 && balObj.exPure===0){
-          setBillPure(calculateTotal(tempBill))  
-          setBillAmount(cash)
-       }
-       
+      }
+      if (balObj.exPure > 0) {
+        let total = calculateTotal(tempBill) - balObj.exPure
+        setBillPure(total)
+        balObj.exBalAmount = balObj.exPure * goldRate
+        setBillAmount(cash - balObj.exBalAmount)
+        //Footer Section
+        if (total >= 0) {
+          setCustomerPure(total)
+          setCustomerExPure(0)
+          setCustomerCashBalance(balObj.balAmount + cash)
+        } else {
+          setCustomerPure(0)
+          setCustomerExPure(total)
+          setCustomerCashBalance(cash - balObj.exBalAmount)
+        }
+      }
+
+      if (balObj.balance === 0 && balObj.exPure === 0) {
+        setBillPure(calculateTotal(tempBill))
+        setBillAmount(cash)
+        setCustomerPure(calculateTotal(tempBill))
+        setCustomerExPure(0)
+        setCustomerCashBalance(cash)
+      }
+
       tempProducts.splice(itemIndex, 1);
       setProductWeight(tempProducts);
     }
@@ -169,10 +188,9 @@ const Billing = () => {
       order_status: "completed",
       totalPrice: totalPrice,
       orderItems: billItems,
-      oldBalance: customerClosing,
-      balance: balanceRow,
-      closingbalance: balanceRow.length === 0 ? totalPure : closing,
       receivedDetails: rows,
+      oldBalance:parseFloat(customerPure),
+      excessBalance:parseFloat(customerExpure)
     };
     console.log("payload", payLoad);
 
@@ -184,21 +202,76 @@ const Billing = () => {
       if (response.status === 201) {
         setBillId(response.data.data.id);
         toast.success("Bill Created Successfully!", { autoClose: 1000 });
-        const cells = document.querySelectorAll(".merge-cell");
-        window.onbeforeprint = () => {
-          cells.forEach((td) => td.setAttribute("colspan", "3"));
-        };
-        window.onafterprint = () => {
-          cells.forEach((td) => td.setAttribute("colspan", "4"));
-        };
-
-        window.print(); 
+       
       }
     } catch (err) {
       toast.error(`Error saving bill: ${err.message}`, { autoClose: 3000 });
       console.error("Error saving bill:", err);
     }
   };
+  const handleCustomerName = (newValue) => {
+    setSelectedCustomer(newValue)
+    if (newValue) {
+      const tempCust = [...customers]
+      const filterCus = tempCust.filter((item, index) => item.customer_id === newValue.customer_id)
+      let obj = {
+        exPure: filterCus[0].customerBalance[0].expure,
+        balance: filterCus[0].customerBalance[0].balance,
+        exBalAmount: filterCus[0].customerBalance[0].expure * goldRate,
+        balAmount: filterCus[0].customerBalance[0].balance * goldRate,
+      }
+      setCustomerBalance(obj)
+      if (obj.balance !== 0) {
+        const tempBill = [...billItems];
+        let cash = 0, purity = 0;
+        for (const amt of tempBill) {
+          cash += amt.productAmount
+          purity += amt.productPure
+        }
+
+        setBillPure(purity + obj.balance)
+        setBillAmount(cash + obj.balance * goldRate)
+        //Footer Values
+        setCustomerPure(purity + obj.balance)
+        setCustomerExPure(0)
+        setCustomerCashBalance(cash + obj.balance * goldRate)
+      }
+      if (obj.exPure !== 0) {
+        const tempBill = [...billItems];
+        let cash = 0, purity = 0;
+
+        for (const amt of tempBill) {
+          cash += amt.productAmount
+          purity += amt.productPure
+        }
+        setBillPure(purity - obj.exPure)
+        setBillAmount(cash - obj.exPure * goldRate)
+        //Footer Values
+        setCustomerPure(0)
+        setCustomerExPure(purity - obj.exPure)
+        setCustomerCashBalance(cash - obj.exPure * goldRate)
+      }
+      if (obj.balance === 0 && obj.exPure === 0) {
+        const tempBill = [...billItems];
+        let cash = 0, purity = 0;
+        for (const amt of tempBill) {
+          cash += amt.productAmount
+          purity += amt.productPure
+        }
+        setBillPure(purity)
+        setBillAmount(cash)
+        setCustomerPure(purity)
+        setCustomerExPure(0)
+        setCustomerCashBalance(purity * goldRate)
+      }
+
+    }
+
+
+
+
+
+  }
 
   const calculateTotal = (items) => {
     return items.reduce((acc, currValue) => acc + currValue.productPure, 0);
@@ -227,8 +300,8 @@ const Billing = () => {
       ...balanceRow,
       {
         customer_id: selectedCustomer.customer_id,
-        givenGold: "", 
-        touch: "", 
+        givenGold: "",
+        touch: "",
         pure: 0,
       },
     ];
@@ -245,7 +318,7 @@ const Billing = () => {
     if (!isNaN(givenGold) && !isNaN(touch)) {
       updatedRows[index]["pure"] = (givenGold * touch) / 100;
     } else {
-      updatedRows[index]["pure"] = 0; 
+      updatedRows[index]["pure"] = 0;
     }
 
     setBalanceRow(updatedRows);
@@ -264,40 +337,59 @@ const Billing = () => {
   };
 
   const handleChangePercentage = (itemIndex, value) => {
+    setRows([])
     const tempBill = [...billItems];
     const itemToUpdate = tempBill[itemIndex];
 
     const newPercentage = parseInt(value);
     if (isNaN(newPercentage)) {
-    
-      itemToUpdate.productPercentage = ""; 
-      itemToUpdate.productPure = (itemToUpdate.productTouch * itemToUpdate.productWeight) / 100; 
+
+      itemToUpdate.productPercentage = "";
+      itemToUpdate.productPure = (itemToUpdate.productTouch * itemToUpdate.productWeight) / 100;
     } else {
       itemToUpdate.productPercentage = newPercentage;
       itemToUpdate.productPure =
         ((itemToUpdate.productTouch + newPercentage) * itemToUpdate.productWeight) / 100;
-          itemToUpdate.productAmount=itemToUpdate.productPure*goldRate
+      itemToUpdate.productAmount = itemToUpdate.productPure * goldRate
 
       //TotalCash
-       let cash=0,purity=0;
-      for(const amt of tempBill){
-        cash+=amt.productAmount
-        purity+=amt.productPure
+      let cash = 0, purity = 0;
+      for (const amt of tempBill) {
+        cash += amt.productAmount
+        purity += amt.productPure
       }
       setCashTotal(cash)
-      if(customerBalance.balance>0){ // old balance update
-        setBillPure(purity+customerBalance.balance)
-        setBillAmount(cash+customerBalance.balance*goldRate)
+      if (customerBalance.balance > 0) { // old balance update
+        setBillPure(purity + customerBalance.balance)
+        setBillAmount(cash + customerBalance.balance * goldRate)
+        setCustomerPure(purity + customerBalance.balance)
+        setCustomerExPure(0)
+        setCustomerCashBalance(cash + customerBalance.balance * goldRate)
       }
 
-       if(customerBalance.exPure>0){ // Excess balance update
-        setBillPure(purity-customerBalance.exPure)
-        setBillAmount(cash-customerBalance.exPure*goldRate)
+      if (customerBalance.exPure > 0) { // Excess balance update
+        setBillPure(purity - customerBalance.exPure)
+        setBillAmount(cash - customerBalance.exPure * goldRate)
+        if (purity - customerBalance.exPure >= 0) {
+          setCustomerPure(purity - customerBalance.exPure)
+          setCustomerExPure(0)
+          setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
+        } else {
+          setCustomerPure(0)
+          setCustomerExPure(purity - customerBalance.exPure)
+          setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
+        }
+
+
       }
 
-      if(customerBalance.balance===0 && customerBalance.exPure===0){
+      if (customerBalance.balance === 0 && customerBalance.exPure === 0) {
         setBillPure(purity)
         setBillAmount(cash)
+        setCustomerPure(purity)
+        setCustomerExPure(0)
+        setCustomerCashBalance(cash)
+
       }
 
     }
@@ -311,38 +403,55 @@ const Billing = () => {
     );
 
     if (confirmDelete) {
+      setRows([])
       const tempBill = [...billItems];// remove order items
       tempBill.splice(index, 1);
       setBillItems(tempBill);
-      
-      let cash=0,purity=0;
-      for(const amt of tempBill){
-        cash+=amt.productAmount
-        purity+=amt.productPure
+
+      let cash = 0, purity = 0;
+      for (const amt of tempBill) {
+        cash += amt.productAmount
+        purity += amt.productPure
       }
-      if(customerBalance.balance>0){ // old balance update
-        setBillPure(purity+customerBalance.balance)
-        setBillAmount(cash+customerBalance.balance*goldRate)
+      if (customerBalance.balance > 0) { // old balance update
+        setBillPure(purity + customerBalance.balance)
+        setBillAmount(cash + customerBalance.balance * goldRate)
+        setCustomerPure(purity + customerBalance.balance)
+        setCustomerCashBalance(cash + customerBalance.balance * goldRate)
+        setCustomerExPure(0)
       }
 
-       if(customerBalance.exPure>0){ // Excess balance update
-        setBillPure(purity-customerBalance.exPure)
-        setBillAmount(cash-customerBalance.exPure*goldRate)
+      if (customerBalance.exPure > 0) { // Excess balance update
+        setBillPure(purity - customerBalance.exPure)
+        setBillAmount(cash - customerBalance.exPure * goldRate)
+        if (purity - customerBalance.exPure >= 0) {
+          setCustomerPure(purity - customerBalance.exPure)
+          setCustomerExPure(0)
+          setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
+        } else {
+          setCustomerPure(0)
+          setCustomerExPure(purity - customerBalance.exPure)
+          setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
+        }
+
       }
 
-      if(customerBalance.balance===0 && customerBalance.exPure===0){
+      if (customerBalance.balance === 0 && customerBalance.exPure === 0) {
         setBillPure(purity)
         setBillAmount(cash)
+        setCustomerPure(purity)
+        setCustomerCashBalance(cash)
+        setCustomerExPure(0)
       }
 
-     
+
       setCashTotal(cash)
       setTotalPure(purity)
-      
+
 
       const tempProduct = [...productWeight];
       tempProduct.push({ item_name, stock_id, touchValue, value });
-      setProductWeight(tempProduct); 
+      setProductWeight(tempProduct);
     }
   };
 
@@ -350,7 +459,7 @@ const Billing = () => {
     setRows([
       ...rows,
       {
-        date: "",
+        date: new Date().toISOString().slice(0, 10),
         goldRate: goldRate,
         givenGold: "",
         touch: "",
@@ -364,48 +473,70 @@ const Billing = () => {
   const handleDeleteRow = (index) => {
     const updatedRows = [...rows];
     updatedRows.splice(index, 1);
+
+    let pure = updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+    console.log('purity', pure)
+    let decrement = billPure - pure
+    console.log('decrement value', decrement)
+
+    if (decrement >= 0) {
+
+      setCustomerPure(decrement)
+      setCustomerCashBalance(decrement * goldRate)
+      setCustomerExPure(0)
+    }
+    //customerExPure
+    if (decrement < 0) {
+      setCustomerExPure(decrement)
+      setCustomerCashBalance(decrement * goldRate)
+      setCustomerPure(0)
+    }
     setRows(updatedRows);
   };
-  const handleGoldRate=(goldValue)=>{
+  const handleGoldRate = (goldValue) => {
 
-    console.log('goldValue',goldValue)
-    let tempBill=[...billItems]
-    for(const bill of tempBill){
-      bill.productAmount=bill.productPure*goldValue
+    console.log('goldValue', goldValue)
+    let tempBill = [...billItems]
+    for (const bill of tempBill) {
+      bill.productAmount = bill.productPure * goldValue
     }
     setBillItems(tempBill)
 
-     let cash=0
-      for(const amt of tempBill){
-        cash+=amt.productAmount
+    let cash = 0
+    for (const amt of tempBill) {
+      cash += amt.productAmount
+    }
+    setCashTotal(cash)
+    if (customerBalance.balance > 0) {
+      let obj = {
+        'exPure': 0,
+        'balance': customerBalance.balance,
+        'exBalAmount': 0,
+        'balAmount': customerBalance.balance * goldValue,
       }
-      setCashTotal(cash)
-      if(customerBalance.balance>0){
-        let obj={
-          'exPure':0,
-          'balance':customerBalance.balance,
-          'exBalAmount':0,
-          'balAmount':customerBalance.balance*goldValue,
-        }
-        setCustomerBalance(obj)
-        setBillAmount(cash+obj.balAmount)
+      setCustomerBalance(obj)
+      setBillAmount(cash + obj.balAmount)
+      setCustomerCashBalance(cash + obj.balAmount)
+
+    }
+    if (customerBalance.exPure > 0) {
+      let obj = {
+        'exPure': customerBalance.exPure,
+        'balance': 0,
+        'exBalAmount': customerBalance.exPure * goldValue,
+        'balAmount': 0,
       }
-      if(customerBalance.exPure>0){
-        let obj={
-          'exPure':customerBalance.exPure,
-          'balance':0,
-          'exBalAmount':customerBalance.exPure*goldValue,
-          'balAmount':0,
-        }
-        setCustomerBalance(obj)
-        setBillAmount(cash-obj.exBalAmount)
-      }
-      if(customerBalance.balance===0&customerBalance.exPure===0){
-        setBillAmount(cash)
-      }
+      setCustomerBalance(obj)
+      setBillAmount(cash - obj.exBalAmount)
+      setCustomerCashBalance(cash - obj.exBalAmount)
+    }
+    if (customerBalance.balance === 0 & customerBalance.exPure === 0) {
+      setBillAmount(cash)
+      setCustomerCashBalance(cash)
+    }
 
     setGoldRate(goldValue)
-    
+
 
   }
   const handleRowChange = (index, field, value) => {
@@ -420,7 +551,30 @@ const Billing = () => {
           (givenGold * touch) /
           100
         ).toFixed(3);
-       updatedRows[index]["amount"]= updatedRows[index]["purityWeight"]*updatedRows[index]["goldRate"]
+        updatedRows[index]["amount"] = (updatedRows[index]["purityWeight"] * updatedRows[index]["goldRate"]).toFixed(2)
+
+        //customerPurity
+        let tempRows = [...rows]
+        let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+        console.log('purity', pure)
+        let decrement = billPure - pure
+        console.log('decrement value', decrement)
+
+        if (decrement >= 0) {
+
+          setCustomerPure(decrement)
+          setCustomerCashBalance(decrement * goldRate)
+          setCustomerExPure(0)
+        }
+        //customerExPure
+        if (decrement < 0) {
+          let tempRows = [...rows]
+          let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+
+          setCustomerExPure(billPure - pure)
+          setCustomerCashBalance((billPure - pure) * goldRate)
+          setCustomerPure(0)
+        }
       } else {
         updatedRows[index]["purityWeight"] = "";
       }
@@ -434,7 +588,7 @@ const Billing = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/getCustomerValueWithPercentage`
         );
-        console.log('customerInfo from billing',response.data)
+        console.log('customerInfo from billing', response.data)
         setCustomers(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         toast.error("Error fetching customers!", { containerId: "custom-toast" });
@@ -474,14 +628,14 @@ const Billing = () => {
     };
 
     updateTime();
-    const timer = setInterval(updateTime, 60000); 
+    const timer = setInterval(updateTime, 60000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
     if (balanceRow.length === 0) {
       setClosing(totalPure);
-      setPure(0); 
+      setPure(0);
     } else {
       const calculatedPure = calculateClosing(balanceRow);
       setPure(calculatedPure);
@@ -515,9 +669,9 @@ const Billing = () => {
         }
       };
       fetchWeight();
-      
+
     } else {
-      setProductWeight([]); 
+      setProductWeight([]);
     }
   }, [selectedProduct]);
 
@@ -531,13 +685,13 @@ const Billing = () => {
       } catch (err) {
         toast.error(`Error fetching customer closing balance: ${err.message}`, { autoClose: 3000 });
         console.error("Error fetching closing balance:", err);
-        setCustomerClosing(0); 
+        setCustomerClosing(0);
       }
     };
     if (selectedCustomer) {
       fetchClosingBalance();
     } else {
-      setCustomerClosing(0); 
+      setCustomerClosing(0);
     }
   }, [selectedCustomer]);
 
@@ -545,9 +699,6 @@ const Billing = () => {
     setBillItems([]);
     setRows([]);
     setBalanceRow([]);
-    setBillPure(0)
-    setCustomerBalance({'exPure':0,'balance':0})
-    setBillAmount(0)
 
     if (selectedProduct && selectedCustomer) {
       const fetchWeightOnCustomerProductChange = async () => {
@@ -569,7 +720,7 @@ const Billing = () => {
       };
       fetchWeightOnCustomerProductChange();
     } else {
-      setProductWeight([]); 
+      setProductWeight([]);
     }
   }, [selectedCustomer, selectedProduct]);
 
@@ -597,7 +748,7 @@ const Billing = () => {
           <Autocomplete
             options={customers}
             getOptionLabel={(option) => option.customer_name || ""}
-            onChange={(event, newValue) => setSelectedCustomer(newValue)}
+            onChange={(event, newValue) => handleCustomerName(newValue)}
             value={selectedCustomer}
             renderInput={(params) => (
               <TextField
@@ -648,7 +799,7 @@ const Billing = () => {
                   left: "5px",
                 }}
                 value={goldRate}
-                onChange={(e) =>handleGoldRate(e.target.value)}
+                onChange={(e) => handleGoldRate(e.target.value)}
                 type="number"
                 required
                 disabled={viewMode && selectedBill}
@@ -732,60 +883,63 @@ const Billing = () => {
                   <strong> {cashTotal.toFixed(2)}</strong>
                 </td>
                 <td className="td merge-cell"></td>
-                
+
               </tr>
-              {selectedCustomer && (
-               
-                  customerBalance.balance!==0 ? (
+
+              {
+                customerBalance.balance !== 0 ? (
                   <tr>
-                  <td className="td merge-cell"></td>
-                  <td className="td merge-cell"></td>
-                     <td  className="td merge-cell">
-                    <strong>Old balance </strong>
-                  </td>
-                  <td className="td merge-cell"></td>
-                  <td className="td merge-cell"><strong>+{customerBalance.balance}</strong></td>
-                  <td className="td merge-cell"><strong>+{customerBalance.balAmount}</strong></td>
-                  <td className="td merge-cell"></td>
-                  
-                  </tr> 
-                ):("")
-                
-              )}
+                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell">
+                      <strong>Old balance </strong>
+                    </td>
+                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell"><strong>+{(customerBalance.balance).toFixed(3)}</strong></td>
+                    <td className="td merge-cell"><strong>+{(customerBalance.balAmount).toFixed(2)}</strong></td>
+                    <td className="td merge-cell"></td>
 
-              {selectedCustomer && (
-               
-                 
-                customerBalance.exPure!==0 ?(
-                   <tr>
-                   <td className="td merge-cell"></td>
-                  <td className="td merge-cell"></td>
-                   <td  className="td merge-cell">
-                    <strong>Excees balance </strong>
-                  </td>
-                  <td className="td merge-cell"></td>
-                  <td className="td merge-cell"><strong>-{customerBalance.exPure}</strong></td>
-                  <td className="td merge-cell">-{customerBalance.exBalAmount}</td>
-                  <td className="td merge-cell"></td>
-                  </tr> 
-                ):("")
-                
-              )}
+                  </tr>
+                ) : ("")
+              }
 
-               <tr>
-                  <td className="td merge-cell"></td>
-                  <td className="td merge-cell"></td>
-                   <td  className="td merge-cell">
-                    <strong>{customerBalance.balance===0 && customerBalance.exPure===0?"Total":billPure>=0?"old Balance Total":"Excees Total"}</strong>
-                  </td>
-                  <td className="td merge-cell"></td>
-                  <td className="td merge-cell"><strong>{(billPure).toFixed(3)}</strong></td>
-                  <td className="td merge-cell"><strong>{(billAmount).toFixed(2)}</strong></td>
-                  <td className="td merge-cell"></td>
-                </tr>
-                
-              
-             
+
+
+
+
+
+              {
+                customerBalance.exPure !== 0 ? (
+                  <tr>
+                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell">
+                      <strong>Excees balance </strong>
+                    </td>
+                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell"><strong>-{(customerBalance.exPure).toFixed(3)}</strong></td>
+                    <td className="td merge-cell">-{(customerBalance.exBalAmount).toFixed(2)}</td>
+                    <td className="td merge-cell"></td>
+                  </tr>
+                ) : ("")
+              }
+
+
+
+              <tr>
+                <td className="td merge-cell"></td>
+                <td className="td merge-cell"></td>
+                <td className="td merge-cell">
+                  <strong>{customerBalance.balance === 0 && customerBalance.exPure === 0 ? "Total" : billPure >= 0 ? "old Balance Total" : "Excees Total"}</strong>
+                </td>
+                <td className="td merge-cell"></td>
+                <td className="td merge-cell"><strong>{(billPure).toFixed(3)}</strong></td>
+                <td className="td merge-cell"><strong>{(billAmount).toFixed(2)}</strong></td>
+                <td className="td merge-cell"></td>
+              </tr>
+
+
+
             </tbody>
           </table>
           <Box className="items-section no-print">
@@ -837,9 +991,9 @@ const Billing = () => {
                         <TextField
                           size="small"
                           value={row.goldRate}
-                          onChange={(e) =>
-                            handleRowChange(index, "goldRate", e.target.value)
-                          }
+                          // onChange={(e) =>
+                          //   handleRowChange(index, "goldRate", e.target.value)
+                          // }
                           type="number"
                           InputProps={{ disableUnderline: true }}
                         />
@@ -901,11 +1055,11 @@ const Billing = () => {
                       <td className="td">
                         {(!viewMode ||
                           index >=
-                            (selectedBill?.receivedDetails?.length || 0)) && (
-                          <IconButton onClick={() => handleDeleteRow(index)}>
-                            <MdDeleteForever />
-                          </IconButton>
-                        )}
+                          (selectedBill?.receivedDetails?.length || 0)) && (
+                            <IconButton onClick={() => handleDeleteRow(index)}>
+                              <MdDeleteForever />
+                            </IconButton>
+                          )}
                       </td>
                     </tr>
                   ))
@@ -921,9 +1075,9 @@ const Billing = () => {
           </Box>
         </Box>
         <div className="flex">
-          <b>Cash Balance:</b>
-          <b>Excess Pure:</b>
-          <b>Pure Balance:</b>
+          <b>{customerCashBalance < 0 ? `Excess Cash Balance :${(customerCashBalance).toFixed(2)}` : `Cash Balance: ${(customerCashBalance).toFixed(2)}`}</b>
+          <b>Excess Pure:{(customerExpure).toFixed(3)}</b>
+          <b>Pure Balance:{(customerPure).toFixed(3)}</b>
           {/* <b>Hallmark Balance:</b> */}
         </div>
         {/* <Box className="closing-box">
@@ -938,16 +1092,17 @@ const Billing = () => {
             </span>
           </p>
         </Box> */}
-     <br></br>
-
+        <br></br>
         <Button
           variant="contained"
           color="primary"
           onClick={handleSaveBill}
           className="save-button no-print"
+          disabled={billItems.length < 1}
         >
           Save
         </Button>
+
       </Box>
 
       <Box className="right-panel no-print">

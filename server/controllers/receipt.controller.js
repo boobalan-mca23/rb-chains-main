@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 exports.saveReceipts = async (req, res) => {
-  const { customer_id, receipts } = req.body;
+  const { customer_id, receipts ,oldBalance,excessBalance} = req.body;
 
   if (!customer_id || !receipts || !Array.isArray(receipts)) {
     return res.status(400).json({ message: "Invalid data format" });
@@ -24,6 +24,15 @@ exports.saveReceipts = async (req, res) => {
         })
       )
     );
+    await prisma.customerBalance.updateMany({
+          where:{
+            customer_id:customer_id
+          },
+          data:{
+              expure:parseFloat(Math.abs(excessBalance).toFixed(2)),
+              balance:parseFloat(Math.abs(oldBalance).toFixed(2)),
+          }
+        })
     res.status(201).json({ message: "Receipts saved", data: created });
   } catch (error) {
     console.error("Create error", error);

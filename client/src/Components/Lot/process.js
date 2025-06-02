@@ -811,54 +811,6 @@ const ProcessTable = () => {
 
   const billRef = useRef(null);
 
-  const handleDownloadPdf = async () => {
-    const input = billRef.current;
-
-    if (!input) return;
-
-    // Temporarily expand scrollable area
-    const originalHeight = input.style.height;
-    const originalOverflow = input.style.overflow;
-
-    input.style.height = "auto";         // allow full height
-    input.style.overflow = "visible";    // make all content visible
-
-    // Give DOM time to update
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    const canvas = await html2canvas(input, {
-      scale: 2,
-      useCORS: true,
-    });
-
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-
-    const imgProps = pdf.getImageProperties(imgData);
-    const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, "PNG", 0, position, pdfWidth, imgHeight);
-    heightLeft -= pdfHeight;
-
-    while (heightLeft > 0) {
-      position -= pdfHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
-    }
-
-    pdf.save(`Bill-Generated.pdf`);
-
-    // Restore original styles
-    input.style.height = originalHeight;
-    input.style.overflow = originalOverflow;
-  };
-
   const tableRef = useRef(null);
 
   return (

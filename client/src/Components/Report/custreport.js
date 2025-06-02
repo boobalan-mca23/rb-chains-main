@@ -39,8 +39,10 @@ const CustReport = () => {
   const [customers, setCustomers] = useState([]);
   const [billInfo, setBillInfo] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [openBalance, setOpenBalance] = useState(0);
-  const [closingBalance, setClosingBalance] = useState(0);
+  const [excess, setExcess] = useState(0)
+  const [balance, setBalance] = useState(0)
+  const [totalExcess, setTotalExcess] = useState(0)
+  const [totalBalance, setTotalBalance] = useState(0)
 
 
   const navigate = useNavigate();
@@ -69,6 +71,10 @@ const CustReport = () => {
 
 
   useEffect(() => {
+    if (fromDate > toDate) {
+      toast.warn('Select Date order was Wrong')
+      return
+    }
     const fetchBill = async () => {
       const params = new URLSearchParams(location.search);
       const from = params.get("fromDate");
@@ -82,6 +88,8 @@ const CustReport = () => {
           setSelectedCustomer(cust); // ✅ Set the selected customer in Autocomplete
         }
       }
+      let billTotal = 0
+      let excessTotal = 0
       try {
         const res = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/bill/getCustomerBillWithDate`, {
           params: {
@@ -90,43 +98,55 @@ const CustReport = () => {
             customer_id: customer_id ? customer_id : null
           }
         });
-        console.log("Fetched Bill:", res);
+        const rawData = res.data || [];
 
-        if (res.data.data.billInfo.length >= 1) {
-          const tempBill = [...billInfo]
-          res.data.data.billInfo.map((item, key) => {
-            const dateObj = new Date(item.created_at);
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
+        const formatted = rawData.map((entry) => {
+          const formattedDate = new Date(entry.date || entry.created_at).toISOString().split("T")[0];
 
-            const formattedDate = `${year}-${month}-${day}`;
-            const billObj = {
-              'id': item.id,
-              'customer_id': item.customer_id,
-              'date': formattedDate,
-              'orderItems': item.OrderItems,
-              'value': item.total_price,
-              'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
-              'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
-            }
-            tempBill.push(billObj)
+          if (entry.type === "bill") {
 
-          })
-          console.log('temp bill', tempBill)
-          setBillInfo(tempBill)
-          setOpenBalance(res.data.data.openingBalance)
+            billTotal += entry.info.total_price
+            return {
+              type: "Bill",
+              date: formattedDate,
+              id: entry.info.id,
+              value: entry.info.total_price,
+              items: entry.info.OrderItems.map((item) => ({
+                itemName: item.itemName,
+                touchValue: item.touchValue,
+                productWeight: item.productWeight,
+                final_price: item.final_price,
+              })),
+            };
+          } else if (entry.type === "receipt") {
+            excessTotal += entry.info.purityWeight
+            return {
+              type: "Receipt",
+              date: formattedDate,
+              id: entry.info.receipt_id,
+              value: entry.info.amount,
+              gold: `${entry.info.givenGold}g`,
+              purityWeight: entry.info.purityWeight,
+              touch: entry.info.touch,
+              rate: entry.info.goldRate,
+            };
+          }
 
-          setClosingBalance(res.data.data.closingAmount)
-
-        } else {
-          setBillInfo([])
-          setOpenBalance(res.data.data.openingBalance)
-
-          setClosingBalance(res.data.data.closingAmount)
-
-
+          return null;
+        }).filter(Boolean);
+        setTotalExcess(excessTotal)
+        setTotalBalance(billTotal)
+        if (excessTotal > billTotal) {
+          setExcess(excessTotal - billTotal)
+          setBalance(0)
         }
+        if (billTotal > excessTotal) {
+          setExcess(0)
+          setBalance(billTotal - excessTotal)
+        }
+        setBillInfo(formatted)
+
+
 
 
       } catch (error) {
@@ -171,7 +191,12 @@ const CustReport = () => {
   }
 
   const handleCustomerBill = async () => {
-
+    let billTotal = 0
+    let excessTotal = 0
+    if (fromDate > toDate) {
+      toast.warn('Select Date order was Wrong')
+      return
+    }
     if (selectedCustomer) {
       navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}&custId=${selectedCustomer.customer_id}`);
 
@@ -179,59 +204,70 @@ const CustReport = () => {
       navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}&custId=null`);
 
     }
-    const from = new Date(fromDate);
-    const to = new Date(toDate);
+
     billInfo.splice(0, billInfo.length)
 
-    if (from <= to) {
-      try {
 
-        const res = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/bill/getCustomerBillWithDate`, {
-          params: {
-            fromDate: fromDate,
-            toDate: toDate,
-            customer_id: selectedCustomer ? selectedCustomer.customer_id : null
-          }
-        });
-        console.log(res)
-        if (res.data.data.billInfo.length >= 1) {
+    try {
 
-          const tempBill = [...billInfo]
-          res.data.data.billInfo.map((item, key) => {
-            const dateObj = new Date(item.created_at);
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-
-            const formattedDate = `${year}-${month}-${day}`;
-            const billObj = {
-              'id': item.id,
-              'customer_id': item.customer_id,
-              'orderItems': item.OrderItems,
-              'date': formattedDate,
-              'value': item.total_price,
-              'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
-              'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
-            }
-            tempBill.push(billObj)
-
-          })
-          console.log('closingAmount', res.data)
-          setBillInfo(tempBill)
-          setOpenBalance(res.data.data.openingBalance)
-          setClosingBalance(res.data.data.closingAmount)
-        } else {
-          setBillInfo([])
-          setOpenBalance(res.data.data.openingBalance)
-
-          setClosingBalance(res.data.data.closingAmount)
-
+      const res = await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/bill/getCustomerBillWithDate`, {
+        params: {
+          fromDate: fromDate,
+          toDate: toDate,
+          customer_id: selectedCustomer ? selectedCustomer.customer_id : null
         }
-      } catch (err) {
-        alert(err.message)
+      });
+      let rawData = res.data || [];
+
+      const formatted = rawData
+        .map((entry) => {
+          const formattedDate = new Date(entry.date || entry.created_at)
+            .toISOString()
+            .split("T")[0];
+
+          if (entry.type === "bill") {
+            return {
+              type: "Bill",
+              date: formattedDate,
+              id: entry.info.id,
+              value: entry.info.total_price,
+              items: entry.info.OrderItems.map((item) => ({
+                itemName: item.itemName,
+                touchValue: item.touchValue,
+                productWeight: item.productWeight,
+                final_price: item.final_price,
+              })),
+            };
+          } else if (entry.type === "receipt") {
+            return {
+              type: "Receipt",
+              date: formattedDate,
+              id: entry.info.receipt_id,
+              value: entry.info.amount,
+              gold: `${entry.info.givenGold}g`,
+              purityWeight: entry.info.purityWeight,
+              touch: entry.info.touch,
+              rate: entry.info.goldRate,
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+      console.log('res', formatted)
+      setTotalExcess(excessTotal)
+      setTotalBalance(billTotal)
+      if (excessTotal > billTotal) {
+        setExcess(excessTotal - billTotal)
+        setBalance(0)
       }
-    } else {
-      alert('Select correct date: From Date must be before To Date');
+      if (billTotal > excessTotal) {
+        setExcess(0)
+        setBalance(billTotal - excessTotal)
+      }
+      setBillInfo(formatted)
+    } catch (err) {
+      alert(err.message)
     }
 
   };
@@ -372,15 +408,11 @@ const CustReport = () => {
           >
             Search
           </Button>
-          <Button onClick={()=>window.print()}>Print</Button>
+          <Button onClick={() => window.print()}>Print</Button>
 
         </Box>
         {/* Opening Balance at Top Right */}
-        <Box display="flex" justifyContent="flex-end" mt={1} mb={1}>
-          <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333" }}>
-            Opening Balance: {(openBalance).toFixed(2)}
-          </Typography>
-        </Box>
+
 
 
         <TableContainer component={Paper} style={{ marginTop: "20px" }}>
@@ -392,10 +424,9 @@ const CustReport = () => {
                   "Bill.NO",
                   "Date",
                   "Description",
-                  "Weight",
                   "Received Amount",
                   "Balance",
-                  "Action",
+                  // "Action",
                 ].map((label, idx) => (
                   <TableCell
                     key={idx}
@@ -415,6 +446,7 @@ const CustReport = () => {
             <TableBody>
               {billInfo.length > 0 ? (
                 billInfo.map((item, index) => (
+
                   <TableRow key={item.id}>
                     <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
                       {index + 1}
@@ -429,54 +461,82 @@ const CustReport = () => {
                       <Table size="small" sx={{ border: "1px solid #ccc", width: "100%" }}>
                         <TableHead sx={{ backgroundColor: "#f9f9f9" }}>
                           <TableRow>
-                            {["Item Name", "Touch Value", "Product Weight", "Final Price"].map(
-                              (col, i) => (
-                                <TableCell
-                                  key={i}
-                                  sx={{ border: "1px solid #ccc", fontWeight: "bold" }}
-                                  align="center"
-                                >
-                                  {col}
-                                </TableCell>
-                              )
+                            {item.type === "Bill" ? (
+                              <>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Item Name</TableCell>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Touch Value</TableCell>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Product Weight</TableCell>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Final Price</TableCell>
+                              </>
+                            ) : (
+                              <>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Gold</TableCell>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Touch</TableCell>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Purity Weight</TableCell>
+                                {/* <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Rate</TableCell>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Value</TableCell> */}
+                              </>
                             )}
                           </TableRow>
                         </TableHead>
+
                         <TableBody>
-                          {item.orderItems.map((orderItem, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
-                                {orderItem.itemName}
-                              </TableCell>
-                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
-                                {orderItem.touchValue}
-                              </TableCell>
-                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
-                                {orderItem.productWeight}
-                              </TableCell>
-                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
-                                {orderItem.final_price}
-                              </TableCell>
+                          {item.type === "Bill" ? (
+                            item.items?.map((orderItem, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{orderItem.itemName}</TableCell>
+                                <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{orderItem.touchValue}</TableCell>
+                                <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{orderItem.productWeight}</TableCell>
+                                <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{orderItem.final_price}</TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.gold}</TableCell>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.touch}</TableCell>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.purityWeight}</TableCell>
+                              {/* <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.rate}</TableCell>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.value}</TableCell> */}
                             </TableRow>
-                          ))}
+                          )}
                         </TableBody>
                       </Table>
                     </TableCell>
-                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
-                      {(item.value).toFixed(3)}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
-                      {(item.recivedAmount).toFixed(3)}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
-                      {item.Balance.toFixed(3)}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+
+                    {item.type === "Bill" && (
+                      <>
+
+                        <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                        </TableCell>
+                        <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                          {(item.value)}
+                        </TableCell>
+                      </>
+
+                    )
+                    }
+                    {item.type === "Receipt" &&
+                      (
+                        <>
+                          <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+                            {(item.purityWeight).toFixed(3)}
+                          </TableCell>
+                          <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
+
+                          </TableCell>
+                        </>
+
+                      )}
+
+
+                    {/* <TableCell align="center" sx={{ border: "1px solid #ccc" }}>
                       <IconButton onClick={() => handleViewBill(item.id)}>
                         <Visibility style={{ color: "black" }} />
                       </IconButton>
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
+
+
                 ))
               ) : (
                 <TableRow>
@@ -487,16 +547,61 @@ const CustReport = () => {
               )}
             </TableBody>
           </Table>
+          <TableHead >
+            <TableRow sx={{ backgroundColor: "#e6f7ff" }}>
+            
+              <TableCell align="center"  sx={{ fontWeight: "bold", border: "1px solid #ccc" }}>
+                Total Received: {(totalExcess).toFixed(3)}
+              </TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", border: "1px solid #ccc" }}>
+                Total Balance: {(totalBalance).toFixed(3)}
+              </TableCell>
+            </TableRow>
+          </TableHead>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 4,
+              marginTop: 2,
+            }}
+          >
+            <Box
+              sx={{
+                backgroundColor: "#f0fff0",
+                padding: "16px 24px",
+                borderRadius: "10px",
+                boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+                minWidth: "200px",
+                textAlign: "center",
+              }}
+            >
+              <b style={{ color: "#388e3c" }}>Excess:</b>
+              <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>{(excess).toFixed(3)}</div>
+            </Box>
+
+            <Box
+              sx={{
+                backgroundColor: "#fff0f0",
+                padding: "16px 24px",
+                borderRadius: "10px",
+                boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+                minWidth: "200px",
+                textAlign: "center",
+              }}
+            >
+              <b style={{ color: "#d32f2f" }}>Balance:</b>
+              <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>{(balance).toFixed(3)}</div>
+            </Box>
+          </Box>
+
         </TableContainer>
 
         {/* TableContainer remains unchanged */}
 
-        {/* Closing Balance at Bottom Right */}
-        <Box display="flex" justifyContent="flex-end" mt={2}>
-          <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333" }}>
-            Closing Balance: {(closingBalance).toFixed(2)}
-          </Typography>
-        </Box>
+
+
 
       </div>
     </>
