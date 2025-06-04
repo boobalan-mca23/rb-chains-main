@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef} from "react";
 import axios from "axios";
 
 import { REACT_APP_BACKEND_SERVER_URL } from '../../config/config'
@@ -22,6 +22,8 @@ import {
   Box,
   Button,
 } from "@mui/material";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 
 import { Balance, ElevatorSharp, Visibility } from "@mui/icons-material";
@@ -31,7 +33,7 @@ import { teal } from "@mui/material/colors";
 
 const CustReport = () => {
   const location = useLocation();
-
+const printRef = useRef();
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,13 +71,46 @@ const CustReport = () => {
     }
   }, [location.search, customers]); // depends on both URL and customers
 
+ const handlePrintPDF = async () => {
+    const input = printRef.current;
 
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = 210; // A4 width in mm
+    const pdfHeight = 297; // A4 height in mm
+
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pdfWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+      position = position - pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+
+    pdf.save("Customer-Report.pdf");
+  };
   useEffect(() => {
     if (fromDate > toDate) {
       toast.warn('Select Date order was Wrong')
       return
     }
     const fetchBill = async () => {
+      setBalance(0)
+      setExcess(0)
       const params = new URLSearchParams(location.search);
       const from = params.get("fromDate");
       const to = params.get("toDate");
@@ -191,8 +226,8 @@ const CustReport = () => {
   }
 
   const handleCustomerBill = async () => {
-    let billTotal = 0
-    let excessTotal = 0
+    setBalance(0)
+    setExcess(0)
     if (fromDate > toDate) {
       toast.warn('Select Date order was Wrong')
       return
@@ -218,7 +253,8 @@ const CustReport = () => {
         }
       });
       let rawData = res.data || [];
-
+    let billTotal = 0
+    let excessTotal = 0
       const formatted = rawData
         .map((entry) => {
           const formattedDate = new Date(entry.date || entry.created_at)
@@ -408,14 +444,17 @@ const CustReport = () => {
           >
             Search
           </Button>
-          <Button onClick={() => window.print()}>Print</Button>
+           <Button variant="contained" onClick={handlePrintPDF}>
+                   Print 
+                 </Button>
 
         </Box>
         {/* Opening Balance at Top Right */}
 
 
 
-        <TableContainer component={Paper} style={{ marginTop: "20px" }}>
+        <TableContainer component={Paper} style={{ marginTop: "20px", padding: "30px", }} ref={printRef}>
+          <h3 style={{textAlign:"center"}}>Customer Report</h3>
           <Table>
             <TableHead style={{ backgroundColor: "aliceblue" }}>
               <TableRow>
@@ -545,21 +584,29 @@ const CustReport = () => {
                   </TableCell>
                 </TableRow>
               )}
-            </TableBody>
-          </Table>
-          <TableHead >
-            <TableRow sx={{ backgroundColor: "#e6f7ff" }}>
-            
-              <TableCell align="center"  sx={{ fontWeight: "bold", border: "1px solid #ccc" }}>
+              <TableRow>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+               <TableCell align="center"  sx={{ fontWeight: "bold", border: "1px solid #ccc" }}>
                 Total Received: {(totalExcess).toFixed(3)}
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", border: "1px solid #ccc" }}>
+              <TableCell align="center"  sx={{ fontWeight: "bold", border: "1px solid #ccc" }}>
                 Total Balance: {(totalBalance).toFixed(3)}
               </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          {/* <TableHead>
+            <TableRow sx={{ backgroundColor: "#e6f7ff" }}>
+             
+             
             </TableRow>
-          </TableHead>
+          </TableHead> */}
 
-          <Box
+         {
+          selectedCustomer &&(<Box
             sx={{
               display: "flex",
               justifyContent: "center",
@@ -594,7 +641,8 @@ const CustReport = () => {
               <b style={{ color: "#d32f2f" }}>Balance:</b>
               <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>{(balance).toFixed(3)}</div>
             </Box>
-          </Box>
+          </Box>)
+         }
 
         </TableContainer>
 

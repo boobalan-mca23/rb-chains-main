@@ -232,12 +232,18 @@ function StockReport() {
           </Button>
         </Box>
         <Button variant="contained" onClick={handlePrintPDF}>
-          Print to A4 PDF
+          Print 
         </Button>
       </Box>
 
-      <div ref={printRef} style={{ padding: "10px" }}>
+      <div ref={printRef}
+    style={{
+    padding: "30px",
+    margin: "auto",
+    boxSizing: "border-box",
+  }}>
         <TableContainer component={Paper}>
+              <h3 style={{textAlign:"center"}}>Stock Report</h3>
           <Table size="small">
             <TableHead style={{ backgroundColor: "aliceblue" }}>
               <TableRow>
@@ -310,3 +316,8 @@ function StockReport() {
 }
 
 export default StockReport;
+
+
+
+
+

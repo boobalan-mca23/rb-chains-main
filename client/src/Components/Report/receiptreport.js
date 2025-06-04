@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import axios from "axios";
 import {
   Table,
@@ -17,8 +16,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button
 } from "@mui/material";
 import { REACT_APP_BACKEND_SERVER_URL } from "../../config/config";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const ReceiptReport = () => {
   const [receipts, setReceipts] = useState([]);
@@ -31,7 +33,39 @@ const ReceiptReport = () => {
   });
   const [customerFilter, setCustomerFilter] = useState("all");
   const [customers, setCustomers] = useState([]);
+  const printRef=useRef()
+const handlePrintPDF = async () => {
+    const input = printRef.current;
 
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = 210; // A4 width in mm
+    const pdfHeight = 297; // A4 height in mm
+
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pdfWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+      position = position - pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+
+    pdf.save("Receipt-Report.pdf");
+  };
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -136,7 +170,7 @@ const ReceiptReport = () => {
       <Typography style={{ textAlign: "center" }} variant="h5" gutterBottom>
         Receipt Report
       </Typography>
-
+      
       <Box
         sx={{
           display: "flex",
@@ -180,13 +214,20 @@ const ReceiptReport = () => {
               </MenuItem>
             ))}
           </Select>
+
         </FormControl>
+        <Button variant="contained" onClick={handlePrintPDF}>
+          Print 
+        </Button>
       </Box>
 
       <TableContainer
         component={Paper}
         sx={{ maxHeight: "calc(100vh - 250px)" }}
+        ref={printRef}
+        style={{padding:"20px"}}
       >
+        <h3 style={{textAlign:"center"}}>Receipt Report</h3>
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>

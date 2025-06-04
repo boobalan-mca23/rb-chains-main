@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef} from "react";
 import axios from "axios";
 import {
   TextField,
@@ -11,10 +11,12 @@ import {
   Paper,
   Typography,
   Box,
+  Button
 } from "@mui/material";
 import { toast } from "react-toastify";
 import './SalesReport.css'
-
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 
 const SalesReport = () => {
@@ -24,7 +26,7 @@ const SalesReport = () => {
   const [toDate, setToDate] = useState(today);
   const [billInfo, setBillInfo] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-
+  const printRef=useRef()
 
 
 
@@ -65,6 +67,38 @@ const SalesReport = () => {
       setFilteredData(filtered);
     }
   }, [fromDate, toDate, billInfo]);
+   const handlePrintPDF = async () => {
+    const input = printRef.current;
+
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = 210; // A4 width in mm
+    const pdfHeight = 297; // A4 height in mm
+
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pdfWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+      position = position - pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+
+    pdf.save("Sales-Report.pdf");
+  };
 
   //   useEffect(() => {
   //     const fetchBillDetails = async () => {
@@ -159,10 +193,16 @@ const SalesReport = () => {
             size="small"
             sx={{ minWidth: 200 }}
           />
+            <Button variant="contained" onClick={handlePrintPDF}>
+             Print 
+        </Button>
         </Box>
 
         <div className="table-center"  >
-          <TableContainer component={Paper} sx={{ mt: 5 }}>
+         
+          <TableContainer component={Paper} sx={{ mt: 5 }} ref={printRef} style={{  padding: "30px",
+            margin: "auto",}}>
+               <h3 style={{textAlign:"center"}}> Sales Report</h3>
             <Table>
               <TableHead sx={{ backgroundColor: "aliceblue" }}>
                 <TableRow>

@@ -24,9 +24,10 @@ import {
   TableHead,
   Paper,
   TableContainer,
+   
 } from "@mui/material";
 import { REACT_APP_BACKEND_SERVER_URL } from "../../config/config";
-
+import { MdDeleteForever } from "react-icons/md";
 const Receipt = ({ initialGoldRate = 0 }) => {
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [customers, setCustomers] = useState([]);
@@ -88,13 +89,13 @@ const Receipt = ({ initialGoldRate = 0 }) => {
         setBalance(filterCustomer[0].balance)
         setCustomerPure(filterCustomer[0].balance)
         setCustomerExcees(0)
-        setCustomerCashBalance(filterCustomer[0].balance*goldRate)
+        // setCustomerCashBalance(filterCustomer[0].balance*goldRate)
       }
       if (filterCustomer[0].expure > 0) {
         setExcess(filterCustomer[0].expure)
         setCustomerPure(0)
         setCustomerExcees(-filterCustomer[0].expure)
-        setCustomerCashBalance(-filterCustomer[0].expure*goldRate)
+        // setCustomerCashBalance(-filterCustomer[0].expure*goldRate)
 
       }
       if (filterCustomer[0].balance === 0 && filterCustomer[0].expure === 0) {
@@ -102,10 +103,10 @@ const Receipt = ({ initialGoldRate = 0 }) => {
         setBalance(0)
         setExcess(0)
       }
-      setRows([createNewRow()]);
+     
 
     } else {
-      setRows([]);
+       setRows([createNewRow()]);
     }
   }, [selectedCustomer]);
 
@@ -139,7 +140,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
     }
   };
 
-  const handleInputChange = (id, field, value) => {
+  const handleInputChange = (id, field, value,index) => {
     const updatedRows = rows.map((row) => {
       if (row.id === id) {
 
@@ -150,18 +151,19 @@ const Receipt = ({ initialGoldRate = 0 }) => {
         const touch = parseFloat(updatedRow.touch) || 0;
         const amount = parseFloat(updatedRow.amount) || 0;
 
+        if(field==="goldRate"){
+         updatedRow.amount=(updatedRow.purityWeight * updatedRow.goldRate).toFixed(2)
+        }
         if (field === "givenGold" || field === "touch") {
           const purityWeight = givenGold * (touch / 100);
           updatedRow.purityWeight = purityWeight.toFixed(3);
-          updatedRow.amount = (purityWeight * goldRate).toFixed(2);
-          
-         
-
+          // updatedRow.amount = (purityWeight * goldRate).toFixed(2);
 
         } else if (field === "amount" && goldRate > 0) {
           const purityWeight = amount / goldRate;
           updatedRow.purityWeight = purityWeight.toFixed(3);
-        } else if (field === "goldRate" && updatedRow.purityWeight > 0) {
+          
+      } else if (field === "goldRate" && updatedRow.purityWeight > 0) {
           updatedRow.amount = (updatedRow.purityWeight * goldRate).toFixed(2);
         }
 
@@ -173,17 +175,26 @@ const Receipt = ({ initialGoldRate = 0 }) => {
       if(balance){ // if customer have oldBalance
 
           if(customerPure>=0){
+           
               let totalPurity=updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
               let value=balance-totalPurity
               console.log('value',value)
              if(value>=0){
               setCustomerPure(value)
               setCustomerExcees(0)
-              setCustomerCashBalance(value*goldRate)
+
+            for(let i=updatedRows.length-1;i>=0;i--){ // its calculate last gold rate
+                 if(updatedRows[i].goldRate>0){
+                    setCustomerCashBalance(value*updatedRows[i].goldRate)
+                    break
+           }}
+              
+             
+              
              }else{
               setCustomerPure(0)
               setCustomerExcees(value)
-              setCustomerCashBalance(value*goldRate)
+            
              }
         }
         if(customerExcees<0){
@@ -191,7 +202,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
            let value=balance-totalPurity
               setCustomerPure(0)
               setCustomerExcees(value)
-              setCustomerCashBalance(value*goldRate)
+              // setCustomerCashBalance(value*goldRate)
         }
       }
 
@@ -201,7 +212,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
            let value=excess+totalPurity
               setCustomerPure(0)
               setCustomerExcees(value)
-              setCustomerCashBalance(-value*goldRate)
+              // setCustomerCashBalance(-value*goldRate)
         
       }
 
@@ -211,7 +222,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
              let value=excess+totalPurity
               setCustomerPure(0)
               setCustomerExcees(-value)
-              setCustomerCashBalance(-value*goldRate)
+              // setCustomerCashBalance(-value*goldRate)
       }
   };
 
@@ -222,7 +233,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
 
   const handleKeyDown = (e, rowId, field) => {
     if (e.key === "Enter") {
-      const fields = ["date", "goldRate", "givenGold", "touch", "purityWeight", "amount"];
+      const fields = ["date", "goldRate", "givenGold", "touch","amount"];
       const index = fields.indexOf(field);
       const nextField = fields[index + 1];
       if (nextField && inputRefs.current[rowId]?.[nextField]) {
@@ -232,6 +243,66 @@ const Receipt = ({ initialGoldRate = 0 }) => {
   };
 
   const handleAddRow = () => setRows([...rows, createNewRow()]);
+
+  const handleDeleteRow = (index) => {
+  const confirmDelete = window.confirm("Are you sure you want to delete this row?");
+  if (confirmDelete) {
+    
+    const updatedRows = [...rows];
+    updatedRows.splice(index, 1);
+
+if(balance){ // if customer have oldBalance
+
+          if(customerPure>=0){
+           
+              let totalPurity=updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+              let value=balance-totalPurity
+              console.log('value',value)
+             if(value>=0){
+              setCustomerPure(value)
+              setCustomerExcees(0)
+
+            for(let i=updatedRows.length-1;i>=0;i--){ // its calculate last gold rate
+                 if(updatedRows[i].goldRate>0){
+                    setCustomerCashBalance(value*updatedRows[i].goldRate)
+                    break
+           }}
+              
+             
+              
+             }else{
+              setCustomerPure(0)
+              setCustomerExcees(value)
+            
+             }
+        }
+    }
+
+
+     if(excess){
+        
+           let totalPurity=updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+           let value=excess+totalPurity
+              setCustomerPure(0)
+              setCustomerExcees(value)
+              // setCustomerCashBalance(-value*goldRate)
+        
+      }
+      
+     if(total===0 && (excess===0 && balance===0)){
+        console.log("hello")
+             let totalPurity=updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+             let value=excess+totalPurity
+              setCustomerPure(0)
+              setCustomerExcees(-value)
+              // setCustomerCashBalance(-value*goldRate)
+      }
+      setRows(updatedRows)
+    
+   
+  }
+};
+
 
   const handleSave = async () => {
     try {
@@ -262,8 +333,8 @@ const Receipt = ({ initialGoldRate = 0 }) => {
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-    <Box p={2}>
-      <FormControl size="small" margin="none" sx={{ width: '50%', mb: 1 }}>
+    <Box p={2}  >
+      <FormControl size="small" margin="none" sx={{ width: '28%', mb: 1 }}>
         <InputLabel id="customer-label" size="small">Select Customer</InputLabel>
         <Select
           labelId="customer-label"
@@ -292,19 +363,6 @@ const Receipt = ({ initialGoldRate = 0 }) => {
         marginBottom={2}
         width={500}
       >
-        <Box display="flex" alignItems="center" gap={1}>
-          <b>Gold Rate:</b>
-          <TextField
-            size="small"
-            sx={{ width: 120 }}
-            value={goldRate}
-            onChange={(e) => handleGoldRate(e.target.value)}
-            type="number"
-            required
-            inputProps={{ style: { padding: "8px" } }}
-          />
-        </Box>
-
         <Box>
           <b>
             {balance !== 0
@@ -318,8 +376,8 @@ const Receipt = ({ initialGoldRate = 0 }) => {
 
 
 
-      {selectedCustomer && (
-        <>
+      
+        
           <Box display="flex" justifyContent="space-between" alignItems="center" my={2}>
             <Typography variant="h6">Receipt Voucher</Typography>
             <Box>
@@ -342,14 +400,14 @@ const Receipt = ({ initialGoldRate = 0 }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
+                {rows.map((row,index) => (
                   <TableRow key={row.id}>
                     {["date", "goldRate", "givenGold", "touch", "purityWeight", "amount"].map((field) => (
                       <TableCell key={field} sx={{ border: "1px solid #eee" }}>
                         <TextField
                           type={field === "date" ? "date" : "number"}
                           value={row[field]}
-                          onChange={(e) => handleInputChange(row.id, field, e.target.value)}
+                          onChange={(e) => handleInputChange(row.id, field, e.target.value,index)}
                           onKeyDown={(e) => handleKeyDown(e, row.id, field)}
                           inputRef={registerRef(row.id, field)}
                           size="small"
@@ -361,6 +419,10 @@ const Receipt = ({ initialGoldRate = 0 }) => {
                         />
                       </TableCell>
                     ))}
+                      <IconButton onClick={() => handleDeleteRow(index)}>
+                                <MdDeleteForever />
+                      </IconButton>
+                    
                   </TableRow>
                 ))}
               </TableBody>
@@ -392,8 +454,7 @@ const Receipt = ({ initialGoldRate = 0 }) => {
               Save
             </Button>
           </Box>
-        </>
-      )}
+      
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>All Receipts</DialogTitle>

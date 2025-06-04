@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef} from "react";
 import { REACT_APP_BACKEND_SERVER_URL } from '../../config/config'
 import axios from 'axios'
 import { styled } from "@mui/material/styles";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Button, Box, Modal, Typography, colors, TableFooter, Autocomplete, Hidden, Grid } from "@mui/material";
 import {getLotDatewise} from "../../Api/processTableApi";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import './dailyReport.css'
 function DailyReport() {
+  const printRef=useRef()
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [items, setItems] = useState([])
@@ -44,7 +48,41 @@ function DailyReport() {
     return totalValue;
   }
 
+  const handlePrintPDF = async () => {
+    const input = printRef.current;
 
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = 210; // A4 width in mm
+    const pdfHeight = 297; // A4 height in mm
+
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pdfWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+      position = position - pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+
+    pdf.save("Daily-Report.pdf");
+  };
+
+
+   
   const docalculation = (arrayItems) => {
     // Calculation
     const tempData = [...arrayItems];
@@ -228,6 +266,7 @@ useEffect(() => {
         Daily Report
       </Typography>
       <div style={{ padding: 20 }}>
+       
         <div style={{ display: "flex", gap: "10px", marginBottom: 20 }}>
           <TextField
             label="From Date"
@@ -244,14 +283,23 @@ useEffect(() => {
             onChange={(e) => setToDate(e.target.value)}
           />
           <Button variant="contained" onClick={()=>{handleDateWiseFilter()}}>Filter</Button>
+           
+        </div>
+         <div>
+          <Button variant="contained" onClick={handlePrintPDF}>
+                    Print 
+         </Button>
         </div>
       </div>
-      <StyledTableContainer component={Paper} >
-        <div style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh' }}>
+      
+    
+        <div  style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh', padding: "10px", margin: "auto"}} className="overflow-auto hidescrollbar">
           {/* <Table> */}
-          <Table >
+            
+          <Table ref={printRef}>
+            
             <TableHead style={{ position: 'sticky', top: "0px", zIndex: 10, backgroundColor: '#d8e3e6' }}  >
-
+                     
               <TableRow>
                 <StyledTableCell >
                   <b>Raw Gold</b>
@@ -569,11 +617,11 @@ useEffect(() => {
                       <React.Fragment>
                         <TableRow>
                           <StyledTableCell colSpan={11}></StyledTableCell>
-                          <StyledTableCell colSpan={5} >
+                          <StyledTableCell colSpan={3} >
                             <Grid container spacing={1}>
 
-                              <Grid container item spacing={1}>
-                                <Grid item xs={6} display="flex" alignItems="center">
+                              <Grid container item spacing={1} >
+                                <Grid item xs={6} display="flex" alignItems="center" width={200}>
                                   <TextField
                                     label="Date"
                                     value={lotItem.scarpValue.scarpDate}
@@ -588,7 +636,7 @@ useEffect(() => {
 
                                   </TextField>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={6} >
                                   <TextField fullWidth label="ItemTotal"
                                     value={lotItem.scarpValue.itemTotal}
                                     InputProps={{
@@ -677,8 +725,8 @@ useEffect(() => {
           </Table>
 
         </div>
-      </StyledTableContainer>
-
+  
+      
 
 
     </>
