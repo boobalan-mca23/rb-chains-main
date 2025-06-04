@@ -46,7 +46,7 @@ const Billing = () => {
   const [customerPure, setCustomerPure] = useState(0)
   const [customerExpure, setCustomerExPure] = useState(0)
   const [customerCashBalance, setCustomerCashBalance] = useState(0)
-
+  const inputRefs = useRef({});
   const [rows, setRows] = useState([]);
   const [viewMode, setViewMode] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
@@ -55,6 +55,14 @@ const Billing = () => {
   const [billAmount, setBillAmount] = useState(0)
 
   const navigate = useNavigate();
+  
+   const registerRef = (rowId, field) => (el) => {
+    if (!inputRefs.current[rowId]) inputRefs.current[rowId] = {};
+    inputRefs.current[rowId][field] = el;
+  };
+
+
+
 
   const handleProductSelect = (itemIndex, stockId) => {
     setRows([])
@@ -136,7 +144,7 @@ const Billing = () => {
         setBillAmount(balObj.balAmount + cash)
         setCustomerPure(total)
         setCustomerExPure(0)
-        setCustomerCashBalance(balObj.balAmount + cash)
+        // setCustomerCashBalance(balObj.balAmount + cash)
 
       }
       if (balObj.exPure > 0) {
@@ -148,11 +156,11 @@ const Billing = () => {
         if (total >= 0) {
           setCustomerPure(total)
           setCustomerExPure(0)
-          setCustomerCashBalance(balObj.balAmount + cash)
+          // setCustomerCashBalance(balObj.balAmount + cash)
         } else {
           setCustomerPure(0)
           setCustomerExPure(total)
-          setCustomerCashBalance(cash - balObj.exBalAmount)
+          // setCustomerCashBalance(cash - balObj.exBalAmount)
         }
       }
 
@@ -161,7 +169,7 @@ const Billing = () => {
         setBillAmount(cash)
         setCustomerPure(calculateTotal(tempBill))
         setCustomerExPure(0)
-        setCustomerCashBalance(cash)
+        // setCustomerCashBalance(cash)
       }
 
       tempProducts.splice(itemIndex, 1);
@@ -234,7 +242,7 @@ const Billing = () => {
         //Footer Values
         setCustomerPure(purity + obj.balance)
         setCustomerExPure(0)
-        setCustomerCashBalance(cash + obj.balance * goldRate)
+        // setCustomerCashBalance(cash + obj.balance * goldRate)
       }
       if (obj.exPure !== 0) {
         const tempBill = [...billItems];
@@ -249,7 +257,7 @@ const Billing = () => {
         //Footer Values
         setCustomerPure(0)
         setCustomerExPure(purity - obj.exPure)
-        setCustomerCashBalance(cash - obj.exPure * goldRate)
+        // setCustomerCashBalance(cash - obj.exPure * goldRate)
       }
       if (obj.balance === 0 && obj.exPure === 0) {
         const tempBill = [...billItems];
@@ -262,14 +270,10 @@ const Billing = () => {
         setBillAmount(cash)
         setCustomerPure(purity)
         setCustomerExPure(0)
-        setCustomerCashBalance(purity * goldRate)
+        // setCustomerCashBalance(purity * goldRate)
       }
 
     }
-
-
-
-
 
   }
 
@@ -364,7 +368,7 @@ const Billing = () => {
         setBillAmount(cash + customerBalance.balance * goldRate)
         setCustomerPure(purity + customerBalance.balance)
         setCustomerExPure(0)
-        setCustomerCashBalance(cash + customerBalance.balance * goldRate)
+        // setCustomerCashBalance(cash + customerBalance.balance * goldRate)
       }
 
       if (customerBalance.exPure > 0) { // Excess balance update
@@ -373,11 +377,11 @@ const Billing = () => {
         if (purity - customerBalance.exPure >= 0) {
           setCustomerPure(purity - customerBalance.exPure)
           setCustomerExPure(0)
-          setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
+          // setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
         } else {
           setCustomerPure(0)
           setCustomerExPure(purity - customerBalance.exPure)
-          setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
+          // setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
         }
 
 
@@ -388,7 +392,7 @@ const Billing = () => {
         setBillAmount(cash)
         setCustomerPure(purity)
         setCustomerExPure(0)
-        setCustomerCashBalance(cash)
+        // setCustomerCashBalance(cash)
 
       }
 
@@ -417,7 +421,7 @@ const Billing = () => {
         setBillPure(purity + customerBalance.balance)
         setBillAmount(cash + customerBalance.balance * goldRate)
         setCustomerPure(purity + customerBalance.balance)
-        setCustomerCashBalance(cash + customerBalance.balance * goldRate)
+        // setCustomerCashBalance(cash + customerBalance.balance * goldRate)
         setCustomerExPure(0)
       }
 
@@ -427,11 +431,11 @@ const Billing = () => {
         if (purity - customerBalance.exPure >= 0) {
           setCustomerPure(purity - customerBalance.exPure)
           setCustomerExPure(0)
-          setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
+          // setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
         } else {
           setCustomerPure(0)
           setCustomerExPure(purity - customerBalance.exPure)
-          setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
+          // setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
         }
 
       }
@@ -440,7 +444,7 @@ const Billing = () => {
         setBillPure(purity)
         setBillAmount(cash)
         setCustomerPure(purity)
-        setCustomerCashBalance(cash)
+        // setCustomerCashBalance(cash)
         setCustomerExPure(0)
       }
 
@@ -460,7 +464,7 @@ const Billing = () => {
       ...rows,
       {
         date: new Date().toISOString().slice(0, 10),
-        goldRate: goldRate,
+        goldRate:0,
         givenGold: "",
         touch: "",
         purityWeight: "",
@@ -482,15 +486,30 @@ const Billing = () => {
     if (decrement >= 0) {
 
       setCustomerPure(decrement)
-      setCustomerCashBalance(decrement * goldRate)
+      // setCustomerCashBalance(decrement * goldRate)
       setCustomerExPure(0)
     }
     //customerExPure
     if (decrement < 0) {
       setCustomerExPure(decrement)
-      setCustomerCashBalance(decrement * goldRate)
+      // setCustomerCashBalance(decrement * goldRate)
       setCustomerPure(0)
     }
+     if(updatedRows.length>=1){
+       for(let i=updatedRows.length-1;i>=0;i--){ // its calculate last gold rate
+           if( updatedRows[i].goldRate>0){
+              if(decrement<0){
+                 setCustomerCashBalance(0)
+                 break
+              }
+             setCustomerCashBalance(decrement*updatedRows[i].goldRate)
+              break
+           }
+           setCustomerCashBalance(0)
+          }
+     }else{
+       setCustomerCashBalance(0)
+     }
     setRows(updatedRows);
   };
   const handleGoldRate = (goldValue) => {
@@ -516,7 +535,7 @@ const Billing = () => {
       }
       setCustomerBalance(obj)
       setBillAmount(cash + obj.balAmount)
-      setCustomerCashBalance(cash + obj.balAmount)
+      // setCustomerCashBalance(cash + obj.balAmount)
 
     }
     if (customerBalance.exPure > 0) {
@@ -528,11 +547,11 @@ const Billing = () => {
       }
       setCustomerBalance(obj)
       setBillAmount(cash - obj.exBalAmount)
-      setCustomerCashBalance(cash - obj.exBalAmount)
+      // setCustomerCashBalance(cash - obj.exBalAmount)
     }
     if (customerBalance.balance === 0 & customerBalance.exPure === 0) {
       setBillAmount(cash)
-      setCustomerCashBalance(cash)
+      // setCustomerCashBalance(cash)
     }
 
     setGoldRate(goldValue)
@@ -542,6 +561,12 @@ const Billing = () => {
   const handleRowChange = (index, field, value) => {
     const updatedRows = [...rows];
     updatedRows[index][field] = value;
+    if(field==="goldRate"){
+      
+        updatedRows[index]["amount"]=(updatedRows[index]["purityWeight"] * updatedRows[index]["goldRate"]).toFixed(2)
+        setCustomerCashBalance(customerPure*updatedRows[index]["goldRate"])
+      
+    }
 
     if (field === "givenGold" || field === "touch") {
       const givenGold = parseFloat(updatedRows[index]["givenGold"]);
@@ -563,7 +588,7 @@ const Billing = () => {
         if (decrement >= 0) {
 
           setCustomerPure(decrement)
-          setCustomerCashBalance(decrement * goldRate)
+          // setCustomerCashBalance(decrement * goldRate)
           setCustomerExPure(0)
         }
         //customerExPure
@@ -572,13 +597,50 @@ const Billing = () => {
           let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
 
           setCustomerExPure(billPure - pure)
-          setCustomerCashBalance((billPure - pure) * goldRate)
+          // setCustomerCashBalance((billPure - pure) * goldRate)
           setCustomerPure(0)
         }
-      } else {
+        for(let i=tempRows.length-1;i>=0;i--){ // its calculate last gold rate
+           if(tempRows[i].goldRate>0){
+              if(decrement<0){
+                 setCustomerCashBalance(0)
+                 break
+              }
+              setCustomerCashBalance(decrement*tempRows[i].goldRate)
+              break
+           }}
+      } 
+      
+      else {
         updatedRows[index]["purityWeight"] = "";
       }
     }
+    else if (field === "amount" && updatedRows[index]["goldRate"] > 0) {
+          const purityWeight = value / updatedRows[index]["goldRate"] ;
+         updatedRows[index]["purityWeight"] = purityWeight.toFixed(3);
+       
+         let tempRows = [...rows]
+        let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+        console.log('purity', pure)
+        let decrement = billPure - pure
+        console.log('decrement value', decrement)
+
+         if (decrement >= 0) {
+
+          setCustomerPure(decrement)
+          setCustomerCashBalance(decrement * updatedRows[index]["goldRate"])
+          setCustomerExPure(0)
+        }
+        //customerExPure
+        if (decrement < 0) {
+          let tempRows = [...rows]
+          let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+
+          setCustomerExPure(billPure - pure)
+          setCustomerCashBalance(0)
+          setCustomerPure(0)
+        }
+      }
     setRows(updatedRows);
   };
 
@@ -612,6 +674,7 @@ const Billing = () => {
 
     fetchCustomers();
     fetchJewelItem();
+    
   }, []);
 
   useEffect(() => {
@@ -632,16 +695,6 @@ const Billing = () => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (balanceRow.length === 0) {
-      setClosing(totalPure);
-      setPure(0);
-    } else {
-      const calculatedPure = calculateClosing(balanceRow);
-      setPure(calculatedPure);
-      setClosing(totalPure - calculatedPure);
-    }
-  }, [balanceRow, totalPure]);
 
   useEffect(() => {
     setTotalPrice(calculateTotal(billItems));
@@ -723,7 +776,16 @@ const Billing = () => {
       setProductWeight([]);
     }
   }, [selectedCustomer, selectedProduct]);
-
+   const handleKeyDown = (e, rowId, field) => {
+    if (e.key === "Enter") {
+      const fields = ["goldRate", "givenGold", "touch", "purityWeight"];
+      const index = fields.indexOf(field);
+      const nextField = fields[index + 1];
+      if (nextField && inputRefs.current[rowId]?.[nextField]) {
+        inputRefs.current[rowId][nextField].focus();
+      }
+    }
+  };
   return (
     <Box className="billing-wrapper" ref={billRef}>
       <Box className="left-panel">
@@ -991,9 +1053,13 @@ const Billing = () => {
                         <TextField
                           size="small"
                           value={row.goldRate}
-                          // onChange={(e) =>
-                          //   handleRowChange(index, "goldRate", e.target.value)
-                          // }
+                          
+                          onChange={(e) =>
+                            handleRowChange(index, "goldRate", e.target.value)
+                          }
+                          inputRef={registerRef(index,'goldRate')}
+                          onKeyDown={(e) => handleKeyDown(e, index,'goldRate')}
+                          
                           type="number"
                           InputProps={{ disableUnderline: true }}
                         />
@@ -1007,6 +1073,10 @@ const Billing = () => {
                           }
                           type="number"
                           InputProps={{ disableUnderline: true }}
+                          inputRef={registerRef(index,'givenGold')}
+                          onKeyDown={(e) => handleKeyDown(e, index,'givenGold')}
+                          autoComplete="off"
+                        
                         />
                       </td>
                       <td className="td">
@@ -1018,6 +1088,9 @@ const Billing = () => {
                           }
                           type="number"
                           InputProps={{ disableUnderline: true }}
+                          inputRef={registerRef(index,'touch')}
+                          onKeyDown={(e) => handleKeyDown(e, index,'touch')}
+                          autoComplete="off"
                         />
                       </td>
                       <td className="td">
@@ -1028,6 +1101,7 @@ const Billing = () => {
                             readOnly: true,
                             disableUnderline: true,
                           }}
+                          inputRef={registerRef(index,'purityWeight')}
                         />
                       </td>
                       <td className="td">
@@ -1039,6 +1113,7 @@ const Billing = () => {
                           }
                           type="number"
                           InputProps={{ disableUnderline: true }}
+                          autoComplete="off"
                         />
                       </td>
                       {/* <td className="td">
@@ -1056,7 +1131,7 @@ const Billing = () => {
                         {(!viewMode ||
                           index >=
                           (selectedBill?.receivedDetails?.length || 0)) && (
-                            <IconButton onClick={() => handleDeleteRow(index)}>
+<                            IconButton onClick={() => handleDeleteRow(index)}>
                               <MdDeleteForever />
                             </IconButton>
                           )}
