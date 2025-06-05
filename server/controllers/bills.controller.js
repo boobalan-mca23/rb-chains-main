@@ -56,12 +56,12 @@ const saveBill = async (req, res) => {
           await prisma.receipt.create({
               data: {
                 date: new Date(recive.date),
-                goldRate: parseFloat(recive.goldRate),
+                goldRate: parseFloat(recive.goldRate)||0,
                 customer_id:customer_id,
-                touch: parseFloat(recive.touch),
-                purityWeight:parseFloat(recive.purityWeight),
-                amount:parseFloat(recive.amount) ,
-                givenGold:parseFloat(recive.givenGold) 
+                touch: parseFloat(recive.touch)||0,
+                purityWeight:parseFloat(recive.purityWeight)||0,
+                amount:parseFloat(recive.amount)||0 ,
+                givenGold:parseFloat(recive.givenGold) ||0
               }
            });
         }
