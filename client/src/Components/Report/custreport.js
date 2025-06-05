@@ -228,10 +228,7 @@ const printRef = useRef();
   const handleCustomerBill = async () => {
     setBalance(0)
     setExcess(0)
-    if (fromDate > toDate) {
-      toast.warn('Select Date order was Wrong')
-      return
-    }
+  
     if (selectedCustomer) {
       navigate(`/report?type=customer&fromDate=${fromDate}&toDate=${toDate}&custId=${selectedCustomer.customer_id}`);
 
@@ -374,7 +371,7 @@ const printRef = useRef();
   return (
     <>
 
-      <Typography
+      {/* <Typography
         variant="h5"
         style={{
           fontWeight: "bold",
@@ -384,9 +381,77 @@ const printRef = useRef();
         }}
       >
         Customer Report
-      </Typography>
+      </Typography> */}
       <div style={{ padding: "20px" }}>
         <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 2,
+            marginBottom: 3,
+          }}
+        >
+          {/* <TextField
+            type="date"
+            label="From Date"
+            InputLabelProps={{ shrink: true }}
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            size="small"
+            sx={{ minWidth: 200 }}
+          />
+          <TextField
+            type="date"
+            label="To Date"
+            InputLabelProps={{ shrink: true }}
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            size="small"
+            sx={{ minWidth: 200 }}
+          />
+          <Autocomplete
+            value={selectedCustomer || null}
+            options={customers}
+            getOptionLabel={(option) => option.customer_name || ""}
+            onChange={(event, newValue) => setSelectedCustomer(newValue)}
+            renderInput={(params) => (
+              <TextField {...params} label="Select Customer" size="small" />
+            )}
+            sx={{ minWidth: 300 }}
+          /> */}
+
+
+          <Button
+            variant="contained"
+            onClick={handleCustomerBill}
+            sx={{
+              backgroundColor: "#1976d2",
+              color: "#fff",
+              fontWeight: "bold",
+              paddingX: 3,
+              paddingY: 1,
+              borderRadius: "8px",
+              textTransform: "none",
+              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+              '&:hover': {
+                backgroundColor: "#115293",
+              },
+            }}
+          >
+            Search
+          </Button>
+           <Button variant="contained" onClick={handlePrintPDF}>
+                   Print 
+                 </Button>
+
+        </Box>
+        {/* Opening Balance at Top Right */}
+
+
+
+        <TableContainer component={Paper} style={{ marginTop: "20px", padding: "30px", }} ref={printRef}>
+           <Box
           sx={{
             display: "flex",
             alignItems: "center",
@@ -425,35 +490,8 @@ const printRef = useRef();
           />
 
 
-          <Button
-            variant="contained"
-            onClick={handleCustomerBill}
-            sx={{
-              backgroundColor: "#1976d2",
-              color: "#fff",
-              fontWeight: "bold",
-              paddingX: 3,
-              paddingY: 1,
-              borderRadius: "8px",
-              textTransform: "none",
-              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-              '&:hover': {
-                backgroundColor: "#115293",
-              },
-            }}
-          >
-            Search
-          </Button>
-           <Button variant="contained" onClick={handlePrintPDF}>
-                   Print 
-                 </Button>
 
         </Box>
-        {/* Opening Balance at Top Right */}
-
-
-
-        <TableContainer component={Paper} style={{ marginTop: "20px", padding: "30px", }} ref={printRef}>
           <h3 style={{textAlign:"center"}}>Customer Report</h3>
           <Table>
             <TableHead style={{ backgroundColor: "aliceblue" }}>
@@ -509,9 +547,11 @@ const printRef = useRef();
                               </>
                             ) : (
                               <>
+                                <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">GoldRate</TableCell>
                                 <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Gold</TableCell>
                                 <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Touch</TableCell>
                                 <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Purity Weight</TableCell>
+                                 <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Amount</TableCell>
                                 {/* <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Rate</TableCell>
                                 <TableCell sx={{ border: "1px solid #ccc", fontWeight: "bold" }} align="center">Value</TableCell> */}
                               </>
@@ -531,9 +571,12 @@ const printRef = useRef();
                             ))
                           ) : (
                             <TableRow>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.rate}</TableCell>
                               <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.gold}</TableCell>
                               <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.touch}</TableCell>
                               <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.purityWeight}</TableCell>
+                              <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.value}</TableCell>
+                              
                               {/* <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.rate}</TableCell>
                               <TableCell align="center" sx={{ border: "1px solid #ccc" }}>{item.value}</TableCell> */}
                             </TableRow>
@@ -585,10 +628,8 @@ const printRef = useRef();
                 </TableRow>
               )}
               <TableRow>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
+                <TableCell colSpan={4}></TableCell>
+               
                <TableCell align="center"  sx={{ fontWeight: "bold", border: "1px solid #ccc" }}>
                 Total Received: {(totalExcess).toFixed(3)}
               </TableCell>

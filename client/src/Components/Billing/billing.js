@@ -53,10 +53,11 @@ const Billing = () => {
   const [goldRate, setGoldRate] = useState(0)
   const [billPure, setBillPure] = useState(0)
   const [billAmount, setBillAmount] = useState(0)
+  const [receivedPure,setReceivedPure]=useState(0)
 
   const navigate = useNavigate();
-  
-   const registerRef = (rowId, field) => (el) => {
+
+  const registerRef = (rowId, field) => (el) => {
     if (!inputRefs.current[rowId]) inputRefs.current[rowId] = {};
     inputRefs.current[rowId][field] = el;
   };
@@ -178,30 +179,65 @@ const Billing = () => {
   };
 
   const handleSaveBill = async () => {
-    if (!selectedCustomer) {
-      toast.error("Customer Name is Required!", { autoClose: 2000 });
-      return;
-    }
-    if (!selectedProduct) {
-      toast.error("Jewel Name is Required!", { autoClose: 2000 });
-      return;
-    }
-    if (billItems.length === 0) {
-      toast.error("Order Items are Required!", { autoClose: 2000 });
-      return;
+   const payLoad = {
+  customer_id: selectedCustomer.customer_id,
+  order_status: "completed",
+  totalPrice: totalPrice,
+  orderItems: billItems,
+  receivedDetails: rows,
+  oldBalance: parseFloat(customerPure),
+  excessBalance: parseFloat(customerExpure),
+};
+
+// Basic validations
+if (!selectedCustomer) {
+  toast.error("Customer Name is Required!", { autoClose: 2000 });
+  return;
+}
+
+if (!selectedProduct) {
+  toast.error("Jewel Name is Required!", { autoClose: 2000 });
+  return;
+}
+
+if (billItems.length === 0) {
+  toast.error("Order Items are Required!", { autoClose: 2000 });
+  return;
+}
+
+// Validate received rows
+let isValid = true;
+let hasValidRow = false;
+
+if (rows.length >= 1) {
+  for (let i = 0; i < rows.length; i++) {
+    const { goldRate, givenGold, touch, amount } = rows[i];
+
+    const allEmpty =
+      (!goldRate || goldRate <= 0) &&
+      (!givenGold || givenGold <= 0) &&
+      (!touch || touch <= 0) &&
+      (!amount || amount <= 0);
+
+    const isRowValid =
+      (goldRate > 0 && amount > 0) ||
+      (givenGold > 0 && touch > 0);
+
+    if (allEmpty || !isRowValid) {
+      isValid = false;
+      break;
     }
 
-    const payLoad = {
-      customer_id: selectedCustomer.customer_id,
-      order_status: "completed",
-      totalPrice: totalPrice,
-      orderItems: billItems,
-      receivedDetails: rows,
-      oldBalance:parseFloat(customerPure),
-      excessBalance:parseFloat(customerExpure)
-    };
+    if (isRowValid) {
+      hasValidRow = true;
+    }
+  }
+
+  if (!isValid || !hasValidRow) {
+    toast.warn("Fill all required fields", { autoClose: 1000 });
+    return;
+  } else {
     console.log("payload", payLoad);
-
     try {
       const response = await axios.post(
         `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,
@@ -210,12 +246,21 @@ const Billing = () => {
       if (response.status === 201) {
         setBillId(response.data.data.id);
         toast.success("Bill Created Successfully!", { autoClose: 1000 });
-       
+
       }
     } catch (err) {
       toast.error(`Error saving bill: ${err.message}`, { autoClose: 3000 });
       console.error("Error saving bill:", err);
     }
+  }
+} else {
+  toast.error("Received details row is required!", { autoClose: 2000 });
+  return;
+}
+
+
+
+   
   };
   const handleCustomerName = (newValue) => {
     setSelectedCustomer(newValue)
@@ -328,17 +373,8 @@ const Billing = () => {
     setBalanceRow(updatedRows);
   };
 
-  const handleRemoveBalanceRow = (index) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this balance row?"
-    );
+  
 
-    if (confirmDelete) {
-      const tempBalRow = [...balanceRow];
-      tempBalRow.splice(index, 1);
-      setBalanceRow(tempBalRow);
-    }
-  };
 
   const handleChangePercentage = (itemIndex, value) => {
     setRows([])
@@ -464,7 +500,7 @@ const Billing = () => {
       ...rows,
       {
         date: new Date().toISOString().slice(0, 10),
-        goldRate:0,
+        goldRate: "",
         givenGold: "",
         touch: "",
         purityWeight: "",
@@ -475,7 +511,11 @@ const Billing = () => {
   };
 
   const handleDeleteRow = (index) => {
-    const updatedRows = [...rows];
+     const confirmDelete = window.confirm(
+      "Are you sure you want to delete this recived item?"
+    );
+    if(confirmDelete){
+ const updatedRows = [...rows];
     updatedRows.splice(index, 1);
 
     let pure = updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
@@ -495,22 +535,24 @@ const Billing = () => {
       // setCustomerCashBalance(decrement * goldRate)
       setCustomerPure(0)
     }
-     if(updatedRows.length>=1){
-       for(let i=updatedRows.length-1;i>=0;i--){ // its calculate last gold rate
-           if( updatedRows[i].goldRate>0){
-              if(decrement<0){
-                 setCustomerCashBalance(0)
-                 break
-              }
-             setCustomerCashBalance(decrement*updatedRows[i].goldRate)
-              break
-           }
-           setCustomerCashBalance(0)
+    if (updatedRows.length >= 1) {
+      for (let i = updatedRows.length - 1; i >= 0; i--) { // its calculate last gold rate
+        if (updatedRows[i].goldRate > 0) {
+          if (decrement < 0) {
+            setCustomerCashBalance(0)
+            break
           }
-     }else{
-       setCustomerCashBalance(0)
-     }
+          setCustomerCashBalance(decrement * updatedRows[i].goldRate)
+          break
+        }
+        setCustomerCashBalance(0)
+      }
+    } else {
+      setCustomerCashBalance(0)
+    }
     setRows(updatedRows);
+    }
+   
   };
   const handleGoldRate = (goldValue) => {
 
@@ -561,11 +603,11 @@ const Billing = () => {
   const handleRowChange = (index, field, value) => {
     const updatedRows = [...rows];
     updatedRows[index][field] = value;
-    if(field==="goldRate"){
-      
-        updatedRows[index]["amount"]=(updatedRows[index]["purityWeight"] * updatedRows[index]["goldRate"]).toFixed(2)
-        setCustomerCashBalance(customerPure*updatedRows[index]["goldRate"])
-      
+    if (field === "goldRate") {
+
+      updatedRows[index]["amount"] = (updatedRows[index]["purityWeight"] * updatedRows[index]["goldRate"]).toFixed(2)
+      setCustomerCashBalance(customerPure * updatedRows[index]["goldRate"])
+
     }
 
     if (field === "givenGold" || field === "touch") {
@@ -600,47 +642,48 @@ const Billing = () => {
           // setCustomerCashBalance((billPure - pure) * goldRate)
           setCustomerPure(0)
         }
-        for(let i=tempRows.length-1;i>=0;i--){ // its calculate last gold rate
-           if(tempRows[i].goldRate>0){
-              if(decrement<0){
-                 setCustomerCashBalance(0)
-                 break
-              }
-              setCustomerCashBalance(decrement*tempRows[i].goldRate)
+        for (let i = tempRows.length - 1; i >= 0; i--) { // its calculate last gold rate
+          if (tempRows[i].goldRate > 0) {
+            if (decrement < 0) {
+              setCustomerCashBalance(0)
               break
-           }}
-      } 
-      
+            }
+            setCustomerCashBalance(decrement * tempRows[i].goldRate)
+            break
+          }
+        }
+      }
+
       else {
         updatedRows[index]["purityWeight"] = "";
       }
     }
     else if (field === "amount" && updatedRows[index]["goldRate"] > 0) {
-          const purityWeight = value / updatedRows[index]["goldRate"] ;
-         updatedRows[index]["purityWeight"] = purityWeight.toFixed(3);
-       
-         let tempRows = [...rows]
-        let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
-        console.log('purity', pure)
-        let decrement = billPure - pure
-        console.log('decrement value', decrement)
+      const purityWeight = value / updatedRows[index]["goldRate"];
+      updatedRows[index]["purityWeight"] = purityWeight.toFixed(3);
 
-         if (decrement >= 0) {
+      let tempRows = [...rows]
+      let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+      console.log('purity', pure)
+      let decrement = billPure - pure
+      console.log('decrement value', decrement)
 
-          setCustomerPure(decrement)
-          setCustomerCashBalance(decrement * updatedRows[index]["goldRate"])
-          setCustomerExPure(0)
-        }
-        //customerExPure
-        if (decrement < 0) {
-          let tempRows = [...rows]
-          let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+      if (decrement >= 0) {
 
-          setCustomerExPure(billPure - pure)
-          setCustomerCashBalance(0)
-          setCustomerPure(0)
-        }
+        setCustomerPure(decrement)
+        setCustomerCashBalance(decrement * updatedRows[index]["goldRate"])
+        setCustomerExPure(0)
       }
+      //customerExPure
+      if (decrement < 0) {
+        let tempRows = [...rows]
+        let pure = tempRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+
+        setCustomerExPure(billPure - pure)
+        setCustomerCashBalance(0)
+        setCustomerPure(0)
+      }
+    }
     setRows(updatedRows);
   };
 
@@ -674,7 +717,7 @@ const Billing = () => {
 
     fetchCustomers();
     fetchJewelItem();
-    
+
   }, []);
 
   useEffect(() => {
@@ -695,7 +738,12 @@ const Billing = () => {
     return () => clearInterval(timer);
   }, []);
 
-
+useEffect(()=>{
+   let tempRows=[...rows]
+   let total=tempRows.reduce((acc,item)=> acc+Number(item.purityWeight),0)
+  
+   setReceivedPure(total)
+},[rows])
   useEffect(() => {
     setTotalPrice(calculateTotal(billItems));
     setTotalPure(Number(calculateTotal(billItems)));
@@ -776,7 +824,7 @@ const Billing = () => {
       setProductWeight([]);
     }
   }, [selectedCustomer, selectedProduct]);
-   const handleKeyDown = (e, rowId, field) => {
+  const handleKeyDown = (e, rowId, field) => {
     if (e.key === "Enter") {
       const fields = ["goldRate", "givenGold", "touch", "purityWeight"];
       const index = fields.indexOf(field);
@@ -1053,13 +1101,13 @@ const Billing = () => {
                         <TextField
                           size="small"
                           value={row.goldRate}
-                          
+
                           onChange={(e) =>
                             handleRowChange(index, "goldRate", e.target.value)
                           }
-                          inputRef={registerRef(index,'goldRate')}
-                          onKeyDown={(e) => handleKeyDown(e, index,'goldRate')}
-                          
+                          inputRef={registerRef(index, 'goldRate')}
+                          onKeyDown={(e) => handleKeyDown(e, index, 'goldRate')}
+
                           type="number"
                           InputProps={{ disableUnderline: true }}
                         />
@@ -1073,10 +1121,10 @@ const Billing = () => {
                           }
                           type="number"
                           InputProps={{ disableUnderline: true }}
-                          inputRef={registerRef(index,'givenGold')}
-                          onKeyDown={(e) => handleKeyDown(e, index,'givenGold')}
+                          inputRef={registerRef(index, 'givenGold')}
+                          onKeyDown={(e) => handleKeyDown(e, index, 'givenGold')}
                           autoComplete="off"
-                        
+
                         />
                       </td>
                       <td className="td">
@@ -1088,8 +1136,8 @@ const Billing = () => {
                           }
                           type="number"
                           InputProps={{ disableUnderline: true }}
-                          inputRef={registerRef(index,'touch')}
-                          onKeyDown={(e) => handleKeyDown(e, index,'touch')}
+                          inputRef={registerRef(index, 'touch')}
+                          onKeyDown={(e) => handleKeyDown(e, index, 'touch')}
                           autoComplete="off"
                         />
                       </td>
@@ -1101,7 +1149,7 @@ const Billing = () => {
                             readOnly: true,
                             disableUnderline: true,
                           }}
-                          inputRef={registerRef(index,'purityWeight')}
+                          inputRef={registerRef(index, 'purityWeight')}
                         />
                       </td>
                       <td className="td">
@@ -1131,7 +1179,7 @@ const Billing = () => {
                         {(!viewMode ||
                           index >=
                           (selectedBill?.receivedDetails?.length || 0)) && (
-<                            IconButton onClick={() => handleDeleteRow(index)}>
+                            <                            IconButton onClick={() => handleDeleteRow(index)}>
                               <MdDeleteForever />
                             </IconButton>
                           )}
@@ -1145,6 +1193,11 @@ const Billing = () => {
                     </td>
                   </tr>
                 )}
+                <tr>
+                  <td className="td" colSpan={5}></td>
+                  <td className="td"><strong>Total</strong>:{receivedPure}</td>
+                  <td className="td" colSpan={2}></td>
+                </tr>
               </tbody>
             </table>
           </Box>
@@ -1173,7 +1226,7 @@ const Billing = () => {
           color="primary"
           onClick={handleSaveBill}
           className="save-button no-print"
-          disabled={billItems.length < 1}
+          disabled={billItems.length < 1 || rows.length<1}
         >
           Save
         </Button>

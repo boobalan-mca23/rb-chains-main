@@ -14,11 +14,11 @@ exports.saveReceipts = async (req, res) => {
         prisma.receipt.create({
           data: {
             date: new Date(r.date),
-            goldRate: parseFloat(r.goldRate),
-            givenGold: parseFloat(r.givenGold),
-            touch: parseFloat(r.touch),
-            purityWeight: parseFloat(r.purityWeight),
-            amount: parseFloat(r.amount),
+            goldRate: parseFloat(r.goldRate)||0,
+            givenGold: parseFloat(r.givenGold)||0,
+            touch: parseFloat(r.touch)||0,
+            purityWeight: parseFloat(r.purityWeight)||0,
+            amount: parseFloat(r.amount)||0,
             customer_id: customer_id,
           },
         })
