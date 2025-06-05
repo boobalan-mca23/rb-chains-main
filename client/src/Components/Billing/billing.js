@@ -53,7 +53,7 @@ const Billing = () => {
   const [goldRate, setGoldRate] = useState(0)
   const [billPure, setBillPure] = useState(0)
   const [billAmount, setBillAmount] = useState(0)
-  const [receivedPure,setReceivedPure]=useState(0)
+  const [receivedPure, setReceivedPure] = useState(0)
 
   const navigate = useNavigate();
 
@@ -179,88 +179,111 @@ const Billing = () => {
   };
 
   const handleSaveBill = async () => {
-   const payLoad = {
-  customer_id: selectedCustomer.customer_id,
-  order_status: "completed",
-  totalPrice: totalPrice,
-  orderItems: billItems,
-  receivedDetails: rows,
-  oldBalance: parseFloat(customerPure),
-  excessBalance: parseFloat(customerExpure),
-};
+    const payLoad = {
+      customer_id: selectedCustomer.customer_id,
+      order_status: "completed",
+      totalPrice: totalPrice,
+      orderItems: billItems,
+      receivedDetails: rows,
+      oldBalance: parseFloat(customerPure),
+      excessBalance: parseFloat(customerExpure),
+    };
 
-// Basic validations
-if (!selectedCustomer) {
-  toast.error("Customer Name is Required!", { autoClose: 2000 });
-  return;
-}
-
-if (!selectedProduct) {
-  toast.error("Jewel Name is Required!", { autoClose: 2000 });
-  return;
-}
-
-if (billItems.length === 0) {
-  toast.error("Order Items are Required!", { autoClose: 2000 });
-  return;
-}
-
-// Validate received rows
-let isValid = true;
-let hasValidRow = false;
-
-if (rows.length >= 1) {
-  for (let i = 0; i < rows.length; i++) {
-    const { goldRate, givenGold, touch, amount } = rows[i];
-
-    const allEmpty =
-      (!goldRate || goldRate <= 0) &&
-      (!givenGold || givenGold <= 0) &&
-      (!touch || touch <= 0) &&
-      (!amount || amount <= 0);
-
-    const isRowValid =
-      (goldRate > 0 && amount > 0) ||
-      (givenGold > 0 && touch > 0);
-
-    if (allEmpty || !isRowValid) {
-      isValid = false;
-      break;
+    // Basic validations
+    if (!selectedCustomer) {
+      toast.error("Customer Name is Required!", { autoClose: 2000 });
+      return;
     }
 
-    if (isRowValid) {
-      hasValidRow = true;
+    if (!selectedProduct) {
+      toast.error("Jewel Name is Required!", { autoClose: 2000 });
+      return;
     }
-  }
 
-  if (!isValid || !hasValidRow) {
-    toast.warn("Fill all required fields", { autoClose: 1000 });
-    return;
-  } else {
-    console.log("payload", payLoad);
-    try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,
-        payLoad
-      );
-      if (response.status === 201) {
-        setBillId(response.data.data.id);
-        toast.success("Bill Created Successfully!", { autoClose: 1000 });
+    if (billItems.length === 0) {
+      toast.error("Order Items are Required!", { autoClose: 2000 });
+      return;
+    }
 
+    // Validate received rows
+    let isValid = true;
+    let hasValidRow = false;
+
+    if (rows.length >= 1) {
+      for (let i = 0; i < rows.length; i++) {
+        const { goldRate, givenGold, touch, amount } = rows[i];
+
+        const allEmpty =
+          (!goldRate || goldRate <= 0) &&
+          (!givenGold || givenGold <= 0) &&
+          (!touch || touch <= 0) &&
+          (!amount || amount <= 0);
+
+        const isRowValid =
+          (goldRate > 0 && amount > 0) ||
+          (givenGold > 0 && touch > 0);
+
+        if (allEmpty || !isRowValid) {
+          isValid = false;
+          break;
+        }
+
+        if (isRowValid) {
+          hasValidRow = true;
+        }
       }
-    } catch (err) {
-      toast.error(`Error saving bill: ${err.message}`, { autoClose: 3000 });
-      console.error("Error saving bill:", err);
+
+      if (!isValid || !hasValidRow) {
+        toast.warn("Fill all required fields", { autoClose: 1000 });
+        return;
+      } else {
+
+        
+        console.log("payload", payLoad);
+
+        try {
+          const response = await axios.post(
+            `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,
+            payLoad
+          );
+          if (response.status === 201) {
+            setBillId(response.data.data.id);
+            toast.success("Bill Created Successfully!", { autoClose: 1000 });
+         
+
+            window.print();
+
+
+          }
+        } catch (err) {
+          toast.error(`Error saving bill: ${err.message}`, { autoClose: 3000 });
+          console.error("Error saving bill:", err);
+        }
+      }
+    } else {
+      console.log("payload", payLoad);
+
+      try {
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,
+          payLoad
+        );
+        if (response.status === 201) {
+          setBillId(response.data.data.id);
+          toast.success("Bill Created Successfully!", { autoClose: 1000 });
+           
+        window.print();
+          
+        }
+      } catch (err) {
+        toast.error(`Error saving bill: ${err.message}`, { autoClose: 3000 });
+        console.error("Error saving bill:", err);
+      }
     }
-  }
-} else {
-  toast.error("Received details row is required!", { autoClose: 2000 });
-  return;
-}
 
 
 
-   
+
   };
   const handleCustomerName = (newValue) => {
     setSelectedCustomer(newValue)
@@ -373,7 +396,7 @@ if (rows.length >= 1) {
     setBalanceRow(updatedRows);
   };
 
-  
+
 
 
   const handleChangePercentage = (itemIndex, value) => {
@@ -511,48 +534,48 @@ if (rows.length >= 1) {
   };
 
   const handleDeleteRow = (index) => {
-     const confirmDelete = window.confirm(
+    const confirmDelete = window.confirm(
       "Are you sure you want to delete this recived item?"
     );
-    if(confirmDelete){
- const updatedRows = [...rows];
-    updatedRows.splice(index, 1);
+    if (confirmDelete) {
+      const updatedRows = [...rows];
+      updatedRows.splice(index, 1);
 
-    let pure = updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
-    console.log('purity', pure)
-    let decrement = billPure - pure
-    console.log('decrement value', decrement)
+      let pure = updatedRows.reduce((acc, currValue) => acc + Number(currValue.purityWeight), 0);
+      console.log('purity', pure)
+      let decrement = billPure - pure
+      console.log('decrement value', decrement)
 
-    if (decrement >= 0) {
+      if (decrement >= 0) {
 
-      setCustomerPure(decrement)
-      // setCustomerCashBalance(decrement * goldRate)
-      setCustomerExPure(0)
-    }
-    //customerExPure
-    if (decrement < 0) {
-      setCustomerExPure(decrement)
-      // setCustomerCashBalance(decrement * goldRate)
-      setCustomerPure(0)
-    }
-    if (updatedRows.length >= 1) {
-      for (let i = updatedRows.length - 1; i >= 0; i--) { // its calculate last gold rate
-        if (updatedRows[i].goldRate > 0) {
-          if (decrement < 0) {
-            setCustomerCashBalance(0)
+        setCustomerPure(decrement)
+        // setCustomerCashBalance(decrement * goldRate)
+        setCustomerExPure(0)
+      }
+      //customerExPure
+      if (decrement < 0) {
+        setCustomerExPure(decrement)
+        // setCustomerCashBalance(decrement * goldRate)
+        setCustomerPure(0)
+      }
+      if (updatedRows.length >= 1) {
+        for (let i = updatedRows.length - 1; i >= 0; i--) { // its calculate last gold rate
+          if (updatedRows[i].goldRate > 0) {
+            if (decrement < 0) {
+              setCustomerCashBalance(0)
+              break
+            }
+            setCustomerCashBalance(decrement * updatedRows[i].goldRate)
             break
           }
-          setCustomerCashBalance(decrement * updatedRows[i].goldRate)
-          break
+          setCustomerCashBalance(0)
         }
+      } else {
         setCustomerCashBalance(0)
       }
-    } else {
-      setCustomerCashBalance(0)
+      setRows(updatedRows);
     }
-    setRows(updatedRows);
-    }
-   
+
   };
   const handleGoldRate = (goldValue) => {
 
@@ -738,12 +761,12 @@ if (rows.length >= 1) {
     return () => clearInterval(timer);
   }, []);
 
-useEffect(()=>{
-   let tempRows=[...rows]
-   let total=tempRows.reduce((acc,item)=> acc+Number(item.purityWeight),0)
-  
-   setReceivedPure(total)
-},[rows])
+  useEffect(() => {
+    let tempRows = [...rows]
+    let total = tempRows.reduce((acc, item) => acc + Number(item.purityWeight), 0)
+
+    setReceivedPure(total)
+  }, [rows])
   useEffect(() => {
     setTotalPrice(calculateTotal(billItems));
     setTotalPure(Number(calculateTotal(billItems)));
@@ -835,7 +858,8 @@ useEffect(()=>{
     }
   };
   return (
-    <Box className="billing-wrapper" ref={billRef}>
+
+    <Box className="billing-wrapper" >
       <Box className="left-panel">
         <h1 className="heading">Estimate Only</h1>
         <Box className="bill-header">
@@ -895,11 +919,12 @@ useEffect(()=>{
             </p>
           </Box>
         )}
-        <Box className="items-section">
-          <h3 className="no-print">Bill Details:</h3>
+        <Box className="items-section" style={{ transition: "border-color 0.2s"}}>
+          <h3 >Bill Details:</h3>
+       
           <div className="run">
-            <b>
-              Gold Rate:
+          
+             
               <TextField
                 size="small"
                 style={{
@@ -913,8 +938,9 @@ useEffect(()=>{
                 type="number"
                 required
                 disabled={viewMode && selectedBill}
+                label="Gold Rate"
               />
-            </b>
+           
           </div>
           <table className="table">
             <thead>
@@ -985,29 +1011,29 @@ useEffect(()=>{
                 <td className="td merge-cell"><strong>Bill Total</strong></td>
                 <td className="td merge-cell"></td>
                 <td className="td merge-cell"></td>
-                <td className="td merge-cell"></td>
+                <td className="td merge-cell no-print"></td>
                 <td className="td merge-cell">
                   <strong>{totalPure.toFixed(3)}</strong>
                 </td>
                 <td className="td merge-cell">
                   <strong> {cashTotal.toFixed(2)}</strong>
                 </td>
-                <td className="td merge-cell"></td>
+                <td className="td merge-cell no-print"></td>
 
               </tr>
 
               {
                 customerBalance.balance !== 0 ? (
                   <tr>
-                    <td className="td merge-cell"></td>
-                    <td className="td merge-cell"></td>
+
+                    <td className="td merge-cell" colSpan={2}></td>
                     <td className="td merge-cell">
                       <strong>Old balance </strong>
                     </td>
-                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell no-print"></td>
                     <td className="td merge-cell"><strong>+{(customerBalance.balance).toFixed(3)}</strong></td>
                     <td className="td merge-cell"><strong>+{(customerBalance.balAmount).toFixed(2)}</strong></td>
-                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell no-print"></td>
 
                   </tr>
                 ) : ("")
@@ -1021,15 +1047,15 @@ useEffect(()=>{
               {
                 customerBalance.exPure !== 0 ? (
                   <tr>
-                    <td className="td merge-cell"></td>
-                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell" colSpan={2}></td>
+
                     <td className="td merge-cell">
                       <strong>Excees balance </strong>
                     </td>
-                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell no-print"></td>
                     <td className="td merge-cell"><strong>-{(customerBalance.exPure).toFixed(3)}</strong></td>
                     <td className="td merge-cell">-{(customerBalance.exBalAmount).toFixed(2)}</td>
-                    <td className="td merge-cell"></td>
+                    <td className="td merge-cell no-print"></td>
                   </tr>
                 ) : ("")
               }
@@ -1037,25 +1063,25 @@ useEffect(()=>{
 
 
               <tr>
-                <td className="td merge-cell"></td>
-                <td className="td merge-cell"></td>
+                <td className="td merge-cell" colSpan={2}></td>
+
                 <td className="td merge-cell">
                   <strong>{customerBalance.balance === 0 && customerBalance.exPure === 0 ? "Total" : billPure >= 0 ? "old Balance Total" : "Excees Total"}</strong>
                 </td>
-                <td className="td merge-cell"></td>
+                <td className="td merge-cell no-print"></td>
                 <td className="td merge-cell"><strong>{(billPure).toFixed(3)}</strong></td>
                 <td className="td merge-cell"><strong>{(billAmount).toFixed(2)}</strong></td>
-                <td className="td merge-cell"></td>
+                <td className="td merge-cell no-print"></td>
               </tr>
 
 
 
             </tbody>
           </table>
-          <Box className="items-section no-print">
+          <Box className="items-section ">
             <div className="add">
               <h3>Received Details:</h3>
-              <p className="add-icon-wrapper">
+              <p className="add-icon-wrapper no-print">
                 <IconButton
                   size="small"
                   onClick={handleAddRow}
@@ -1077,7 +1103,7 @@ useEffect(()=>{
                   <th className="th">Purity WT</th>
                   <th className="th">Amount</th>
                   {/* <th className="th">Hallmark</th> */}
-                  <th className="th">Action</th>
+                  <th className="th no-print">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -1175,7 +1201,7 @@ useEffect(()=>{
                           InputProps={{ disableUnderline: true }}
                         />
                       </td> */}
-                      <td className="td">
+                      <td className="td no-print">
                         {(!viewMode ||
                           index >=
                           (selectedBill?.receivedDetails?.length || 0)) && (
@@ -1226,7 +1252,7 @@ useEffect(()=>{
           color="primary"
           onClick={handleSaveBill}
           className="save-button no-print"
-          disabled={billItems.length < 1 || rows.length<1}
+          disabled={billItems.length < 1}
         >
           Save
         </Button>

@@ -420,9 +420,9 @@ const Receipt = ({ initialGoldRate = 0 }) => {
         borderRadius="8px"
         boxShadow="0 2px 6px rgba(0,0,0,0.1)"
         marginBottom={2}
-        width={500}
+        sx={{ width: '28%', mb: 1 }}
       >
-        <Box>
+        <Box >
           <b>
             {balance !== 0
               ? `Old Balance: ₹${balance}`
@@ -449,8 +449,8 @@ const Receipt = ({ initialGoldRate = 0 }) => {
         </Box>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table size="small">
+      <TableContainer component={Paper} >
+        <Table size="small" >
           <TableHead>
             <TableRow>
               {["Date", "Gold Rate", "Given Gold", "Touch", "Purity Weight", "Amount"].map((header) => (
