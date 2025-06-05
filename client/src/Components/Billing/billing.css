@@ -9,7 +9,8 @@ body {
     color: #1a237e;
   }
   .run{
-    margin-left: 40rem;
+    margin-left: 35rem;
+    padding: 10px;
   }
   .flex {
     display: flex;
@@ -440,6 +441,10 @@ body {
     .table .MuiFormControl-root {
         border: none;
     }
+    .run{
+    margin-left: 35rem;
+    padding: 10px;
+  }
 }
   
  
