@@ -65,44 +65,56 @@ const wiring = (rowId, field) => (el) => {
     if (!wiringRef.current[rowId]) wiringRef.current[rowId] = {};
     wiringRef.current[rowId][field] = el;
   }; 
-const mechine=(rowId, field) => (el) => {
 
-    if (!mechineRef.current[rowId]) mechineRef.current[rowId] = {};
-    mechineRef.current[rowId][field] = el;
-  }; 
 
-  const handleKeyDown=(e, rowId, field)=>{
-    
-     if (e.key === "Enter") {
+  const mechine = (rowId, field, index) => (el) => {
+  if (!mechineRef.current[rowId]) mechineRef.current[rowId] = {};
+  if (!mechineRef.current[rowId][field]) mechineRef.current[rowId][field] = [];
+  mechineRef.current[rowId][field][index] = el;
+};
 
-       if(field==="meltingAfter"|| field==="meltingScarp"){
-         const fields = ["meltingAfter", "meltingScarp"];
-         const index = fields.indexOf(field);
-         const nextField = fields[index + 1];
+ 
+const handleKeyDown = (e, rowId, field, index) => {
+  const fields = [
+    "mechineAfter", "soldringAfter", "soldringScarp",
+    "jointAfter", "jointScarp", "cuttingAfter",
+    "cuttingScarp", "cuttingPure", "finishingAfter", "finishingScarp"
+  ];
+
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+    const currentIndex = fields.indexOf(field);
+    const nextIndex = e.key === "ArrowRight" ? currentIndex + 1 : currentIndex - 1;
+    const targetField = fields[nextIndex];
+
+    if (targetField && mechineRef.current[rowId]?.[targetField]?.[index]) {
+      mechineRef.current[rowId][targetField][index].focus();
+    }
+  }
+
+  // handle melting
+  if (e.key === "Enter" || e.key === "ArrowLeft") {
+    if (field === "meltingAfter" || field === "meltingScarp") {
+      const meltFields = ["meltingAfter", "meltingScarp"];
+      const currentIndex = meltFields.indexOf(field);
+      
+      const nextField = e.key==="Enter"? meltFields[currentIndex + 1]:meltFields[currentIndex - 1]
       if (nextField && meltingRef.current[rowId]?.[nextField]) {
         meltingRef.current[rowId][nextField].focus();
       }
     }
-       if(field==="wiringAfter" || field==="wiringScarp"){
-        const fields = ["wiringAfter", "wiringScarp"];
-         const index = fields.indexOf(field);
-         const nextField = fields[index + 1];
-          if (nextField && wiringRef.current[rowId]?.[nextField]) {
-          wiringRef.current[rowId][nextField].focus();
-          }
-       }else{
-         const fields =["mechineAfter","soldringAfter","soldringScarp","jointAfter","jointScarp","cuttingAfter","cuttingScarp","cuttingPure","finishingAfter","finishingScarp"]
-         const index = fields.indexOf(field);
-         const nextField = fields[index + 1];
-          if (nextField && mechineRef.current[rowId]?.[nextField]) {
-          mechineRef.current[rowId][nextField].focus();
-          }
-       }
-       
 
-    
+    // handle wiring
+    if (field === "wiringAfter" || field === "wiringScarp") {
+      const wiringFields = ["wiringAfter", "wiringScarp"];
+      const currentIndex = wiringFields.indexOf(field);
+      const nextField = wiringFields[currentIndex + 1];
+      if (nextField && wiringRef.current[rowId]?.[nextField]) {
+        wiringRef.current[rowId][nextField].focus();
+      }
     }
   }
+};
+
 
   const docalculation = (arrayItems) => {
     // Calculation
@@ -1277,8 +1289,8 @@ const mechine=(rowId, field) => (el) => {
                                         type="number"
                                         style={{ width: "120px" }}
                                         autoComplete="off"
-                                        inputRef={mechine(lotItem.lotid, lotItem.data[lotArrIndex]?.process_name+"After")}
-                                        onKeyDown={(e) => handleKeyDown(e, lotItem.lotid,lotItem.data[lotArrIndex]?.process_name+"After")}
+                                        inputRef={mechine(lotItem.lotid, lotItem.data[lotArrIndex]?.process_name+"After",key)}
+                                        onKeyDown={(e) => handleKeyDown(e, lotItem.lotid,lotItem.data[lotArrIndex]?.process_name+"After",key)}
                                       ></StyledInput>
                                     </StyledTableCell>
                                     {lotItem.data[lotArrIndex]?.process_name !== "mechine" ? (
@@ -1300,8 +1312,8 @@ const mechine=(rowId, field) => (el) => {
                                           type="number"
                                           style={{ width: "120px" }}
                                           autoComplete="off"
-                                           inputRef={mechine(lotItem.lotid, lotItem.data[lotArrIndex]?.process_name+"Scarp")}
-                                           onKeyDown={(e) => handleKeyDown(e, lotItem.lotid,lotItem.data[lotArrIndex]?.process_name+"Scarp")}
+                                           inputRef={mechine(lotItem.lotid, lotItem.data[lotArrIndex]?.process_name+"Scarp",key)}
+                                           onKeyDown={(e) => handleKeyDown(e, lotItem.lotid,lotItem.data[lotArrIndex]?.process_name+"Scarp",key)}
                                         ></StyledInput>
                                       </StyledTableCell>) : null}
 
@@ -1334,8 +1346,8 @@ const mechine=(rowId, field) => (el) => {
                                               : ""
                                           }
                                           style={{ width: "120px" }}
-                                           inputRef={mechine(lotItem.lotid, lotItem.data[lotArrIndex]?.process_name+"Pure")}
-                                           onKeyDown={(e) => handleKeyDown(e, lotItem.lotid,lotItem.data[lotArrIndex]?.process_name+"Pure")}
+                                           inputRef={mechine(lotItem.lotid, lotItem.data[lotArrIndex]?.process_name+"Pure",key)}
+                                           onKeyDown={(e) => handleKeyDown(e, lotItem.lotid,lotItem.data[lotArrIndex]?.process_name+"Pure",key)}
                                           ></StyledInput>
                                       </StyledTableCell>
                                     ) : (" ")

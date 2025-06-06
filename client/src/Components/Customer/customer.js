@@ -38,6 +38,7 @@ function Customer() {
   const [viewCustomer, setViewCustomer] = useState(null);
   const [itemList, setItemList] = useState([]);
   const [save, setSave] = useState([])
+  const nameRef=useRef()
   const shopRef=useRef()
   const phonRef=useRef()
   const addressRef=useRef()
@@ -284,6 +285,7 @@ function Customer() {
             fullWidth
             margin="normal"
             autoComplete="off"
+            inputRef={nameRef}
             onKeyDown={(e)=>{
                 if (e.key === "Enter") shopRef.current.focus();
             }}
@@ -298,7 +300,8 @@ function Customer() {
             autoComplete="off"
             inputRef={shopRef}
             onKeyDown={(e)=>{
-                if (e.key === "Enter") phonRef.current.focus();
+                if (e.key === "Enter") {phonRef.current.focus()};
+                if(e.key==="ArrowUp") {nameRef.current.focus()};
             }}
           />
           <TextField
@@ -312,6 +315,7 @@ function Customer() {
             inputRef={phonRef}
             onKeyDown={(e)=>{
                 if (e.key === "Enter") addressRef.current.focus();
+                if(e.key==="ArrowUp") {shopRef.current.focus()};
             }}
           />
           <TextField
@@ -325,6 +329,10 @@ function Customer() {
             margin="normal"
             autoComplete="off"
             inputRef={addressRef}
+             onKeyDown={(e)=>{
+                if (e.key === "Enter") nameRef.current.focus();
+                if(e.key==="ArrowUp") {phonRef.current.focus()};
+            }}
           />
         </DialogContent>
         <DialogActions>
