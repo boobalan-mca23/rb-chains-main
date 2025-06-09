@@ -112,7 +112,7 @@ function Report() {
             cursor: selectedReport === "DailyReport" ? "not-allowed" : "pointer",
             opacity: selectedReport === "DailyReport" ? 0.5 : 1,
           }}>
-           DailyReport
+           Daily Lot Report
         </button>
       </div>
 

@@ -253,7 +253,7 @@ useEffect(() => {
     }, []);
   return (
     <>
-      <Typography
+      {/* <Typography
         variant="h5"
         style={{
           fontWeight: "bold",
@@ -263,8 +263,8 @@ useEffect(() => {
 
         }}
       >
-        Daily Report
-      </Typography>
+        Daily Lot Report
+      </Typography> */}
       <div style={{ padding: 20 }}>
        
         <div style={{ display: "flex", gap: "10px", marginBottom: 20 }}>
@@ -292,12 +292,13 @@ useEffect(() => {
         </div>
       </div>
       
-    
+         
         <div  style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh', padding: "10px", margin: "auto"}} className="overflow-auto hidescrollbar">
+          <h3 style={{textAlign:"center"}}>Daily Lot Report</h3>
           {/* <Table> */}
             
           <Table ref={printRef}>
-            
+             
             <TableHead style={{ position: 'sticky', top: "0px", zIndex: 10, backgroundColor: '#d8e3e6' }}  >
                      
               <TableRow>

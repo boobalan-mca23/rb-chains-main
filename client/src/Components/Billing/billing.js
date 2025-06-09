@@ -240,19 +240,29 @@ const Billing = () => {
 
         
         console.log("payload", payLoad);
-
+       
         try {
           const response = await axios.post(
             `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,
             payLoad
           );
           if (response.status === 201) {
-            setBillId(response.data.data.id);
+            setBillId((response.data.data)+1);
             toast.success("Bill Created Successfully!", { autoClose: 1000 });
-         
-
+            setSelectedCustomer("")
+            setSelectedProduct("")
+            setBillItems([])
+            setRows([])
+            setBillPure(0)
+            setBillAmount(0)
+            setCustomerBalance({ exPure: 0, balance: 0, exBalAmount: 0, balAmount: 0 })
+            setCustomerExPure(0)
+            setCustomerPure(0)
+            setCustomerCashBalance(0)
+            setGoldRate(0)
+            setTotalPure(0)
+            setCashTotal(0)
             window.print();
-
 
           }
         } catch (err) {
@@ -262,17 +272,30 @@ const Billing = () => {
       }
     } else {
       console.log("payload", payLoad);
-
+       
       try {
         const response = await axios.post(
           `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/saveBill`,
           payLoad
         );
         if (response.status === 201) {
-          setBillId(response.data.data.id);
-          toast.success("Bill Created Successfully!", { autoClose: 1000 });
-           
-        window.print();
+          setBillId((response.data.data)+1);
+           toast.success("Bill Created Successfully!", { autoClose: 1000 });
+           setSelectedCustomer("")
+           setSelectedProduct("")
+           setBillItems([])
+           setRows([])
+           setBillPure(0)
+           setBillAmount(0)
+           setCustomerBalance({ exPure: 0, balance: 0, exBalAmount: 0, balAmount: 0 })
+           setCustomerExPure(0)
+           setCustomerPure(0)
+           setCustomerCashBalance(0)
+           setGoldRate(0)
+           setTotalPure(0)
+           setCashTotal(0)
+           window.print();
+         
           
         }
       } catch (err) {
@@ -737,9 +760,21 @@ const Billing = () => {
         console.error("Error:", error);
       }
     };
-
+    const fetchBillLength=async()=>{
+       try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/bill/getBillLength`
+        );
+        console.log('billLength',response.data.billLength)
+         setBillId(response.data.billLength+1)
+      } catch (error) {
+        toast.error("Error Fetch bill no!", { containerId: "custom-toast" });
+        console.error("Error:", error);
+      }
+    }
     fetchCustomers();
     fetchJewelItem();
+    fetchBillLength();
 
   }, []);
 
@@ -848,8 +883,8 @@ const Billing = () => {
     }
   }, [selectedCustomer, selectedProduct]);
   const handleKeyDown = (e, rowId, field) => {
-    if (e.key === "Enter") {
-      const fields = ["goldRate", "givenGold", "touch", "purityWeight"];
+    if (e.key === "Enter" ) {
+      const fields = ["goldRate", "givenGold", "touch", "amount"];
       const index = fields.indexOf(field);
       const nextField = fields[index + 1];
       if (nextField && inputRefs.current[rowId]?.[nextField]) {
@@ -1188,6 +1223,7 @@ const Billing = () => {
                           type="number"
                           InputProps={{ disableUnderline: true }}
                           autoComplete="off"
+                          inputRef={registerRef(index, 'amount')}
                         />
                       </td>
                       {/* <td className="td">

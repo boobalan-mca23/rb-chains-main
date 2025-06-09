@@ -42,6 +42,7 @@ function Customer() {
   const shopRef=useRef()
   const phonRef=useRef()
   const addressRef=useRef()
+  const saveRef=useRef()
 
   const handleView = async (customer) => {
     setViewCustomer(customer);
@@ -287,7 +288,9 @@ function Customer() {
             autoComplete="off"
             inputRef={nameRef}
             onKeyDown={(e)=>{
-                if (e.key === "Enter") shopRef.current.focus();
+                if (e.key === "Enter" || e.key==="ArrowDown" ||e.key==="ArrowRight"){ shopRef.current.focus()}
+
+
             }}
           />
           <TextField
@@ -300,8 +303,8 @@ function Customer() {
             autoComplete="off"
             inputRef={shopRef}
             onKeyDown={(e)=>{
-                if (e.key === "Enter") {phonRef.current.focus()};
-                if(e.key==="ArrowUp") {nameRef.current.focus()};
+                if (e.key === "Enter" || e.key==="ArrowDown" || e.key==="ArrowRight") {phonRef.current.focus()};
+                if(e.key==="ArrowUp" || e.key ==="ArrowLeft") {nameRef.current.focus()};
             }}
           />
           <TextField
@@ -314,8 +317,8 @@ function Customer() {
             autoComplete="off"
             inputRef={phonRef}
             onKeyDown={(e)=>{
-                if (e.key === "Enter") addressRef.current.focus();
-                if(e.key==="ArrowUp") {shopRef.current.focus()};
+                if (e.key === "Enter" || e.key==="ArrowDown" || e.key==="ArrowRight") addressRef.current.focus();
+                if(e.key==="ArrowUp" || e.key==="ArrowLeft") {shopRef.current.focus()};
             }}
           />
           <TextField
@@ -330,8 +333,8 @@ function Customer() {
             autoComplete="off"
             inputRef={addressRef}
              onKeyDown={(e)=>{
-                if (e.key === "Enter") nameRef.current.focus();
-                if(e.key==="ArrowUp") {phonRef.current.focus()};
+                if (e.key === "Enter") saveRef.current.focus();
+                if(e.key==="ArrowUp" || e.key==="ArrowLeft") {phonRef.current.focus()};
             }}
           />
         </DialogContent>
@@ -346,6 +349,7 @@ function Customer() {
               color: "#000",
               fontWeight: "bold",
             }}
+            ref={saveRef}
           >
             Save
           </Button>
@@ -448,7 +452,7 @@ function Customer() {
         <DialogActions>
           <Button onClick={()=>{handleSaveItem()}}> Save</Button>
           <Button onClick={handleViewClose} color="primary">
-            Close
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>
