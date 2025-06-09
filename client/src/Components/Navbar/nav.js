@@ -11,29 +11,29 @@ function Nav() {
   const navigate = useNavigate();
   const navbarHeight = "70px"; 
   
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  useEffect(() => {
-    // Get current date in UTC
-    const today = new Date();
+  // const [fromDate, setFromDate] = useState("");
+  // const [toDate, setToDate] = useState("");
+  // useEffect(() => {
+  //   // Get current date in UTC
+  //   const today = new Date();
 
-    // Convert to Indian Standard Time (IST)
-    const offset = 5.5 * 60; // IST is UTC +5:30
-    const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
+  //   // Convert to Indian Standard Time (IST)
+  //   const offset = 5.5 * 60; // IST is UTC +5:30
+  //   const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
 
-    // Extract date parts (year, month, day)
-    const year = indiaTime.getFullYear();
-    const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-    const day = String(indiaTime.getDate()).padStart(2, '0');
+  //   // Extract date parts (year, month, day)
+  //   const year = indiaTime.getFullYear();
+  //   const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+  //   const day = String(indiaTime.getDate()).padStart(2, '0');
 
-    // Format the date as YYYY-MM-DD
-    const currentDate = `${year}-${month}-${day}`;
+  //   // Format the date as YYYY-MM-DD
+  //   const currentDate = `${year}-${month}-${day}`;
 
-    console.log('currentDate in IST:', currentDate);
+  //   console.log('currentDate in IST:', currentDate);
 
-    setFromDate(currentDate);
-    setToDate(currentDate);
-  }, []);
+  //   setFromDate(currentDate);
+  //   setToDate(currentDate);
+  // }, []);
 
   return (
     <>
@@ -57,8 +57,9 @@ function Nav() {
 
           <Box>
             <Button
+              disableRipple
               onClick={() => navigate("/process")}
-              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
+              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" ,"&:focus": { backgroundColor: "black" ,color:"white"},}}
             >
               Lot
             </Button>
@@ -69,30 +70,34 @@ function Nav() {
               Customer
             </Button> */}
             <Button
+              disableRipple
               onClick={() => navigate("/billing")}
-              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
+              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold","&:focus": { backgroundColor: "black" ,color:"white"} }}
             >
               Billing
             </Button>
             <Button
+              disableRipple
               onClick={() => navigate("/receiptvoucher")}
-              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
+              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold","&:focus": { backgroundColor: "black" ,color:"white"}}}
             >
               Receipt Voucher
             </Button>
             <Button
+              disableRipple
               onClick={() =>
                 navigate(
-                  `/report?type=customer&fromDate=${fromDate}&toDate=${toDate}`
+                  `/report?type=customer`
                 )
               }
-              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
+              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold","&:focus": { backgroundColor: "black" ,color:"white"} }}
             >
               Report
             </Button>
             <Button
+              disableRipple
               onClick={() => navigate("/master")}
-              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold" }}
+              sx={{ color: "black", fontSize: "1rem", fontWeight: "bold","&:focus": { backgroundColor: "black" ,color:"white"} }}
             >
               Master
             </Button>

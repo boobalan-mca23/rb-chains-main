@@ -75,14 +75,25 @@ const saveBill = async (req, res) => {
               balance:parseFloat(Math.abs(oldBalance).toFixed(2)),
           }
         })
+      const billLength=await prisma.masterOrder.findMany()
 
-    res.status(201).json({ message: "Bill items saved!", data: newOrder });
+    res.status(201).json({ message: "Bill items saved!", data: billLength.length });
   } catch (error) {
     console.error("Error saving bill:", error);
     res.status(500).json({ error: "Error saving bill" });
   }
 };
+ 
+//getBill length
 
+const getBillLength=async(req,res)=>{
+    try{
+       const billLength=await prisma.masterOrder.findMany()
+       return res.status(200).json({billLength:billLength.length})
+    }catch(err){
+       return res.status(500).json({message:"Server Error"})
+    }
+}
 
 //getBill
 
@@ -329,4 +340,4 @@ const updateBill = async (req, res) => {
   }
 
 }
-module.exports = { saveBill, getBill, updateBill, getSalesBillDetails, getCustomerBillWithDate }
+module.exports = { saveBill, getBill, updateBill, getSalesBillDetails, getCustomerBillWithDate,getBillLength }

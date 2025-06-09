@@ -231,10 +231,11 @@ function StockReport() {
             Sold
           </Button>
         </Box>
-        <Button variant="contained" onClick={handlePrintPDF}>
+        
+      </Box>
+      <Button variant="contained" onClick={handlePrintPDF}>
           Print 
         </Button>
-      </Box>
 
       <div ref={printRef}
     style={{
