@@ -511,7 +511,7 @@ useEffect(() => {
                                     </StyledTableCell>
                                     {lotItem.data[lotArrIndex]?.process_name !== "mechine" ? (
                                       <StyledTableCell >
-                                        {(lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value).toFixed(3)}
+                                        {(lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value)}
                                       </StyledTableCell>) : null}
 
                                     <StyledTableCell >

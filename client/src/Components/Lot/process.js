@@ -51,7 +51,7 @@ const ProcessTable = () => {
   ]);
   const [productName, setProductName] = useState([])
   const touchRef = useRef()
-  const saveRef=useRef()
+  const saveRef = useRef()
   const meltingRef = useRef({})
   const wiringRef = useRef({})
   const mechineRef = useRef({})
@@ -101,38 +101,38 @@ const ProcessTable = () => {
     // handle melting
     // if (e.key === "Enter" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
 
-      if (field === "meltingAfter" || field === "meltingScarp") {
-        const meltFields = ["meltingAfter", "meltingScarp"];
-        const currentIndex = meltFields.indexOf(field);
+    if (field === "meltingAfter" || field === "meltingScarp") {
+      const meltFields = ["meltingAfter", "meltingScarp"];
+      const currentIndex = meltFields.indexOf(field);
 
-       
-        let nextField;
-        if (e.key === "Enter" || e.key === "ArrowRight") {
-          nextField = meltFields[currentIndex + 1];
-        } else if (e.key === "ArrowLeft") {
-          nextField = meltFields[currentIndex - 1];
-        }
 
-        if (nextField && meltingRef.current[rowId]?.[nextField]) {
-          meltingRef.current[rowId][nextField].focus();
-        }
+      let nextField;
+      if (e.key === "Enter" || e.key === "ArrowRight") {
+        nextField = meltFields[currentIndex + 1];
+      } else if (e.key === "ArrowLeft") {
+        nextField = meltFields[currentIndex - 1];
       }
 
-      // handle wiring
-      if (field === "wiringAfter" || field === "wiringScarp") {
-        const wiringFields = ["wiringAfter", "wiringScarp"];
-        const currentIndex = wiringFields.indexOf(field);
+      if (nextField && meltingRef.current[rowId]?.[nextField]) {
+        meltingRef.current[rowId][nextField].focus();
+      }
+    }
 
-        let nextField;
-        if (e.key === "Enter" || e.key === "ArrowRight") {
-          nextField = wiringFields[currentIndex + 1];
-        } else if (e.key === "ArrowLeft") {
-          nextField = wiringFields[currentIndex - 1];
-        }
+    // handle wiring
+    if (field === "wiringAfter" || field === "wiringScarp") {
+      const wiringFields = ["wiringAfter", "wiringScarp"];
+      const currentIndex = wiringFields.indexOf(field);
 
-        if (nextField && wiringRef.current[rowId]?.[nextField]) {
-          wiringRef.current[rowId][nextField].focus();
-        }
+      let nextField;
+      if (e.key === "Enter" || e.key === "ArrowRight") {
+        nextField = wiringFields[currentIndex + 1];
+      } else if (e.key === "ArrowLeft") {
+        nextField = wiringFields[currentIndex - 1];
+      }
+
+      if (nextField && wiringRef.current[rowId]?.[nextField]) {
+        wiringRef.current[rowId][nextField].focus();
+      }
       // }
 
     }
@@ -257,9 +257,9 @@ const ProcessTable = () => {
     console.log('touch', lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue);
     lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue = parseFloat(value);
     //when user change touch value that time also we need to change pure weight
-    if (lotData[0].data[7].ProcessSteps[2].AttributeValues.length != 0) {
-      lotData[0].data[7].ProcessSteps[2].AttributeValues.forEach((item, index) => {
-        lotData[0].data[7].ProcessSteps[4].AttributeValues[index].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[7].ProcessSteps[2].AttributeValues[index].value / 100
+    if (lotData[0].data[6].ProcessSteps[2].AttributeValues.length != 0) {
+      lotData[0].data[6].ProcessSteps[2].AttributeValues.forEach((item, index) => {
+        lotData[0].data[6].ProcessSteps[4].AttributeValues[index].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[6].ProcessSteps[2].AttributeValues[index].value / 100
       })
     }
     tempData.splice(index, 1, lotData[0]);
@@ -945,13 +945,19 @@ const ProcessTable = () => {
         <div ref={tableRef} style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh' }}>
           {/* <Table> */}
           <Table >
-            <TableHead style={{ position: 'sticky', top: "0px", zIndex: 10, backgroundColor: '#d8e3e6' }}  >
+            <TableHead style={{ position: 'sticky', top: "0px", zIndex: 10, backgroundColor: '#d8e3e6', }}  >
 
               <TableRow>
-                <StyledTableCell >
+                <StyledTableCell style={{
+                  borderRight: "3px solid black", // Bold right border
+
+                }}>
                   <b>Raw Gold</b>
                 </StyledTableCell>
-                <StyledTableCell >
+                <StyledTableCell style={{
+                  borderRight: "3px solid black", // Bold right border
+
+                }} >
                   <b>Touch</b>
                 </StyledTableCell >
                 {processes.map((process) => {
@@ -968,17 +974,26 @@ const ProcessTable = () => {
                   }
 
                   return (
-                    <StyledTableCell key={process} colSpan={colSpanValue} >
+                    <StyledTableCell key={process} colSpan={colSpanValue} style={{
+                      borderRight: "3px solid black", // Bold right border
+
+                    }}>
                       <b>{process}</b>
                     </StyledTableCell>
                   );
                 })}
 
 
-                <StyledTableCell >
+                <StyledTableCell style={{
+                  borderRight: "3px solid black", // Bold right border
+
+                }}>
                   <b>Item Diffrent</b>
                 </StyledTableCell>
-                <StyledTableCell >
+                <StyledTableCell style={{
+                  borderRight: "3px solid black", // Bold right border
+
+                }} >
                   <b>Total Diffrent</b>
                 </StyledTableCell >
 
@@ -1015,16 +1030,23 @@ const ProcessTable = () => {
                         <b>Scarp</b>
                       </StyledTableCell>) : ("")}
                     {process !== "Soldrine" ? (
-                      <StyledTableCell >
+                      <StyledTableCell style={{
+                        borderRight: process === "Cutting" ? "none" : "3px solid black"
+                      }} >
                         <b>Loss</b>
                       </StyledTableCell>) : (
-                      <StyledTableCell >
+                      <StyledTableCell style={{
+                        borderRight: "3px solid black", // Bold right border
+
+                      }} >
                         <b>+</b>
                       </StyledTableCell>)}
 
                     {
                       process === "Cutting" && (
-                        <StyledTableCell >
+                        <StyledTableCell style={{
+                          borderRight: "3px solid black", // Bold right border
+                        }} >
                           <b>Scarp Pure</b>
                         </StyledTableCell>
                       )
@@ -1047,8 +1069,8 @@ const ProcessTable = () => {
                     )} */}
                   </React.Fragment>
                 ))}
-                <StyledTableCell />
-                <StyledTableCell />
+                <StyledTableCell style={{ borderRight: "3px solid black", }} />
+                <StyledTableCell style={{ borderRight: "3px solid black", }} />
 
               </TableRow>
             </TableHead>
@@ -1058,7 +1080,7 @@ const ProcessTable = () => {
                   lotItem.data ? (
                     <React.Fragment key={lotIndex} >
                       <TableRow >
-                        <StyledTableCell>
+                        <StyledTableCell style={{borderRight: "3px solid black",}}>
                           <StyledInput
                             value={//RawGold Input Box
                               typeof lotItem.data[0].ProcessSteps[0].AttributeValues[0].value === "number"
@@ -1075,7 +1097,7 @@ const ProcessTable = () => {
 
 
                         </StyledTableCell>
-                        <StyledTableCell>
+                        <StyledTableCell style={{borderRight: "3px solid black",}}>
                           <StyledInput
                             value={lotItem.data[0].ProcessSteps[0].AttributeValues[0].touchValue || " "}
                             onChange={(e) => {
@@ -1138,7 +1160,7 @@ const ProcessTable = () => {
                                     />
                                   </StyledTableCell>) : ("")}
 
-                                <StyledTableCell>
+                                <StyledTableCell style={{ borderRight: "3px solid black" }}>
 
                                   <StyledInput //loss Weight
                                     value={
@@ -1179,15 +1201,15 @@ const ProcessTable = () => {
                               </Button>
                             </StyledTableCell>
 
-                            <StyledTableCell colSpan={25} />
+                            <StyledTableCell colSpan={25} style={{ borderRight: "3px solid black" }} />
 
                           </React.Fragment>
                         }
 
                         {
                           lotItem.data[7]?.ProcessSteps[1]?.AttributeValues.length >= 1 ? (
-                            <StyledTableCell>
-                              <b>{lotItem.data[0].ProcessSteps[0].AttributeValues[0].value - handleTotal(lotItem.lotid, 7, 1)}</b>
+                            <StyledTableCell >
+                              <b>{(lotItem.data[0].ProcessSteps[0].AttributeValues[0].value - handleTotal(lotItem.lotid, 7, 1)).toFixed(3)}</b>
                             </StyledTableCell>
                           ) : (<StyledTableCell></StyledTableCell>)
                         }
@@ -1234,7 +1256,7 @@ const ProcessTable = () => {
                               )}
                             />
 
-                            <StyledTableCell>
+                            <StyledTableCell >
                               <StyledInput
                                 value={lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].value}
                                 placeholder="Weight"
@@ -1260,7 +1282,7 @@ const ProcessTable = () => {
                                     onKeyDown={(e) => handleKeyDown(e, lotItem.lotid, 'wiringScarp')}
                                   ></StyledInput>
                                 </StyledTableCell>
-                                <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length}>
+                                <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length} style={{ borderRight: "3px solid black" }}>
                                   <StyledInput
                                     value={
                                       typeof lotItem.data[2]?.ProcessSteps[3]?.AttributeValues[0]?.value === "number"
@@ -1340,7 +1362,7 @@ const ProcessTable = () => {
                                         ></StyledInput>
                                       </StyledTableCell>) : null}
 
-                                    <StyledTableCell>
+                                    <StyledTableCell style={{ borderRight: lotItem.data[lotArrIndex]?.process_name === "cutting" ? "none" : "3px solid black" }}>
                                       {lotItem.data[lotArrIndex]?.process_name === "mechine" ? (
                                         <StyledInput //loss Weight Mechine
                                           value={
@@ -1349,6 +1371,7 @@ const ProcessTable = () => {
                                               : ""
                                           }
                                           style={{ width: "120px" }}
+
                                         />) : (<StyledInput //loss Weight Other
                                           value={
                                             typeof lotItem.data[lotArrIndex]?.ProcessSteps[3]?.AttributeValues[key]?.value === "number"
@@ -1356,12 +1379,13 @@ const ProcessTable = () => {
                                               : ""
                                           }
                                           style={{ width: "120px" }}
+
                                         />)}
 
                                     </StyledTableCell>
 
                                     {lotArrIndex === 6 ? (
-                                      <StyledTableCell>
+                                      <StyledTableCell style={{ borderRight: "3px solid black" }}>
                                         <StyledInput
                                           value={
                                             typeof lotItem.data[lotArrIndex]?.ProcessSteps[4]?.AttributeValues[key]?.value === "number"
@@ -1384,8 +1408,8 @@ const ProcessTable = () => {
                             {
                               //Item Different
                               lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key]?.value ?
-                                (<StyledTableCell>
-                                  <p style={{ fontSize: "15px" }}>{lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key]?.value - (lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key].value).toFixed(3)}</p>
+                                (<StyledTableCell style={{ borderRight: "3px solid black" }}>
+                                  <p style={{ fontSize: "15px" }}>{(lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key]?.value - lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key].value).toFixed(3)}</p>
                                 </StyledTableCell>)
                                 : (<StyledTableCell></StyledTableCell>)
                             }
@@ -1406,7 +1430,7 @@ const ProcessTable = () => {
                           ) : (<StyledTableCell>Total:0</StyledTableCell>)
                         }
                         <StyledTableCell></StyledTableCell>
-                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell  style={{borderRight: "3px solid black",}}></StyledTableCell>
 
 
                         {
@@ -1426,9 +1450,9 @@ const ProcessTable = () => {
                                 {
                                   index !== 3 ? (<StyledTableCell></StyledTableCell>) : ("")
                                 }
-                                <StyledTableCell></StyledTableCell>
+                                <StyledTableCell style={{ borderRight: lotItem.data[index]?.process_name === "cutting" ? "none" : "3px solid black" }}></StyledTableCell>
                                 {
-                                  index === 6 ? (<StyledTableCell></StyledTableCell>) : ("")
+                                  index === 6 ? (<StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>) : ("")
                                 }
 
                               </React.Fragment>
@@ -1436,7 +1460,7 @@ const ProcessTable = () => {
 
                           ))
                         }
-                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>
                         <StyledTableCell></StyledTableCell>
                       </TableRow>
                     </React.Fragment>) :
@@ -1444,7 +1468,12 @@ const ProcessTable = () => {
                       <React.Fragment>
                         <TableRow>
                           <StyledTableCell colSpan={12}></StyledTableCell>
-                          <StyledTableCell colSpan={3} >
+                          <StyledTableCell colSpan={3} style={{
+                            borderLeft: "3px solid black",   // Left border
+                            borderRight: "3px solid black",  // Right border
+                            borderTop: "none",               // No top border
+                            borderBottom: "none"             // No bottom border
+                          }} >
                             <Grid container spacing={1}>
 
                               <Grid container item spacing={1}>
@@ -1485,7 +1514,7 @@ const ProcessTable = () => {
               }
             </TableBody>
             <TableFooter>
-              <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>Total RawGold:{calculation[0].rawGold}</p></StyledTableCell>
+              <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>Total RawGold:{(calculation[0].rawGold).toFixed(3)}</p></StyledTableCell>
               <StyledTableCell><p ></p></StyledTableCell>
               {
                 calculation[2].process.map((item, key) => (
@@ -1568,7 +1597,7 @@ const ProcessTable = () => {
             sx={{ mt: 2 }}
             autoComplete="off"
             inputRef={touchRef}
-             onKeyDown={(e) => {
+            onKeyDown={(e) => {
               if (e.key === "Enter") {
                 saveRef.current.focus()
               }
