@@ -43,6 +43,7 @@ const getStock=async(req,res)=>{
             stockDetail.push(stock)
     
         }
+         
         res.send({data:stockDetail})
     }catch(err){
         res.send(500).json({err:'Stock is Empty'})

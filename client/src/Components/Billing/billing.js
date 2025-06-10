@@ -363,9 +363,45 @@ const Billing = () => {
         setCustomerExPure(0)
         // setCustomerCashBalance(purity * goldRate)
       }
-
     }
 
+  }
+
+  const handleSelectedProduct=(newValue)=>{
+      setSelectedProduct(newValue)
+    
+      
+      const fetchWeight = async () => {
+        try {
+          const productsWeight = await axios.get(
+            `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${newValue.master_jewel_id}`
+          );
+         let response=productsWeight.data.productsWeight
+         
+      
+         if(billItems.length>=1){
+              const existingStockIds = billItems.map(item => item.stockId); 
+              const newItems = response.filter(
+                  item => !existingStockIds.includes(item.stock_id)
+                 ); 
+              setProductWeight(newItems)
+           }
+           else{
+          setProductWeight(response)
+           }
+        } catch (err) {
+          if (err.response && err.response.status === 400) {
+            setProductWeight([]);
+            toast.info("No products found for this jewel type.", { autoClose: 2000 });
+          } else if (err.response && err.response.status === 500) {
+            toast.error("Server error while fetching product weights.", { autoClose: 3000 });
+          } else {
+            toast.error("Error fetching product weights.", { autoClose: 3000 });
+          }
+          console.error("Error fetching product weights:", err);
+        }
+      };
+      fetchWeight();
   }
 
   const calculateTotal = (items) => {
@@ -376,53 +412,8 @@ const Billing = () => {
   const calculateClosing = (balRows) => {
     return balRows.reduce((acc, currValue) => acc + currValue.pure, 0);
   };
-
-  const handleBalanceRow = () => {
-    if (!selectedCustomer) {
-      toast.warning("Select Customer Name", { autoClose: 2000 });
-      return;
-    }
-    if (!selectedProduct) {
-      toast.warning("Select Jewel Name", { autoClose: 2000 });
-      return;
-    }
-    if (billItems.length === 0) {
-      toast.warning("Add Order Items first!", { autoClose: 2000 });
-      return;
-    }
-
-    const tempRow = [
-      ...balanceRow,
-      {
-        customer_id: selectedCustomer.customer_id,
-        givenGold: "",
-        touch: "",
-        pure: 0,
-      },
-    ];
-    setBalanceRow(tempRow);
-  };
-
-  const handleBalanceInputChange = (index, field, value) => {
-    const updatedRows = [...balanceRow];
-    updatedRows[index][field] = value;
-
-    const givenGold = parseFloat(updatedRows[index]["givenGold"]);
-    const touch = parseFloat(updatedRows[index]["touch"]);
-
-    if (!isNaN(givenGold) && !isNaN(touch)) {
-      updatedRows[index]["pure"] = (givenGold * touch) / 100;
-    } else {
-      updatedRows[index]["pure"] = 0;
-    }
-
-    setBalanceRow(updatedRows);
-  };
-
-
-
-
-  const handleChangePercentage = (itemIndex, value) => {
+  
+   const handleChangePercentage = (itemIndex, value) => {
     setRows([])
     const tempBill = [...billItems];
     const itemToUpdate = tempBill[itemIndex];
@@ -464,10 +455,7 @@ const Billing = () => {
           setCustomerPure(0)
           setCustomerExPure(purity - customerBalance.exPure)
           // setCustomerCashBalance(cash - customerBalance.exPure * goldRate)
-        }
-
-
-      }
+        } }
 
       if (customerBalance.balance === 0 && customerBalance.exPure === 0) {
         setBillPure(purity)
@@ -475,9 +463,7 @@ const Billing = () => {
         setCustomerPure(purity)
         setCustomerExPure(0)
         // setCustomerCashBalance(cash)
-
       }
-
     }
 
     setBillItems([...tempBill]);
@@ -529,12 +515,9 @@ const Billing = () => {
         // setCustomerCashBalance(cash)
         setCustomerExPure(0)
       }
-
-
       setCashTotal(cash)
       setTotalPure(purity)
-
-
+      
       const tempProduct = [...productWeight];
       tempProduct.push({ item_name, stock_id, touchValue, value });
       setProductWeight(tempProduct);
@@ -807,81 +790,7 @@ const Billing = () => {
     setTotalPure(Number(calculateTotal(billItems)));
   }, [billItems, customerClosing]);
 
-  useEffect(() => {
-    if (selectedProduct) {
-      const fetchWeight = async () => {
-        try {
-          const productsWeight = await axios.get(
-            `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`
-          );
-          setProductWeight(productsWeight.data.productsWeight);
-        } catch (err) {
-          if (err.response && err.response.status === 400) {
-            setProductWeight([]);
-            toast.info("No products found for this jewel type.", { autoClose: 2000 });
-          } else if (err.response && err.response.status === 500) {
-            toast.error("Server error while fetching product weights.", { autoClose: 3000 });
-          } else {
-            toast.error("Error fetching product weights.", { autoClose: 3000 });
-          }
-          console.error("Error fetching product weights:", err);
-        }
-      };
-      fetchWeight();
-
-    } else {
-      setProductWeight([]);
-    }
-  }, [selectedProduct]);
-
-  useEffect(() => {
-    const fetchClosingBalance = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/customer/closing/${selectedCustomer.customer_id}`
-        );
-        setCustomerClosing(response.data.closingBalance);
-      } catch (err) {
-        toast.error(`Error fetching customer closing balance: ${err.message}`, { autoClose: 3000 });
-        console.error("Error fetching closing balance:", err);
-        setCustomerClosing(0);
-      }
-    };
-    if (selectedCustomer) {
-      fetchClosingBalance();
-    } else {
-      setCustomerClosing(0);
-    }
-  }, [selectedCustomer]);
-
-  useEffect(() => {
-    setBillItems([]);
-    setRows([]);
-    setBalanceRow([]);
-
-    if (selectedProduct && selectedCustomer) {
-      const fetchWeightOnCustomerProductChange = async () => {
-        try {
-          const productsWeight = await axios.get(
-            `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getProductWeight/${selectedProduct.master_jewel_id}`
-          );
-          setProductWeight(productsWeight.data.productsWeight);
-        } catch (err) {
-          if (err.response && err.response.status === 400) {
-            setProductWeight([]);
-          } else if (err.response && err.response.status === 500) {
-            toast.error("Server Error: Could not fetch product weights on change.", { autoClose: 3000 });
-          } else {
-            toast.error("Error fetching products on customer/product change.", { autoClose: 3000 });
-          }
-          console.error("Error fetching product weights on change:", err);
-        }
-      };
-      fetchWeightOnCustomerProductChange();
-    } else {
-      setProductWeight([]);
-    }
-  }, [selectedCustomer, selectedProduct]);
+ 
   const handleKeyDown = (e, rowId, field) => {
     if (e.key === "Enter" ) {
       const fields = ["goldRate", "givenGold", "touch", "amount"];
@@ -933,7 +842,7 @@ const Billing = () => {
           <Autocomplete
             options={products}
             getOptionLabel={(option) => option.jewel_name || ""}
-            onChange={(event, newValue) => setSelectedProduct(newValue)}
+            onChange={(event, newValue) => handleSelectedProduct(newValue)}
             value={selectedProduct}
             renderInput={(params) => (
               <TextField
