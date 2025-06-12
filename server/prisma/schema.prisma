@@ -230,16 +230,22 @@ model ClosingBalance{
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 }
-model ScarpInfo{
-   id               Int @id @default(autoincrement())
-   lot_id           Int @unique
-   scarpDate        String 
-   itemTotal        Int
-   scarp            Float
-   totalScarp       Float
-   LotInfo         LotInfo?      @relation(fields: [lot_id], references: [id]) 
-  @@map("scarpInfo") 
+model ScarpInfo {
+  id             Int       @id @default(autoincrement())
+  lot_id         Int
+  process_id     Int
+  scarpDate      String 
+  itemTotal      Int
+  scarp          Float
+  touch          Float?
+  cuttingScarp   Float?
+  totalScarp     Float
+  LotInfo        LotInfo?  @relation(fields: [lot_id], references: [id]) 
+
+  @@unique([lot_id, process_id]) // ✅ composite unique index
+  @@map("scarpInfo")
 }
+
 model Receipt {
   receipt_id     Int      @id @default(autoincrement())
   customer_id    Int

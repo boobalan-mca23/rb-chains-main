@@ -29,7 +29,7 @@ const getStock=async(req,res)=>{
             const value=await prisma.attributeValue.findFirst({
                 where:{
                     items_id:stock.item_id,
-                    process_step_id:27
+                    process_step_id:26
                 },
                 select:{
                     touchValue:true,
