@@ -40,7 +40,7 @@ function Layout() {
       )}
       <Routes>
         <Route path="/" element={<Home />} />
-         <Route path="/process" element={<Process />} /> 
+        <Route path="/process" element={<Process />} /> 
         <Route path="/customer" element={<Customer />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/receiptvoucher" element={<Receipt />}></Route>
