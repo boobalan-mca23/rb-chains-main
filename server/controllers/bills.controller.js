@@ -144,7 +144,7 @@ const getCustomerBillWithDate = async (req, res) => {
        receiptWhere.customer_id = parseInt(customer_id);
 }
 
-
+ const combinedData=[]
     // Check if at least date or customer_id is provided
     if (fromDate && toDate || customer_id) {
       const allBill = await prisma.masterOrder.findMany({
@@ -158,7 +158,7 @@ const getCustomerBillWithDate = async (req, res) => {
         where: receiptWhere,
       });
 
-      const combinedData = [
+       combinedData = [
         ...allBill.map((bill) => ({
           type: "bill",
           date: new Date(bill.created_at),
@@ -176,9 +176,7 @@ const getCustomerBillWithDate = async (req, res) => {
       
       res.status(200).json(combinedData);
     } else {
-      res.status(400).json({
-        error: "Provide at least fromDate and toDate, or customer_id",
-      });
+      res.status(200).json(combinedData);
     }
   } catch (error) {
     console.error(error);
