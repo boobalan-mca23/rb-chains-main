@@ -223,7 +223,7 @@ const createLotInfo = async (req, res) => {
             finalData.push({"scarpBox":[{"mechine":mechine},{"cutting": cutting }] });
             console.log('finalLot in lot create controller ', finalData)
 
-      //  return res.status(200).json(finalData);
+       return res.status(200).json(finalData);
     }
 
 

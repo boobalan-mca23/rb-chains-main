@@ -23,7 +23,7 @@ function DailyReport() {
         { processName: "Machine", Weight: [{ bw: 0 }, { aw: 0 }, { lw: 0 }] },
         { processName: "Soldrine", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
         { processName: "Joint", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
-        { processName: "Cutting", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }, { pw: 0 }] },
+        { processName: "Cutting", Weight: [{ bw: 0 }, { aw: 0 },{ lw: 0 }, { pw: 0 }] },
         { processName: "Finishing", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
       ],
     },
@@ -142,14 +142,22 @@ function DailyReport() {
         if (attrValues && attrValues.length !== 0) {
           attrValues.forEach((attrItem, attrIndex) => {
             if (i === 6) {
-              const pureValue = processSteps?.[4]?.AttributeValues?.[attrIndex]?.value || 0;
+              const pureValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
               innerPure += Number(pureValue);
             }
             if (i !== 3) {
-              const scrapValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
-              const lossValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
-              innerScarp += Number(scrapValue);
-              innerLoss += Number(lossValue);
+              let lossValue ;
+              if (i === 6) {
+               lossValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
+               console.log('cutting loss',lossValue)
+               innerLoss += Number(lossValue);
+              }else{
+                 const scrapValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
+                 lossValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
+                 innerScarp += Number(scrapValue);
+                 innerLoss += Number(lossValue);
+              }
+             
             }
           });
         }
@@ -159,13 +167,14 @@ function DailyReport() {
       lossTotal += innerLoss;
       pureTotal += innerPure;
 
-      if (i !== 3) {
+      if (i !== 3 && i !==6) {
         tempCalculation[2].process[i - 1].Weight[2].sw = scarpTotal
         tempCalculation[2].process[i - 1].Weight[3].lw = lossTotal
       }
 
       if (i === 6) {
-        tempCalculation[2].process[i - 1].Weight[4].pw = pureTotal
+        tempCalculation[2].process[i - 1].Weight[2].lw = lossTotal
+        tempCalculation[2].process[i - 1].Weight[3].pw = pureTotal
       }
       console.log('tempCalculation for scw,losw', tempCalculation)
     }
@@ -184,6 +193,7 @@ function DailyReport() {
           return;
         }
         setItems([])
+       
         const res = await getLotDatewise(fromDate, toDate);
         console.log('DateWiseFilter', res.data.data);
         setItems(res.data.data)
@@ -199,11 +209,12 @@ function DailyReport() {
 
   const handleMachineCalculate = (response, calculation) => {
     const tempData = response;
+   
     const tempCal = [...calculation]
     let total = 0;
     for (const lot of tempData) {
-      if (lot.scarpValue) {
-        total += lot.scarpValue.totalScarp
+      if (lot.scarpBox) {
+        total += lot.scarpBox[0].mechine.totalScarp
       }
     }
     tempCal[2].process[2].Weight[2].lw = total
@@ -312,7 +323,7 @@ useEffect(() => {
                   let colSpanValue = 4;
 
                   if (process === "Cutting") {
-                    colSpanValue = 5;
+                    colSpanValue = 4;
                   }
                   if (process === "Wire") {
                     colSpanValue = 5
@@ -351,13 +362,12 @@ useEffect(() => {
                       </StyledTableCell>)}
 
 
-                    {process !== "Machine" ?
-                      (<StyledTableCell   >
-                        <b style={{fontSize:"11px"}}>Scarp</b>
-                      </StyledTableCell>) : ("")}
+                     {process === "Machine" || process === "Cutting" ? ("") : (<StyledTableCell >
+                      <b style={{fontSize:"11px"}}>Scarp</b>
+                    </StyledTableCell>)}
                     {process !== "Soldrine" ? (
                       <StyledTableCell  >
-                        <b style={{fontSize:"11px"}}>Loss</b>
+                        <b style={{fontSize:"11px"}} >{process === "Cutting" ? "Scarp" : "loss"}</b>
                       </StyledTableCell>) : (
                       <StyledTableCell>
                         <b style={{fontSize:"11px"}}>+</b>
@@ -449,7 +459,7 @@ useEffect(() => {
                                   : ""
                               }
                             </StyledTableCell>
-                            <StyledTableCell colSpan={25} />
+                            <StyledTableCell colSpan={24} />
 
                           </React.Fragment>
 
@@ -509,13 +519,13 @@ useEffect(() => {
                                     <StyledTableCell>
                                       {(lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeValues[key]?.value).toFixed(3)}
                                     </StyledTableCell>
-                                    {lotItem.data[lotArrIndex]?.process_name !== "mechine" ? (
+                                    {lotItem.data[lotArrIndex]?.process_name === "mechine" || lotItem.data[lotArrIndex]?.process_name === "cutting" ?null:(
                                       <StyledTableCell >
                                         {(lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value)}
-                                      </StyledTableCell>) : null}
+                                      </StyledTableCell>) }
 
                                     <StyledTableCell >
-                                      {lotItem.data[lotArrIndex]?.process_name === "mechine" ? (
+                                      {lotItem.data[lotArrIndex]?.process_name === "mechine" || lotItem.data[lotArrIndex]?.process_name === "cutting" ? (
 
                                         <p> {//loss Weight Mechine
                                           typeof lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value === "number"
@@ -540,8 +550,8 @@ useEffect(() => {
                                       <StyledTableCell>
 
                                         {
-                                          typeof lotItem.data[lotArrIndex]?.ProcessSteps[4]?.AttributeValues[key]?.value === "number"
-                                            ? lotItem.data[lotArrIndex].ProcessSteps[4].AttributeValues[key].value.toFixed(3)
+                                          typeof lotItem.data[lotArrIndex]?.ProcessSteps[3]?.AttributeValues[key]?.value === "number"
+                                            ? lotItem.data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value.toFixed(3)
                                             : ""
                                         }
 
@@ -570,7 +580,7 @@ useEffect(() => {
                         ))
                       }
 
-                      <TableRow >
+                       <TableRow >
                         <StyledTableCell colSpan={7}></StyledTableCell>
 
                         <StyledTableCell>-</StyledTableCell>
@@ -598,7 +608,7 @@ useEffect(() => {
                                   }
                                 </StyledTableCell>
                                 {
-                                  index !== 3 ? (<StyledTableCell></StyledTableCell>) : ("")
+                                  index === 3 || index === 6 ? (""):(<StyledTableCell></StyledTableCell>)
                                 }
                                 <StyledTableCell></StyledTableCell>
                                 {
@@ -612,7 +622,7 @@ useEffect(() => {
                         }
                         <StyledTableCell></StyledTableCell>
                         <StyledTableCell></StyledTableCell>
-                      </TableRow>
+                      </TableRow> 
                     </React.Fragment>) :
                     (
                       <React.Fragment>
@@ -625,7 +635,7 @@ useEffect(() => {
                                 <Grid item xs={6} display="flex" alignItems="center" width={200}>
                                   <TextField
                                     label="Date"
-                                    value={lotItem.scarpValue.scarpDate}
+                                    value={lotItem.scarpBox[0].mechine.scarpDate}
                                     InputProps={{
                                       style: { fontSize: "12px" }, // this controls the input value font
                                     }}
@@ -639,7 +649,7 @@ useEffect(() => {
                                 </Grid>
                                 <Grid item xs={6} >
                                   <TextField fullWidth label="ItemTotal"
-                                    value={lotItem.scarpValue.itemTotal}
+                                    value={lotItem.scarpBox[0].mechine.itemTotal}
                                     InputProps={{
                                       style: { fontSize: "12px" }, // this controls the input value font
                                     }}
@@ -654,7 +664,7 @@ useEffect(() => {
 
                               <Grid container item spacing={1}>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth value={lotItem.scarpValue?.scarp} label="Scarp" InputProps={{
+                                  <TextField fullWidth value={lotItem.scarpBox[0].mechine?.scarp} label="Scarp" InputProps={{
                                     style: { fontSize: "12px" },
                                     // this controls the input value font
                                   }}
@@ -663,7 +673,7 @@ useEffect(() => {
                                     }} />
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth label="Loss" value={(lotItem.scarpValue?.totalScarp).toFixed(3)} InputProps={{
+                                  <TextField fullWidth label="Loss" value={(lotItem.scarpBox[0].mechine?.totalScarp).toFixed(3)} InputProps={{
                                     style: { fontSize: "12px" }, // this controls the input value font
                                   }}
                                     InputLabelProps={{
@@ -673,7 +683,81 @@ useEffect(() => {
                               </Grid>
                             </Grid>
                           </StyledTableCell>
-                          <StyledTableCell colSpan={19}></StyledTableCell>
+                          <StyledTableCell colSpan={8}></StyledTableCell> 
+                           <StyledTableCell colSpan={4} >
+                            <Grid container spacing={1}>
+
+                              <Grid container item spacing={1} >
+                                <Grid item xs={6} display="flex" alignItems="center" width={200}>
+                                  <TextField
+                                    label="Date"
+                                    value={lotItem.scarpBox[1].cutting.scarpDate}
+                                    InputProps={{
+                                      style: { fontSize: "12px" }, // this controls the input value font
+                                    }}
+                                    InputLabelProps={{
+                                      style: { fontSize: "15px" }, // this controls the label font
+                                    }}
+                                    
+                                  >
+
+                                  </TextField>
+                                </Grid>
+                                <Grid item xs={6} >
+                                  <TextField fullWidth label="ItemTotal"
+                                    value={lotItem.scarpBox[1].cutting.itemTotal}
+                                    InputProps={{
+                                      style: { fontSize: "12px" }, // this controls the input value font
+                                    }}
+                                    InputLabelProps={{
+                                      style: { fontSize: "15px" }, // this controls the label font
+                                    }}
+
+                                  />
+                                </Grid>
+                              </Grid>
+
+
+                              <Grid container item spacing={1}>
+                                <Grid item xs={6}>
+                                  <TextField fullWidth value={lotItem.scarpBox[1].cutting?.scarp} label="Scarp" InputProps={{
+                                    style: { fontSize: "12px" },
+                                    // this controls the input value font
+                                  }}
+                                    InputLabelProps={{
+                                      style: { fontSize: "15px" }, // this controls the label font
+                                    }} />
+                                </Grid>
+                                <Grid item xs={6}>
+                                  <TextField fullWidth value={lotItem.scarpBox[1].cutting?.touch} label="Touch" InputProps={{
+                                    style: { fontSize: "12px" },
+                                    // this controls the input value font
+                                  }}
+                                    InputLabelProps={{
+                                      style: { fontSize: "15px" }, // this controls the label font
+                                    }} />
+                                </Grid>
+                                 <Grid item xs={6}>
+                                  <TextField fullWidth value={(lotItem.scarpBox[1].cutting?.cuttingScarp).toFixed(3)} label="CuttingScarp" InputProps={{
+                                    style: { fontSize: "12px" },
+                                    // this controls the input value font
+                                  }}
+                                    InputLabelProps={{
+                                      style: { fontSize: "15px" }, // this controls the label font
+                                    }} />
+                                </Grid>
+                                <Grid item xs={6}>
+                                  <TextField fullWidth label="Loss" value={(lotItem.scarpBox[1].cutting?.totalScarp).toFixed(3)} InputProps={{
+                                    style: { fontSize: "12px" }, // this controls the input value font
+                                  }}
+                                    InputLabelProps={{
+                                      style: { fontSize: "15px" }, // this controls the label font
+                                    }} />
+                                </Grid>
+                              </Grid>
+                            </Grid>
+                          </StyledTableCell>
+                          <StyledTableCell colSpan={6}></StyledTableCell> 
                         </TableRow>
                       </React.Fragment>
 
@@ -687,9 +771,9 @@ useEffect(() => {
 
 
 
-            </TableBody>
+            </TableBody> 
             <TableFooter>
-              <StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>RawGold:{calculation[0].rawGold}</p></StyledTableCell>
+              <StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>RawGold:{(calculation[0].rawGold).toFixed(3)}</p></StyledTableCell>
               <StyledTableCell><p ></p></StyledTableCell>
               {
                 calculation[2].process.map((item, key) => (
@@ -708,11 +792,11 @@ useEffect(() => {
 
                       </>) : ("")}
                     {
-                      item.processName !== "Machine" ? (<StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>) : ("")
+                      item.processName === "Machine" || item.processName === "Cutting"  ?(""):(<StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>)
                     }
-                    <StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{item.processName === "Machine" ? (item.Weight[2].lw).toFixed(3) : (item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
+                    <StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{item.processName === "Machine" || item.processName === "Cutting" ? (item.Weight[2].lw).toFixed(3) : (item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
                     {
-                      item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{(item.Weight[4].pw).toFixed(3)}</p></StyledTableCell>) : ("")
+                      item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{(item.Weight[3].pw).toFixed(3)}</p></StyledTableCell>) : ("")
                     }
 
 
@@ -722,7 +806,7 @@ useEffect(() => {
               }
               <StyledTableCell></StyledTableCell>
               <StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{(calculation[3].lotTotal).toFixed(3)}</p></StyledTableCell>
-            </TableFooter>
+            </TableFooter> 
           </Table>
 
         </div>
