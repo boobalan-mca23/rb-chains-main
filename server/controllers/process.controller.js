@@ -82,7 +82,7 @@ const getAllLot = async (req, res) => {
     const finalData = []
     console.log('lotInfo', allLotData)
     if (allLotData.length >= 1) { // if lot data empty return [] array
-       for (const [index, item] of allLotData.entries()) {
+      for (const [index, item] of allLotData.entries()) {
         if (finalData.length === 0) {
           finalData.push(item);
         } else {
@@ -91,7 +91,7 @@ const getAllLot = async (req, res) => {
           } else {
             const scarpProcesses = await prisma.scarpInfo.findMany({
               where: {
-                scarpDate:finalData[finalData.length - 1].lotDate,
+                scarpDate: finalData[finalData.length - 1].lotDate,
                 process_id: { in: [3, 6] },
               },
               orderBy: {
@@ -102,7 +102,7 @@ const getAllLot = async (req, res) => {
 
             const mechine = scarpProcesses.find(item => item.process_id === 3);
             const cutting = scarpProcesses.find(item => item.process_id === 6);
-            finalData.push({"scarpBox":[{"mechine":mechine},{"cutting": cutting }] });
+            finalData.push({ "scarpBox": [{ "mechine": mechine }, { "cutting": cutting }] });
             finalData.push(item);
           }
         }
@@ -111,22 +111,22 @@ const getAllLot = async (req, res) => {
       // After the loop, push scarpValue for last lot
       const lastLotDate = finalData[finalData.length - 1].lotDate;
       const lastScarpProcess = await prisma.scarpInfo.findMany({
-              where: {
-                scarpDate:lastLotDate,
-                process_id: { in: [3, 6] },
-              },
-              orderBy: {
-                id: 'asc', //  ensures you get oldest records first
-              },
-              take: 2       //  limits the result to first 2
-            });
+        where: {
+          scarpDate: lastLotDate,
+          process_id: { in: [3, 6] },
+        },
+        orderBy: {
+          id: 'asc', //  ensures you get oldest records first
+        },
+        take: 2       //  limits the result to first 2
+      });
 
-            const mechine = lastScarpProcess.find(item => item.process_id === 3);
-            const cutting = lastScarpProcess.find(item => item.process_id === 6);
-            finalData.push({"scarpBox":[{"mechine":mechine},{"cutting": cutting }] });
-     
-      
-    
+      const mechine = lastScarpProcess.find(item => item.process_id === 3);
+      const cutting = lastScarpProcess.find(item => item.process_id === 6);
+      finalData.push({ "scarpBox": [{ "mechine": mechine }, { "cutting": cutting }] });
+
+
+
     }
 
 
@@ -193,7 +193,7 @@ const saveProcess = async (req, res) => {
 
   try {
     //   const {lotdata} = req.body;
-    
+
     const lotData = req.body.lotdata
 
     if (!req.body.lotdata) {
@@ -203,7 +203,7 @@ const saveProcess = async (req, res) => {
     for (const lot of lotData) {
       lotId = lot.lotid;
       if (lot.scarpValue) {
-       
+
       }
 
       if (lot.data) {
@@ -223,54 +223,54 @@ const saveProcess = async (req, res) => {
               let existingChildItems = [];
 
               for (const attrValue of step.AttributeValues) {
-              
-               
-                if(step.process_id ===3){
-                  
-                  if(attrValue.process_step_id===6 && attrValue.attribute_id === 2){ // wiring Process Before weight
 
-                      const existingAttribute = await prisma.attributeValue.findFirst({
+
+                if (step.process_id === 3) {
+
+                  if (attrValue.process_step_id === 6 && attrValue.attribute_id === 2) { // wiring Process Before weight
+
+                    const existingAttribute = await prisma.attributeValue.findFirst({
                       where: {
-                       process_step_id: attrValue.process_step_id,
-                       lot_id: attrValue.lot_id,
-                       attribute_id: attrValue.attribute_id,
-                       items_id: attrValue.items_id
-                    },
+                        process_step_id: attrValue.process_step_id,
+                        lot_id: attrValue.lot_id,
+                        attribute_id: attrValue.attribute_id,
+                        items_id: attrValue.items_id
+                      },
 
-                   });
+                    });
 
                     if (!existingAttribute) { // Create new item 
-                    
+
                       await prisma.attributeValue.create({
-                    data: {
-                      process_step_id: attrValue.process_step_id,
-                      lot_id: attrValue.lot_id,
-                      attribute_id: attrValue.attribute_id,
-                      items_id: attrValue.items_id,
-                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                     
-                    },
-                   });
+                        data: {
+                          process_step_id: attrValue.process_step_id,
+                          lot_id: attrValue.lot_id,
+                          attribute_id: attrValue.attribute_id,
+                          items_id: attrValue.items_id,
+                          value: attrValue.value === null ? null : parseFloat(attrValue.value),
 
-                  }else{
+                        },
+                      });
 
-                    await prisma.attributeValue.updateMany({
-                    where: {
-                      process_step_id: attrValue.process_step_id,
-                      lot_id: attrValue.lot_id,
-                      attribute_id: attrValue.attribute_id,
-                      items_id: attrValue.items_id
-                    },
-                    data: {
-                      value: attrValue.value === null ? null : parseFloat(attrValue.value),
-                    },
-                     });
+                    } else {
 
-                  }
+                      await prisma.attributeValue.updateMany({
+                        where: {
+                          process_step_id: attrValue.process_step_id,
+                          lot_id: attrValue.lot_id,
+                          attribute_id: attrValue.attribute_id,
+                          items_id: attrValue.items_id
+                        },
+                        data: {
+                          value: attrValue.value === null ? null : parseFloat(attrValue.value),
+                        },
+                      });
+
+                    }
 
                   }
                 }
-                if (attrValue.items_id === null && attrValue.attribute_id === 3) {
+                if (attrValue.items_id === null && attrValue.attribute_id === 3) { // wiring after weight created
 
                   if (step.process_id === 3) { // child items only created at wiring process
 
@@ -334,7 +334,7 @@ const saveProcess = async (req, res) => {
                       },
                     });
                     ++index;
-                        console.log('process_step_id',attrValue.process_step_id)
+                    console.log('process_step_id', attrValue.process_step_id)
 
                     if (attrValue.process_step_id === 26) {
                       console.log('stockkkkk')
@@ -347,7 +347,7 @@ const saveProcess = async (req, res) => {
                       });
 
                       const existingChildItems = childItems.map(item => item.item_id);
-                    console.log('stock created time',existingChildItems)
+                      console.log('stock created time', existingChildItems)
                       for (const itemId of existingChildItems) {
                         const validAttributes = await prisma.attributeValue.findMany({
                           where: {
@@ -386,7 +386,7 @@ const saveProcess = async (req, res) => {
                         }
                       }
                     }
-                    
+
 
                   }
                 }
@@ -419,7 +419,7 @@ const saveProcess = async (req, res) => {
 
 
                     ++index;
-      
+
                   } else {
                     await prisma.attributeValue.updateMany({
                       where: {
@@ -556,7 +556,7 @@ const saveProcess = async (req, res) => {
                   });
                 }
                 else { // updateItem
-                  
+
                   await prisma.attributeValue.updateMany({
                     where: {
                       process_step_id: attrValue.process_step_id,
@@ -571,7 +571,7 @@ const saveProcess = async (req, res) => {
 
                     },
                   });
-                
+
                 }
               }
             }
@@ -583,19 +583,31 @@ const saveProcess = async (req, res) => {
 
 
       } else {
-        // update scarpData
+      
+        // Update mechine
         await prisma.scarpInfo.updateMany({
-          where: {
-            id: lot.scarpValue.id
-          },
+          where: { id: lot.scarpBox[0].mechine.id },
           data: {
-            itemTotal: lot.scarpValue?.itemTotal ?? 0,
-            scarp: lot.scarpValue?.scarp ?? 0,
-            touch: lot.scarpValue?.touch ?? 0,      
-            cuttingScarp:lot.scarpValue?.cuttingScarp??0,
-            totalScarp: lot.scarpValue?.totalScarp ?? 0
+            itemTotal: lot.scarpBox[0].mechine.itemTotal ?? 0,
+            scarp: lot.scarpBox[0].mechine.scarp ?? 0,
+            touch: lot.scarpBox[0].mechine.touch ?? 0,
+            cuttingScarp: lot.scarpBox[0].mechine.cuttingScarp ?? 0,
+            totalScarp: lot.scarpBox[0].mechine.totalScarp ?? 0,
           }
-        })
+        });
+
+        // Update cutting
+        await prisma.scarpInfo.updateMany({
+          where: { id: lot.scarpBox[1].cutting.id },
+          data: {
+            itemTotal: lot.scarpBox[1].cutting.itemTotal ?? 0,
+            scarp: lot.scarpBox[1].cutting.scarp ?? 0,
+            touch: lot.scarpBox[1].cutting.touch ?? 0,
+            cuttingScarp: lot.scarpBox[1].cutting.cuttingScarp ?? 0,
+            totalScarp: lot.scarpBox[1].cutting.totalScarp ?? 0,
+          }
+        });
+
       }
 
     }
@@ -653,9 +665,9 @@ const saveProcess = async (req, res) => {
 
     }
     const finalData = []
-    
+
     if (allLotData.length >= 1) {
-     
+
       console.log('lotInfo', allLotData)
       for (const [index, item] of allLotData.entries()) {
         if (finalData.length === 0) {
@@ -666,7 +678,7 @@ const saveProcess = async (req, res) => {
           } else {
             const scarpProcesses = await prisma.scarpInfo.findMany({
               where: {
-                scarpDate:finalData[finalData.length - 1].lotDate,
+                scarpDate: finalData[finalData.length - 1].lotDate,
                 process_id: { in: [3, 6] },
               },
               orderBy: {
@@ -677,7 +689,7 @@ const saveProcess = async (req, res) => {
 
             const mechine = scarpProcesses.find(item => item.process_id === 3);
             const cutting = scarpProcesses.find(item => item.process_id === 6);
-            finalData.push({"scarpBox":[{"mechine":mechine},{"cutting": cutting }] });
+            finalData.push({ "scarpBox": [{ "mechine": mechine }, { "cutting": cutting }] });
             finalData.push(item);
           }
         }
@@ -686,28 +698,28 @@ const saveProcess = async (req, res) => {
       // After the loop, push scarpValue for last lot
       const lastLotDate = finalData[finalData.length - 1].lotDate;
       const lastScarpProcess = await prisma.scarpInfo.findMany({
-              where: {
-                scarpDate:lastLotDate,
-                process_id: { in: [3, 6] },
-              },
-              orderBy: {
-                id: 'asc', //  ensures you get oldest records first
-              },
-              take: 2       //  limits the result to first 2
-            });
+        where: {
+          scarpDate: lastLotDate,
+          process_id: { in: [3, 6] },
+        },
+        orderBy: {
+          id: 'asc', //  ensures you get oldest records first
+        },
+        take: 2       //  limits the result to first 2
+      });
 
-            const mechine = lastScarpProcess.find(item => item.process_id === 3);
-            const cutting = lastScarpProcess.find(item => item.process_id === 6);
-           finalData.push({"scarpBox":[{"mechine":mechine},{"cutting": cutting }] });
-     
-      
+      const mechine = lastScarpProcess.find(item => item.process_id === 3);
+      const cutting = lastScarpProcess.find(item => item.process_id === 6);
+      finalData.push({ "scarpBox": [{ "mechine": mechine }, { "cutting": cutting }] });
+
+
     }
 
 
-   
-   console.log('finalLot in lot create controller ', finalData)
 
-    // res.status(200).json({ data: finalData });
+    console.log('finalLot in lot create controller ', finalData)
+
+    res.status(200).json({ data: finalData });
   } catch (error) {
     console.error("Error creating process:", error);
     return res.status(500).json({ message: "Internal Server Error", error });
@@ -872,7 +884,7 @@ const getLotsByDateRange = async (req, res) => {
           } else {
             const scarpProcesses = await prisma.scarpInfo.findMany({
               where: {
-                scarpDate:finalData[finalData.length - 1].lotDate,
+                scarpDate: finalData[finalData.length - 1].lotDate,
                 process_id: { in: [3, 6] },
               },
               orderBy: {
@@ -883,7 +895,7 @@ const getLotsByDateRange = async (req, res) => {
 
             const mechine = scarpProcesses.find(item => item.process_id === 3);
             const cutting = scarpProcesses.find(item => item.process_id === 6);
-            finalData.push({"scarpBox":[{"mechine":mechine},{"cutting": cutting }] });
+            finalData.push({ "scarpBox": [{ "mechine": mechine }, { "cutting": cutting }] });
             finalData.push(item);
           }
         }
@@ -892,29 +904,29 @@ const getLotsByDateRange = async (req, res) => {
       // After the loop, push scarpValue for last lot
       const lastLotDate = finalData[finalData.length - 1].lotDate;
       const lastScarpProcess = await prisma.scarpInfo.findMany({
-              where: {
-                scarpDate:lastLotDate,
-                process_id: { in: [3, 6] },
-              },
-              orderBy: {
-                id: 'asc', //  ensures you get oldest records first
-              },
-              take: 2       //  limits the result to first 2
-            });
+        where: {
+          scarpDate: lastLotDate,
+          process_id: { in: [3, 6] },
+        },
+        orderBy: {
+          id: 'asc', //  ensures you get oldest records first
+        },
+        take: 2       //  limits the result to first 2
+      });
 
-            const mechine = lastScarpProcess.find(item => item.process_id === 3);
-            const cutting = lastScarpProcess.find(item => item.process_id === 6);
-            finalData.push({"scarpBox":[{"mechine":mechine},{"cutting": cutting }] });
-     
-      
-    
+      const mechine = lastScarpProcess.find(item => item.process_id === 3);
+      const cutting = lastScarpProcess.find(item => item.process_id === 6);
+      finalData.push({ "scarpBox": [{ "mechine": mechine }, { "cutting": cutting }] });
 
-    
+
+
+
+
     }
 
 
     // After the loop, push scarpValue for last lot
-    
+
 
 
     console.log('finalLot', finalData)

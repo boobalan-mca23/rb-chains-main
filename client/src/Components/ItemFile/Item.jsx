@@ -506,6 +506,7 @@ const Item = () => {
             onChange={(e) => setJewelType({ ...jewelType, name: e.target.value })}
             fullWidth
             margin="normal"
+            
             autoComplete="off"
             onKeyDown={(e)=>{
               if(e.key==="Enter"){

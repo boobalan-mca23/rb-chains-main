@@ -50,24 +50,25 @@ const printRef = useRef();
   const navigate = useNavigate();
 useEffect(() => {
     // Get current date in UTC
-    const today = new Date();
+    // const today = new Date();
 
-    // Convert to Indian Standard Time (IST)
-    const offset = 5.5 * 60; // IST is UTC +5:30
-    const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
+    // // Convert to Indian Standard Time (IST)
+    // const offset = 5.5 * 60; // IST is UTC +5:30
+    // const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
 
-    // Extract date parts (year, month, day)
-    const year = indiaTime.getFullYear();
-    const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-    const day = String(indiaTime.getDate()).padStart(2, '0');
+    // // Extract date parts (year, month, day)
+    // const year = indiaTime.getFullYear();
+    // const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    // const day = String(indiaTime.getDate()).padStart(2, '0');
 
-    // Format the date as YYYY-MM-DD
-    const currentDate = `${year}-${month}-${day}`;
+    // // Format the date as YYYY-MM-DD
+    // const currentDate = `${year}-${month}-${day}`;
 
-    console.log('currentDate in IST:', currentDate);
-
-    setFromDate(currentDate);
-    setToDate(currentDate);
+    // console.log('currentDate in IST:', currentDate);
+    const now = new Date();
+    const formattedDate = now.toISOString().split("T")[0];
+    setFromDate(formattedDate);
+    setToDate(formattedDate);
   }, []);
 
   useEffect(() => {

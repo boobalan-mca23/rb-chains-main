@@ -197,17 +197,22 @@ const ProcessTable = () => {
         if (attrValues && attrValues.length !== 0) {
           attrValues.forEach((attrItem, attrIndex) => {
             if (i === 6) {
-              const pureValue = processSteps?.[4]?.AttributeValues?.[attrIndex]?.value || 0;
+              const pureValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
               innerPure += Number(pureValue);
             }
             if (i !== 3) {
-              let scrapValue;
-              if (i !== 6) {
-                scrapValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
+              let lossValue ;
+              if (i === 6) {
+               lossValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
+               console.log('cutting loss',lossValue)
+               innerLoss += Number(lossValue);
+              }else{
+                 const scrapValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
+                 lossValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
+                 innerScarp += Number(scrapValue);
+                 innerLoss += Number(lossValue);
               }
-              const lossValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
-              innerScarp += Number(scrapValue);
-              innerLoss += Number(lossValue);
+             
             }
           });
         }
@@ -217,12 +222,13 @@ const ProcessTable = () => {
       lossTotal += innerLoss;
       pureTotal += innerPure;
 
-      if (i !== 3) {
+      if (i !== 3 && i !==6) {
         tempCalculation[2].process[i - 1].Weight[2].sw = scarpTotal
         tempCalculation[2].process[i - 1].Weight[3].lw = lossTotal
       }
 
       if (i === 6) {
+        tempCalculation[2].process[i - 1].Weight[2].lw = lossTotal
         tempCalculation[2].process[i - 1].Weight[3].pw = pureTotal
       }
       console.log('tempCalculation for scw,losw', tempCalculation)
@@ -261,7 +267,7 @@ const ProcessTable = () => {
     //when user change touch value that time also we need to change pure weight
     if (lotData[0].data[6].ProcessSteps[2].AttributeValues.length != 0) {
       lotData[0].data[6].ProcessSteps[2].AttributeValues.forEach((item, index) => {
-        lotData[0].data[6].ProcessSteps[4].AttributeValues[index].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[6].ProcessSteps[2].AttributeValues[index].value / 100
+        lotData[0].data[6].ProcessSteps[3].AttributeValues[index].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[6].ProcessSteps[2].AttributeValues[index].value / 100
       })
     }
     tempData.splice(index, 1, lotData[0]);
@@ -472,7 +478,7 @@ const ProcessTable = () => {
       }
       //Loss
 
-      lotData[0].data[2].ProcessSteps[3].AttributeValues[0].value = lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value - afterTotal
+      lotData[0].data[2].ProcessSteps[3].AttributeValues[0].value =lotData[0].data[2].ProcessSteps[0].AttributeValues.length===1? lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value - afterTotal:0-afterTotal
       lotData[0].data[2].ProcessSteps[3].AttributeValues[0].index = childIndex
       // next process before 
       lotData[0].data[3].ProcessSteps[0].AttributeValues[childIndex].value = parseFloat(itemWeight);
@@ -486,7 +492,7 @@ const ProcessTable = () => {
       for (const loss of lotData[0].data[2].ProcessSteps[1].AttributeValues) {
         afterTotal += loss.value
       }
-      lotData[0].data[2].ProcessSteps[3].AttributeValues[childIndex].value = (lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value - parseFloat(afterTotal)) - parseFloat(itemWeight)
+      lotData[0].data[2].ProcessSteps[3].AttributeValues[childIndex].value = lotData[0].data[2].ProcessSteps[0].AttributeValues.length===1 ?(lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value - parseFloat(afterTotal)) - parseFloat(itemWeight):0
     }
 
     tempData.splice(lotIndex, 1, lotData[0]);
@@ -558,6 +564,38 @@ const ProcessTable = () => {
    
   };
 
+  const handleCuttingScarp=(value,date,option)=>{
+ const updatedItems = [...items]
+    for(let i=0;i<updatedItems.length;i++){
+        if(updatedItems[i]?.scarpBox){
+          if(option==="scarp"){
+            if(updatedItems[i]?.scarpBox[1]?.cutting?.scarpDate === date){
+               updatedItems[i].scarpBox[1].cutting.scarp=parseFloat(value)
+            }
+          }else{
+            updatedItems[i].scarpBox[1].cutting.touch=parseFloat(value)
+            updatedItems[i].scarpBox[1].cutting.cuttingScarp= updatedItems[i].scarpBox[1].cutting.scarp*parseFloat(value)/100
+            // add total scarpure
+
+             const lotData = updatedItems.filter((item, index) => item.lotDate === String(date))
+             let total = 0;
+             for (const lot of lotData) {
+                 lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
+                     total += item.value
+                   })}
+             
+                for (const lotScarp of updatedItems) {
+                if (lotScarp.scarpBox && lotScarp.scarpBox[1].cutting.scarpDate === String(date)) {
+                      const scarp = Number(lotScarp.scarpBox[1].cutting.cuttingScarp);
+                      lotScarp.scarpBox[1].cutting.totalScarp = total - (isNaN(scarp) ? 0 : scarp);
+                  }}      
+          }
+            
+        }}
+
+      setItems(updatedItems);  
+  }
+
   const handleSave = async () => {
     try {
 
@@ -615,8 +653,8 @@ const ProcessTable = () => {
     const tempCal = [...calculation]
     let total = 0;
     for (const lot of tempData) {
-      if (lot.scarpValue) {
-        total += lot.scarpValue.totalScarp
+      if (lot.scarpBox) {
+        total += lot.scarpBox[0].mechine.totalScarp
       }
     }
     tempCal[2].process[2].Weight[2].lw = total
@@ -653,7 +691,7 @@ const ProcessTable = () => {
               lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key
               lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value / 100
               lotData[0].data[lotArrIndex].ProcessSteps[3].AttributeValues[key].index = key
-               handleCuttingScarpTotal(lotDate)
+               handleScarpBoxTotal(lotDate,process_id)
           } else {
             lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value = lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value
             lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key
@@ -674,7 +712,7 @@ const ProcessTable = () => {
         if (process_id === 4) {
           lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value = lotData[0].data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value - lotData[0].data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value
           lotData[0].data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key;
-          handleMechineScarpTotal(lotDate)// calculate totalScarp
+          handleScarpBoxTotal(lotDate,process_id)// calculate totalScarp
 
         }
         tempData.splice(lotIndex, 1, lotData[0]);
@@ -715,37 +753,33 @@ const ProcessTable = () => {
     }
 
   }
-  const handleCuttingScarpTotal = (lotDate) => {
+ 
+  const  handleScarpBoxTotal = (lotDate,process_id) => {
     const tempData = [...items]
     const lotData = tempData.filter((item, index) => item.lotDate === String(lotDate))
     let total = 0;
     for (const lot of lotData) {
-      lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
-        total += item.value
-      })
+       if(process_id===4){// calculate mechine loss total
+          lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
+           total += item.value
+        })
+       }else{// calculate cutting scarppure total
+        lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
+           total += item.value
+        })
+       }
     }
     //assign totalScarp value
     for (const lotScarp of tempData) {
-      if (lotScarp.scarpBox && lotScarp.scarpBox[1].cutting.scarpDate === String(lotDate)) {
+       if(process_id===4){
+         if (lotScarp.scarpBox && lotScarp.scarpBox[0].mechine.scarpDate === String(lotDate)) {
+         lotScarp.scarpBox[0].mechine.totalScarp = total
+        }
+       }else{
+         if (lotScarp.scarpBox && lotScarp.scarpBox[1].cutting.scarpDate === String(lotDate)) {
          lotScarp.scarpBox[1].cutting.totalScarp = total
       }
-    }
-    setItems(tempData)
-  }
-  const  handleMechineScarpTotal = (lotDate) => {
-    const tempData = [...items]
-    const lotData = tempData.filter((item, index) => item.lotDate === String(lotDate))
-    let total = 0;
-    for (const lot of lotData) {
-      lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
-        total += item.value
-      })
-    }
-    //assign totalScarp value
-    for (const lotScarp of tempData) {
-      if (lotScarp.scarpBox && lotScarp.scarpBox[0].mechine.scarpDate === String(lotDate)) {
-         lotScarp.scarpBox[0].mechine.totalScarp = total
-      }
+       }
     }
     setItems(tempData)
   }
@@ -844,11 +878,12 @@ const ProcessTable = () => {
         alert('Your Date Order was Wrong');
         return;
       }
-
+      setItems([])
+      setCalculation([])
       const res = await getLotDatewise(fromDate, toDate);
       console.log('DateWiseFilter', res.data.data);
       // const tempRes=handleLotChildItem(res.data.data)
-
+ 
       setItems(res.data.data)
       setCalculation(docalculation(res.data.data))
       handleMachineCalculate(items, calculation)
@@ -874,24 +909,12 @@ const ProcessTable = () => {
 
   useEffect(() => {
     // Get current date in UTC
-    const today = new Date();
+    const now = new Date();
+    const formattedDate = now.toISOString().split("T")[0];
+    setFromDate(formattedDate);
+    setToDate(formattedDate);
 
-    // Convert to Indian Standard Time (IST)
-    const offset = 5.5 * 60; // IST is UTC +5:30
-    const indiaTime = new Date(today.getTime() + offset * 60000); // Adjust the time by the offset
-
-    // Extract date parts (year, month, day)
-    const year = indiaTime.getFullYear();
-    const month = String(indiaTime.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-    const day = String(indiaTime.getDate()).padStart(2, '0');
-
-    // Format the date as YYYY-MM-DD
-    const currentDate = `${year}-${month}-${day}`;
-
-    console.log('currentDate in IST:', currentDate);
-
-    setFromDate(currentDate);
-    setToDate(currentDate);
+  
   }, []);
 
 
@@ -1149,7 +1172,7 @@ const ProcessTable = () => {
                                   <StyledTableCell>
                                     <StyledInput 
                                       value={
-                                        lotItem.data[lotArrIndex + 1]?.ProcessSteps[2]?.AttributeValues[0]?.value || ''
+                                        lotItem.data[lotArrIndex + 1]?.ProcessSteps[2]?.AttributeValues[0]?.value 
                                       }
                                       onChange={(e) => handleSingleItem(lotArrIndex, lotItem.lotid,
                                         lotItem.data[lotArrIndex + 1]?.ProcessSteps[2]?.process_id,
@@ -1540,10 +1563,15 @@ const ProcessTable = () => {
 
                               <Grid container item spacing={1}>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth size="small" value={lotItem.scarpBox[1].cutting?.scarp} label="Scarp" type="number"  autoComplete="off" />
+                                  <TextField fullWidth size="small" value={lotItem.scarpBox[1].cutting?.scarp} label="Scarp" type="number" 
+                                   onChange={(e) => {handleCuttingScarp(e.target.value, lotItem.scarpBox[1].cutting?.scarpDate,"scarp") }} 
+                                  autoComplete="off" />
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth size="small" value={lotItem.scarpBox[1].cutting?.touch} label="touch" type="number"  autoComplete="off" />
+                                  <TextField fullWidth size="small" value={lotItem.scarpBox[1].cutting?.touch} label="touch" 
+                                  type="number"
+                                  onChange={(e) => {handleCuttingScarp(e.target.value, lotItem.scarpBox[1].cutting?.scarpDate,"touch") }} 
+                                  autoComplete="off" />
                                 </Grid>
                                 <Grid item xs={6}>
                                   <TextField fullWidth size="small" value={lotItem.scarpBox[1].cutting?.cuttingScarp} label="cuttingScarp" type="number"  autoComplete="off" />
@@ -1564,7 +1592,7 @@ const ProcessTable = () => {
                 ))
               }
             </TableBody> 
-            {/* <TableFooter>
+             <TableFooter>
               <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>Total RawGold:{(calculation[0].rawGold).toFixed(3)}</p></StyledTableCell>
               <StyledTableCell><p ></p></StyledTableCell>
               {
@@ -1584,11 +1612,11 @@ const ProcessTable = () => {
                         <StyledTableCell></StyledTableCell>
                       </>) : ("")}
                     {
-                      item.processName !== "Machine" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br />ScarpTotal:{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>) : ("")
+                      item.processName === "Machine" || item.processName === "Cutting" ? (""):(<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br />ScarpTotal:{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>)
                     }
-                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br />LossTotal:{item.processName === "Machine" ? (item.Weight[2].lw).toFixed(3) : (item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
+                    <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br />LossTotal:{item.processName === "Machine" || item.processName === "Cutting" ? (item.Weight[2].lw).toFixed(3) : (item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
                     {
-                      item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br />PureTotal:{(item.Weight[4].pw).toFixed(3)}</p></StyledTableCell>) : ("")
+                      item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>{item.processName}<br />PureTotal:{(item.Weight[3].pw).toFixed(3)}</p></StyledTableCell>) : ("")
                     }
 
 
@@ -1598,7 +1626,7 @@ const ProcessTable = () => {
               }
               <StyledTableCell></StyledTableCell>
               <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>LotTotal:{(calculation[3].lotTotal).toFixed(3)}</p></StyledTableCell>
-            </TableFooter> */}
+            </TableFooter> 
           </Table>
           <ToastContainer />
         </div>
@@ -1658,7 +1686,7 @@ const ProcessTable = () => {
             <Button onClick={handleClose} sx={{ mr: 2 }}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleSave} ref={saveRef}>
+            <Button variant="contained" onClick={handleSave} ref={saveRef} >
               Save
             </Button>
           </Box>
