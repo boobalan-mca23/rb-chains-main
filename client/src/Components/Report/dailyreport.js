@@ -193,7 +193,24 @@ function DailyReport() {
           return;
         }
         setItems([])
-       
+        setCalculation([
+    { rawGold: 0 },
+    { touchValue: 0 },
+    {
+      process: [
+        { processName: "Melting", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
+        { processName: "Wire", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
+        { processName: "Machine", Weight: [{ bw: 0 }, { aw: 0 }, { lw: 0 }] },
+        { processName: "Soldrine", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
+        { processName: "Joint", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
+        { processName: "Cutting", Weight: [{ bw: 0 }, { aw: 0 },{ lw: 0 }, { pw: 0 }] },
+        { processName: "Finishing", Weight: [{ bw: 0 }, { aw: 0 }, { sw: 0 }, { lw: 0 }] },
+      ],
+    },
+    {
+      lotTotal: 0
+    }
+  ])
         const res = await getLotDatewise(fromDate, toDate);
         console.log('DateWiseFilter', res.data.data);
         setItems(res.data.data)
