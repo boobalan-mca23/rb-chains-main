@@ -144,7 +144,7 @@ const getCustomerBillWithDate = async (req, res) => {
        receiptWhere.customer_id = parseInt(customer_id);
 }
 
- const combinedData=[]
+    let combinedData=[]
     // Check if at least date or customer_id is provided
     if (fromDate && toDate || customer_id) {
       const allBill = await prisma.masterOrder.findMany({

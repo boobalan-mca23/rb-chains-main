@@ -571,6 +571,20 @@ const ProcessTable = () => {
           if(option==="scarp"){
             if(updatedItems[i]?.scarpBox[1]?.cutting?.scarpDate === date){
                updatedItems[i].scarpBox[1].cutting.scarp=parseFloat(value)
+               updatedItems[i].scarpBox[1].cutting.cuttingScarp= parseFloat(value)*updatedItems[i].scarpBox[1].cutting.touch/100
+               const lotData = updatedItems.filter((item, index) => item.lotDate === String(date))
+             let total = 0;
+             for (const lot of lotData) {
+                 lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
+                     total += item.value
+                   })}
+             
+                for (const lotScarp of updatedItems) {
+                if (lotScarp.scarpBox && lotScarp.scarpBox[1].cutting.scarpDate === String(date)) {
+                      const scarp = Number(lotScarp.scarpBox[1].cutting.cuttingScarp);
+                      lotScarp.scarpBox[1].cutting.totalScarp = total - (isNaN(scarp) ? 0 : scarp);
+                  }}    
+
             }
           }else{
             updatedItems[i].scarpBox[1].cutting.touch=parseFloat(value)
@@ -879,7 +893,7 @@ const ProcessTable = () => {
         return;
       }
       setItems([])
-      setCalculation([])
+     
       const res = await getLotDatewise(fromDate, toDate);
       console.log('DateWiseFilter', res.data.data);
       // const tempRes=handleLotChildItem(res.data.data)
@@ -1227,7 +1241,14 @@ const ProcessTable = () => {
                               </Button>
                             </StyledTableCell>
 
-                            <StyledTableCell colSpan={24} style={{ borderRight: "3px solid black" }} />
+                            
+                             <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
+                             <StyledTableCell colSpan={3} style={{ borderRight: "3px solid black" }} />
+                             <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
+                             <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
+                             <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
+                             <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} /> 
+                              <StyledTableCell style={{ borderRight: "3px solid black" }} /> 
 
                           </React.Fragment>
                         }

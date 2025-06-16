@@ -659,7 +659,7 @@ useEffect(() => {
           </TableHead> */}
 
          {
-          selectedCustomer &&(<Box
+          billInfo.length>=1 &&(<Box
             sx={{
               display: "flex",
               justifyContent: "center",
