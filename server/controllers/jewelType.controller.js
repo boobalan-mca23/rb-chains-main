@@ -32,6 +32,48 @@ const deleteJewelType =async (req,res)=>{
   const {master_jewel_id} = req.params;
   console.log(`Attempting to delete JewelType with ID: ${master_jewel_id}`)
 try{
+  let itemIds=await prisma.masterJewelItemMapper.findMany({
+    where:{
+      master_jewel_id:parseInt(master_jewel_id)
+    },
+    select:{
+      item_id:true
+    }
+  })
+let processStep = [];
+  
+  if(itemIds.length>=1){
+    
+    for(const id of itemIds){
+     let result=await prisma.attributeValue.findMany({
+      where:{
+        items_id:id.item_id
+      },
+      select:{
+        process_step_id:true,
+        items_id:true
+      }
+    })
+     processStep = processStep.concat(result);
+   }
+  }
+  console.log('processStepid',processStep)
+  if(processStep.length>=1){
+   for(const processStepId of processStep){
+       await prisma.attributeValue.updateMany({
+         where:{
+          process_step_id:processStepId.process_step_id,
+          items_id:processStepId.items_id
+         },
+         data:{
+          item_name:""
+         }
+       })
+   }
+  }
+  
+   
+
   const deletedJewelType= await prisma.masterJewelType.delete({
     where:{
       master_jewel_id:parseInt(master_jewel_id),
