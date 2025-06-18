@@ -1275,8 +1275,8 @@ const ProcessTable = () => {
                               options={productName}
                               getOptionLabel={(option) => option.jewel_name || ""}
                               value={{
-                                jewel_name: lotItem.data[3]?.ProcessSteps[1]?.AttributeValues[key].item_name || "",
-                                master_jewel_id: lotItem.data[3]?.ProcessSteps[1]?.AttributeValues[key].master_jewel_id || "",
+                                jewel_name: lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].item_name || "",
+                                master_jewel_id: lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].master_jewel_id || "",
                               }}
                               onChange={(event, newValue) => {
                                 if (newValue) {

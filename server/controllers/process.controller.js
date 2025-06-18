@@ -285,7 +285,7 @@ const saveProcess = async (req, res) => {
                         data: {
                           lot_id: attrValue.lot_id,
                           item_type: "childItem",
-                          item_name: attrValue.item_name
+                          
 
                         }
                       })
@@ -436,15 +436,16 @@ const saveProcess = async (req, res) => {
                       },
                     });
                     //Item Name Update
-                    await prisma.item.update({
-                      where: {
-                        item_id: attrValue.items_id
-                      },
-                      data: {
-                        item_name: attrValue.item_name
-                      }
-                    })
+                    // await prisma.item.update({
+                    //   where: {
+                    //     item_id: attrValue.items_id
+                    //   },
+                    //   data: {
+                    //     item_name: attrValue.item_name
+                    //   }
+                    // })
                     // MasterJewelItemMapper Update
+                    if(attrValue.process_step_id===7){// its only create for child item
                     const existingItem = await prisma.masterJewelItemMapper.findFirst({
                       where: { item_id: attrValue.items_id }
                     });
@@ -455,6 +456,20 @@ const saveProcess = async (req, res) => {
                         data: { master_jewel_id: attrValue.master_jewel_id }
                       });
                     }
+                    else{
+                          console.log('master id',attrValue.master_jewel_id)
+                        if(attrValue.master_jewel_id){
+                            await prisma.masterJewelItemMapper.create({
+                         data: {
+                          item_id: attrValue.items_id,
+                          master_jewel_id: attrValue.master_jewel_id
+                        }
+                      });
+                    }
+                  }
+                    
+                    }
+                    
 
 
                     //Stock moved to Update time

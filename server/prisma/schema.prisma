@@ -120,7 +120,6 @@ model Item {
   item_id        Int     @id @default(autoincrement())
   lot_id         Int
   item_type      String?
-  item_name      String?
   LotInfo        LotInfo @relation("LotItems", fields: [lot_id], references: [id])  
   AttributeValues AttributeValue[] 
   ProductStocks  ProductStocks[]  
@@ -256,7 +255,7 @@ model Receipt {
   purityWeight   Float
   amount         Float
 
-  customer       CustomerInfo @relation(fields: [customer_id], references: [customer_id])
+  customer       CustomerInfo @relation(fields: [customer_id], references: [customer_id],onDelete: Cascade)
   @@map("receipt")
 }
 model CustomerBalance{
@@ -264,6 +263,6 @@ model CustomerBalance{
   customer_id       Int @unique
   expure            Float?
   balance           Float?
-  customer          CustomerInfo @relation(fields: [customer_id], references: [customer_id])
+  customer          CustomerInfo @relation(fields: [customer_id], references: [customer_id],onDelete: Cascade)
   @@map("customerBalance")
 }

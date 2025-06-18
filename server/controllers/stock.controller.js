@@ -16,16 +16,6 @@ const getStock=async(req,res)=>{
                 weight:0,
                 pure:0
             }
-            const name=await prisma.item.findFirst({
-                where:{
-                    item_id:stock.item_id
-                },
-                select:{
-                    item_name:true
-                }
-            })
-            obj.itemName=name.item_name
-    
             const value=await prisma.attributeValue.findFirst({
                 where:{
                     items_id:stock.item_id,
@@ -33,9 +23,11 @@ const getStock=async(req,res)=>{
                 },
                 select:{
                     touchValue:true,
-                    value:true
+                    value:true,
+                    item_name:true
                 }
             })
+            obj.itemName=value.item_name
             obj.touch=value.touchValue,
             obj.weight=value.value
             obj.pure=(value.touchValue*value.value)/100
