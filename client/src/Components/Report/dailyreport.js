@@ -132,8 +132,8 @@ function DailyReport() {
     tempCalculation[3].lotTotal = lotFinishValue
     //calculation for total scarp value and loss total
     for (let i = 1; i <= 7; i++) {
-      let scarpTotal = 0, lossTotal = 0, pureTotal = 0;
-      let innerScarp = 0, innerLoss = 0, innerPure = 0;
+      let scarpTotal = 0, lossTotal = 0;
+      let innerScarp = 0, innerLoss = 0;
       for (let j = 0; j < tempData.length; j++) {
         const dataItem = tempData[j]?.data?.[i];
         const processSteps = dataItem?.ProcessSteps;
@@ -141,40 +141,24 @@ function DailyReport() {
 
         if (attrValues && attrValues.length !== 0) {
           attrValues.forEach((attrItem, attrIndex) => {
-            if (i === 6) {
-              const pureValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
-              innerPure += Number(pureValue);
-            }
-            if (i !== 3) {
-              let lossValue ;
-              if (i === 6) {
-               lossValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
-               console.log('cutting loss',lossValue)
-               innerLoss += Number(lossValue);
-              }else{
+          
+            if (i!== 3 && i!==6) {
                  const scrapValue = processSteps?.[2]?.AttributeValues?.[attrIndex]?.value || 0;
-                 lossValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
+                 const lossValue = processSteps?.[3]?.AttributeValues?.[attrIndex]?.value || 0;
                  innerScarp += Number(scrapValue);
                  innerLoss += Number(lossValue);
               }
-             
-            }
           });
         }
       }
 
       scarpTotal += innerScarp;
       lossTotal += innerLoss;
-      pureTotal += innerPure;
+      
 
       if (i !== 3 && i !==6) {
         tempCalculation[2].process[i - 1].Weight[2].sw = scarpTotal
         tempCalculation[2].process[i - 1].Weight[3].lw = lossTotal
-      }
-
-      if (i === 6) {
-        tempCalculation[2].process[i - 1].Weight[2].lw = lossTotal
-        tempCalculation[2].process[i - 1].Weight[3].pw = pureTotal
       }
       console.log('tempCalculation for scw,losw', tempCalculation)
     }
@@ -215,7 +199,8 @@ function DailyReport() {
         console.log('DateWiseFilter', res.data.data);
         setItems(res.data.data)
         setCalculation(docalculation(res.data.data))
-        handleMachineCalculate(items, calculation)
+        handleMachineCalculate(res.data.data, calculation)
+        handleCuttingCalculate(res.data.data,calculation)
         console.log('itemsAfterDateWiseFilter', items);
       } catch (error) {
         console.error('Error fetching data by date:', error.message);
@@ -224,6 +209,39 @@ function DailyReport() {
     };
     
 
+    const handleCuttingCalculate = (response, calculation) => {
+    const tempData = response;
+    const tempCal = [...calculation]
+    // calculate cutting loss total
+    let cuttingScarpBox_total=0,cuttingLoss_total=0;
+    for (const lot of tempData) {
+      if (lot.data) {
+      
+        if(lot.data[6]?.ProcessSteps[2]?.AttributeValues.length>=1){
+          cuttingLoss_total+=lot.data[6]?.ProcessSteps[2]?.AttributeValues.reduce((acc,item)=>acc+item.value,0)
+        }
+      }else{
+         cuttingScarpBox_total+=lot.scarpBox[1].cutting.scarp
+        
+      }
+    }
+    console.log('cuttingLossTotal',cuttingLoss_total)
+    console.log('cuttingScarpBox',cuttingScarpBox_total)
+   
+     tempCal[2].process[5].Weight[2].lw =cuttingLoss_total-cuttingScarpBox_total
+
+    // calculate cutting pure total
+    let cutting_total = 0;
+    for (const lot of tempData) {
+      if (lot.scarpBox) {
+        cutting_total += lot.scarpBox[1].cutting.totalScarp
+      }
+    }
+
+    tempCal[2].process[5].Weight[3].pw = cutting_total
+    setCalculation(tempCal)
+
+  }
   const handleMachineCalculate = (response, calculation) => {
     const tempData = response;
    
@@ -246,7 +264,8 @@ useEffect(() => {
       setItems(res.data.data);
       const calculated = docalculation(res.data.data);
       setCalculation(calculated);
-      handleMachineCalculate(res.data.data, calculated);
+      handleMachineCalculate(res.data.data, calculation);
+      handleCuttingCalculate(res.data.data,calculation)
     } catch (error) {
       console.error("Error fetching lot details:", error);
      
@@ -330,9 +349,9 @@ useEffect(() => {
             <TableHead style={{ position: 'sticky', top: "0px", zIndex: 10, backgroundColor: '#d8e3e6' }}  >
                      
               <TableRow>
-                <StyledTableCell >
+                <StyledTableCell  >
                   <b>Raw Gold</b>
-                </StyledTableCell>
+                </StyledTableCell >
                 <StyledTableCell >
                   <b>Touch</b>
                 </StyledTableCell >
@@ -350,15 +369,15 @@ useEffect(() => {
                   }
 
                   return (
-                    <StyledTableCell key={process} colSpan={colSpanValue}  >
+                    <StyledTableCell key={process} colSpan={colSpanValue} style={{ borderRight: "3px solid black",}} >
                       <b>{process}</b>
                     </StyledTableCell>
                   );
                 })}
-                <StyledTableCell   >
+                <StyledTableCell  style={{ borderRight: "3px solid black",}} >
                   <b>Item Diffrent</b>
                 </StyledTableCell>
-                <StyledTableCell   >
+                <StyledTableCell style={{ borderRight: "3px solid black" }} >
                   <b>Total Diffrent</b>
                 </StyledTableCell >
               </TableRow>
@@ -382,17 +401,20 @@ useEffect(() => {
                      {process === "Machine" || process === "Cutting" ? ("") : (<StyledTableCell >
                       <b style={{fontSize:"11px"}}>Scarp</b>
                     </StyledTableCell>)}
-                    {process !== "Soldrine" ? (
-                      <StyledTableCell  >
-                        <b style={{fontSize:"11px"}} >{process === "Cutting" ? "Scarp" : "loss"}</b>
-                      </StyledTableCell>) : (
-                      <StyledTableCell>
+
+                    {process === "Soldrine" || process==="Joint" ?(
+                      <StyledTableCell style={{ borderRight: "3px solid black"}}>
                         <b style={{fontSize:"11px"}}>+</b>
+                      </StyledTableCell>):(
+                      <StyledTableCell  style={{
+                        borderRight: process === "Cutting" ? "none" : "3px solid black"
+                      }}  >
+                        <b style={{fontSize:"11px",}} >{process === "Cutting" ? "Scarp" : "loss"}</b>
                       </StyledTableCell>)}
 
                     {
                       process === "Cutting" && (
-                        <StyledTableCell   >
+                        <StyledTableCell style={{ borderRight: "3px solid black",}}  >
                           <b style={{fontSize:"11px"}}>ScarpTotal</b>
                         </StyledTableCell>
                       )
@@ -402,8 +424,8 @@ useEffect(() => {
 
                   </React.Fragment>
                 ))}
-                <StyledTableCell />
-                <StyledTableCell />
+                <StyledTableCell style={{ borderRight: "3px solid black"}} />
+                <StyledTableCell style={{ borderRight: "3px solid black"}}/>
 
               </TableRow>
             </TableHead>
@@ -454,7 +476,7 @@ useEffect(() => {
                                     }
                                   </StyledTableCell>) : ("")}
 
-                                <StyledTableCell>
+                                <StyledTableCell style={{borderRight: "3px solid black"}}>
                                   {//loss Weight
                                     typeof lotItem.data[lotArrIndex + 1]?.ProcessSteps[3]?.AttributeValues[0]?.value === "number"
                                       ? lotItem.data[lotArrIndex + 1].ProcessSteps[3].AttributeValues[0].value.toFixed(3)
@@ -476,7 +498,13 @@ useEffect(() => {
                                   : ""
                               }
                             </StyledTableCell>
-                            <StyledTableCell colSpan={24} />
+                            <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
+                            <StyledTableCell colSpan={3} style={{ borderRight: "3px solid black" }} />
+                            <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
+                            <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
+                            <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
+                            <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} /> 
+                            <StyledTableCell style={{ borderRight: "3px solid black" }} /> 
 
                           </React.Fragment>
 
@@ -484,10 +512,10 @@ useEffect(() => {
 
                         {
                           lotItem.data[7]?.ProcessSteps[1]?.AttributeValues.length >= 1 ? (
-                            <StyledTableCell>
+                            <StyledTableCell style={{ borderRight: "3px solid black" }}>
                               <b>{lotItem.data[0].ProcessSteps[0].AttributeValues[0].value - handleTotal(lotItem.lotid, 7, 1)}</b>
                             </StyledTableCell>
-                          ) : (<StyledTableCell></StyledTableCell>)
+                          ) : (<StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>)
                         }
 
                       </TableRow>
@@ -513,7 +541,7 @@ useEffect(() => {
                                     lotItem.data[2]?.ProcessSteps[2]?.AttributeValues[0]?.value
                                   }
                                 </StyledTableCell>
-                                <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length} >
+                                <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length} style={{ borderRight: "3px solid black" }} >
                                   {
                                     typeof lotItem.data[2]?.ProcessSteps[3]?.AttributeValues[0]?.value === "number"
                                       ? lotItem.data[2].ProcessSteps[3].AttributeValues[0].value.toFixed(3)
@@ -534,14 +562,14 @@ useEffect(() => {
                                     </StyledTableCell>
 
                                     <StyledTableCell>
-                                      {(lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeValues[key]?.value).toFixed(3)}
+                                      {lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeValues[key]?.value}
                                     </StyledTableCell>
                                     {lotItem.data[lotArrIndex]?.process_name === "mechine" || lotItem.data[lotArrIndex]?.process_name === "cutting" ?null:(
                                       <StyledTableCell >
                                         {(lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value)}
                                       </StyledTableCell>) }
 
-                                    <StyledTableCell >
+                                    <StyledTableCell style={{ borderRight: lotItem.data[lotArrIndex]?.process_name === "cutting" ? "none" : "3px solid black" }} >
                                       {lotItem.data[lotArrIndex]?.process_name === "mechine" || lotItem.data[lotArrIndex]?.process_name === "cutting" ? (
 
                                         <p> {//loss Weight Mechine
@@ -564,7 +592,7 @@ useEffect(() => {
                                     </StyledTableCell>
 
                                     {lotArrIndex === 6 ? (
-                                      <StyledTableCell>
+                                      <StyledTableCell style={{ borderRight: "3px solid black" }}>
 
                                         {
                                           typeof lotItem.data[lotArrIndex]?.ProcessSteps[3]?.AttributeValues[key]?.value === "number"
@@ -583,12 +611,12 @@ useEffect(() => {
                             {
                               //Item Different
                               lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key]?.value ?
-                                (<StyledTableCell>
+                                (<StyledTableCell style={{ borderRight: "3px solid black" }}>
                                   <p style={{ fontSize: "15px" }}>{lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key]?.value - (lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key].value).toFixed(3)}</p>
                                 </StyledTableCell>)
-                                : (<StyledTableCell></StyledTableCell>)
+                                : (<StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>)
                             }
-                            <StyledTableCell style={{ borderTop: "2px solid white" }}></StyledTableCell>
+                            <StyledTableCell style={{ borderTop: "2px solid white",borderRight: "3px solid black" }}></StyledTableCell>
 
 
 
@@ -607,7 +635,7 @@ useEffect(() => {
                           ) : (<StyledTableCell>Total:0</StyledTableCell>)
                         }
                         <StyledTableCell></StyledTableCell>
-                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell  style={{ borderRight: "3px solid black" }}></StyledTableCell>
 
 
                         {
@@ -616,7 +644,7 @@ useEffect(() => {
                               <React.Fragment>
                                 <StyledTableCell></StyledTableCell>
 
-                                <StyledTableCell>
+                                <StyledTableCell >
                                   {
                                     index === 7 ? (lotItem.data[7].ProcessSteps[1].AttributeValues.length !== 0 ? (
                                       "Total:" + handleTotal(lotItem.lotid, 7, 1)
@@ -625,11 +653,11 @@ useEffect(() => {
                                   }
                                 </StyledTableCell>
                                 {
-                                  index === 3 || index === 6 ? (""):(<StyledTableCell></StyledTableCell>)
+                                  index === 3 || index === 6 ? (""):(<StyledTableCell  ></StyledTableCell>)
                                 }
-                                <StyledTableCell></StyledTableCell>
+                                <StyledTableCell style={{ borderRight: lotItem.data[index]?.process_name === "cutting" ? "none" : "3px solid black" }}></StyledTableCell>
                                 {
-                                  index === 6 ? (<StyledTableCell></StyledTableCell>) : ("")
+                                  index === 6 ? (<StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>) : ("")
                                 }
 
                               </React.Fragment>
@@ -637,15 +665,20 @@ useEffect(() => {
 
                           ))
                         }
-                        <StyledTableCell></StyledTableCell>
-                        <StyledTableCell></StyledTableCell>
+                        <StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>
+                        <StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>
                       </TableRow> 
                     </React.Fragment>) :
                     (
                       <React.Fragment>
                         <TableRow>
                           <StyledTableCell colSpan={11}></StyledTableCell>
-                          <StyledTableCell colSpan={3} >
+                          <StyledTableCell colSpan={3} style={{
+                            borderLeft: "3px solid black",   
+                            borderRight: "3px solid black", 
+                            borderTop: "none",               
+                            borderBottom: "none"             
+                          }} >
                             <Grid container spacing={1}>
 
                               <Grid container item spacing={1} >
@@ -701,7 +734,12 @@ useEffect(() => {
                             </Grid>
                           </StyledTableCell>
                           <StyledTableCell colSpan={8}></StyledTableCell> 
-                           <StyledTableCell colSpan={4} >
+                           <StyledTableCell colSpan={4} style={{
+                            borderLeft: "3px solid black",   
+                            borderRight: "3px solid black", 
+                            borderTop: "none",               
+                            borderBottom: "none"             
+                          }} >
                             <Grid container spacing={1}>
 
                               <Grid container item spacing={1} >
@@ -774,7 +812,10 @@ useEffect(() => {
                               </Grid>
                             </Grid>
                           </StyledTableCell>
-                          <StyledTableCell colSpan={6}></StyledTableCell> 
+                          <StyledTableCell style={{
+                             borderRight: "3px solid black", 
+                                      
+                          }} colSpan={6}></StyledTableCell> 
                         </TableRow>
                       </React.Fragment>
 
